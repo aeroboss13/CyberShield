@@ -42,10 +42,13 @@ export class NewsService {
 
     try {
       const newsSources = await Promise.allSettled([
-        this.fetchRedditSecurity(),
+        this.fetchTheHackerNews(),
         this.fetchKrebsOnSecurity(),
         this.fetchBleepingComputer(),
-        this.fetchTheHackerNews()
+        this.fetchCISAAlerts(),
+        this.fetchDarkReading(),
+        this.fetchThreatpost(),
+        this.fetchRedditSecurity()
       ]);
 
       const allNews: NewsArticle[] = [];
@@ -76,6 +79,73 @@ export class NewsService {
     }
   }
 
+  private async fetchRSSFeed(url: string, source: string): Promise<NewsArticle[]> {
+    try {
+      // Use RSS2JSON service to convert RSS to JSON
+      const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&api_key=YOUR_API_KEY&count=10`;
+      
+      const response = await fetch(rss2jsonUrl, {
+        headers: {
+          'User-Agent': 'SecHub/1.0 (Security News Aggregator)'
+        }
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to fetch RSS for ${source}:`, response.status);
+        return [];
+      }
+
+      const data = await response.json();
+      const articles: NewsArticle[] = [];
+
+      if (data.status === 'ok' && data.items) {
+        data.items.forEach((item: any) => {
+          if (item.title && item.link) {
+            articles.push({
+              id: this.hashString(item.link),
+              title: this.cleanTitle(item.title),
+              summary: this.stripHtml(item.description || item.content || 'Latest cybersecurity news and updates'),
+              content: this.stripHtml(item.content || item.description),
+              source: source,
+              imageUrl: item.thumbnail || null,
+              tags: this.generateTags(item.title + ' ' + (item.description || ''), source.toLowerCase()),
+              publishedAt: new Date(item.pubDate || Date.now())
+            });
+          }
+        });
+      }
+
+      return articles;
+    } catch (error) {
+      console.error(`Error fetching RSS for ${source}:`, error);
+      return [];
+    }
+  }
+
+  private async fetchTheHackerNews(): Promise<NewsArticle[]> {
+    return this.fetchRSSFeed('https://feeds.feedburner.com/TheHackersNews', 'The Hacker News');
+  }
+
+  private async fetchKrebsOnSecurity(): Promise<NewsArticle[]> {
+    return this.fetchRSSFeed('https://krebsonsecurity.com/feed/', 'Krebs on Security');
+  }
+
+  private async fetchBleepingComputer(): Promise<NewsArticle[]> {
+    return this.fetchRSSFeed('https://www.bleepingcomputer.com/feed/', 'BleepingComputer');
+  }
+
+  private async fetchCISAAlerts(): Promise<NewsArticle[]> {
+    return this.fetchRSSFeed('https://www.cisa.gov/cybersecurity-advisories.xml', 'CISA');
+  }
+
+  private async fetchDarkReading(): Promise<NewsArticle[]> {
+    return this.fetchRSSFeed('https://www.darkreading.com/rss_simple.asp', 'Dark Reading');
+  }
+
+  private async fetchThreatpost(): Promise<NewsArticle[]> {
+    return this.fetchRSSFeed('https://threatpost.com/feed/', 'Threatpost');
+  }
+
   private async fetchRedditSecurity(): Promise<NewsArticle[]> {
     try {
       const subreddits = ['cybersecurity', 'netsec', 'InfoSecNews', 'security'];
@@ -84,7 +154,7 @@ export class NewsService {
       for (const subreddit of subreddits) {
         try {
           const response = await fetch(
-            `https://www.reddit.com/r/${subreddit}/hot.json?limit=10`,
+            `https://www.reddit.com/r/${subreddit}/hot.json?limit=5`,
             {
               headers: {
                 'User-Agent': 'SecHub/1.0 (Security News Aggregator)'
@@ -100,17 +170,17 @@ export class NewsService {
             data.data.children.forEach((child: { data: RedditPost['data'] }) => {
               const post = child.data;
               
-              if (post.title && post.score > 5) {
+              if (post.title && post.score > 10 && this.isSecurityRelated(post.title)) {
                 articles.push({
                   id: this.hashString(post.permalink),
                   title: this.cleanTitle(post.title),
                   summary: post.selftext ? 
                     this.truncateText(post.selftext, 200) : 
-                    `Popular post from r/${post.subreddit} with ${post.score} upvotes`,
+                    `Community discussion: ${post.score} upvotes, ${post.num_comments || 0} comments`,
                   content: post.selftext || null,
                   source: `Reddit - r/${post.subreddit}`,
                   imageUrl: null,
-                  tags: this.generateTags(post.title + ' ' + post.selftext, post.subreddit),
+                  tags: this.generateTags(post.title + ' ' + (post.selftext || ''), post.subreddit),
                   publishedAt: new Date(post.created_utc * 1000)
                 });
               }

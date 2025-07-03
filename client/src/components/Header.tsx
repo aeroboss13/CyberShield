@@ -1,10 +1,19 @@
-import { Search, Shield, Bell, Settings, Activity } from "lucide-react";
+import { Search, Shield, Bell, Settings, Activity, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import PostModal from "./PostModal";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Open search results in new window/tab or redirect
+      window.open(`https://www.google.com/search?q=site:nvd.nist.gov+${encodeURIComponent(searchQuery)}+OR+site:attack.mitre.org+${encodeURIComponent(searchQuery)}`, '_blank');
+    }
+  };
 
   return (
     <header className="cyber-bg-surface border-b cyber-border sticky top-0 z-50 backdrop-blur-lg bg-opacity-95">
@@ -26,7 +35,7 @@ export default function Header() {
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="relative group">
+            <form onSubmit={handleSearch} className="relative group">
               <Input
                 type="text"
                 placeholder="Search CVEs, threats, techniques..."
@@ -34,14 +43,29 @@ export default function Header() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="cyber-input w-80 pl-10 pr-4 h-10 rounded-lg transition-all duration-300 focus:w-96"
               />
-              <Search className="absolute left-3 top-2.5 w-5 h-5 cyber-text-dim transition-colors group-focus-within:cyber-text-blue" />
-            </div>
+              <button
+                type="submit"
+                className="absolute left-3 top-2.5 hover:cyber-text-blue transition-colors"
+              >
+                <Search className="w-5 h-5 cyber-text-dim group-focus-within:cyber-text-blue" />
+              </button>
+            </form>
             
             <div className="flex items-center space-x-2">
+              <PostModal 
+                trigger={
+                  <Button className="cyber-button-primary">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Post
+                  </Button>
+                }
+              />
+              
               <Button
                 variant="ghost"
                 size="sm"
                 className="relative cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                onClick={() => alert('Security alerts and notifications')}
               >
                 <Bell className="w-5 h-5 cyber-text-muted" />
                 <span className="absolute -top-1 -right-1 w-2 h-2 cyber-bg-red rounded-full"></span>
@@ -51,6 +75,7 @@ export default function Header() {
                 variant="ghost"
                 size="sm"
                 className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                onClick={() => alert('System activity and live monitoring')}
               >
                 <Activity className="w-5 h-5 cyber-text-green" />
               </Button>
@@ -59,6 +84,7 @@ export default function Header() {
                 variant="ghost"
                 size="sm"
                 className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                onClick={() => alert('Settings and preferences')}
               >
                 <Settings className="w-5 h-5 cyber-text-muted" />
               </Button>

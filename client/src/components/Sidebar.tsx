@@ -85,15 +85,24 @@ export default function Sidebar() {
           <span>Quick Actions</span>
         </h3>
         <div className="space-y-3">
-          <Button className="w-full cyber-button-primary justify-start">
+          <Button 
+            className="w-full cyber-button-primary justify-start"
+            onClick={() => window.open('https://www.cisa.gov/report-incident', '_blank')}
+          >
             <AlertTriangle className="w-4 h-4 mr-3" />
             Report Security Incident
           </Button>
-          <Button className="w-full cyber-button-secondary justify-start">
+          <Button 
+            className="w-full cyber-button-secondary justify-start"
+            onClick={() => window.open('https://cveform.mitre.org/', '_blank')}
+          >
             <Database className="w-4 h-4 mr-3" />
             Submit CVE Analysis
           </Button>
-          <Button className="w-full cyber-button-secondary justify-start">
+          <Button 
+            className="w-full cyber-button-secondary justify-start"
+            onClick={() => alert('Share threat intelligence with the community')}
+          >
             <Globe className="w-4 h-4 mr-3" />
             Share Threat Intel
           </Button>
