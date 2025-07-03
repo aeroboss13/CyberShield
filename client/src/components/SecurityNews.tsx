@@ -1,14 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Globe, Clock, TrendingUp, MessageSquare } from "lucide-react";
+import NewsModal from "./NewsModal";
 import type { NewsArticleType } from "@/lib/types";
 
 export default function SecurityNews() {
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticleType | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { data: news, isLoading } = useQuery<NewsArticleType[]>({
     queryKey: ["/api/news"],
   });
+
+  const openArticle = (article: NewsArticleType) => {
+    setSelectedArticle(article);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedArticle(null);
+  };
 
   const formatTimestamp = (date: Date) => {
     const now = new Date();
@@ -115,7 +130,10 @@ export default function SecurityNews() {
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-3 leading-tight hover:cyber-text-green cursor-pointer transition-colors line-clamp-2">
+                <h3 
+                  className="text-xl font-bold text-white mb-3 leading-tight hover:cyber-text-green cursor-pointer transition-colors line-clamp-2"
+                  onClick={() => openArticle(article)}
+                >
                   {article.title}
                 </h3>
                 
@@ -157,7 +175,7 @@ export default function SecurityNews() {
                     </Button>
                     <Button
                       className="cyber-button-secondary"
-                      onClick={() => window.open('#', '_blank')}
+                      onClick={() => openArticle(article)}
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />
                       Read More
@@ -177,6 +195,12 @@ export default function SecurityNews() {
           <p className="text-sm mt-2">Check back soon for the latest updates.</p>
         </div>
       )}
+
+      <NewsModal
+        article={selectedArticle}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </div>
   );
 }
