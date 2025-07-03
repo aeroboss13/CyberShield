@@ -107,14 +107,18 @@ export class NewsService {
       if (data.status === 'ok' && data.items) {
         data.items.forEach((item: any) => {
           if (item.title && item.link && this.isSecurityRelated(item.title)) {
+            // Get the fullest content available
+            const fullContent = item.content || item.description || item['content:encoded'] || '';
+            const summary = item.description || item.content || 'Latest cybersecurity news';
+            
             articles.push({
               id: this.hashString(item.link),
               title: this.cleanTitle(item.title),
-              summary: this.stripHtml(item.description || item.content || 'Latest cybersecurity news'),
-              content: this.stripHtml(item.content || item.description),
+              summary: this.stripHtml(summary),
+              content: this.stripHtml(fullContent),
               source: source,
-              imageUrl: item.thumbnail || null,
-              tags: this.generateTags(item.title + ' ' + (item.description || ''), source.toLowerCase()),
+              imageUrl: item.thumbnail || item.enclosure?.url || null,
+              tags: this.generateTags(item.title + ' ' + (fullContent || summary), source.toLowerCase()),
               publishedAt: item.pubDate ? new Date(item.pubDate) : new Date()
             });
           }
@@ -161,22 +165,28 @@ export class NewsService {
         const titleMatch = item.match(/<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/i);
         const linkMatch = item.match(/<link[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>/i);
         const descMatch = item.match(/<description[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i);
+        const contentMatch = item.match(/<content:encoded[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/content:encoded>/i);
         const pubDateMatch = item.match(/<pubDate[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/pubDate>/i);
         
         const title = titleMatch?.[1]?.trim();
         const link = linkMatch?.[1]?.trim();
         const description = descMatch?.[1]?.trim();
+        const fullContent = contentMatch?.[1]?.trim();
         const pubDate = pubDateMatch?.[1]?.trim();
+        
+        // Use full content if available, otherwise use description
+        const content = fullContent || description || '';
+        const summary = description || fullContent || 'Latest cybersecurity news';
         
         if (title && link && this.isSecurityRelated(title)) {
           articles.push({
             id: this.hashString(link),
             title: this.cleanTitle(title),
-            summary: this.stripHtml(description || 'Latest cybersecurity news'),
-            content: this.stripHtml(description || ''),
+            summary: this.stripHtml(summary),
+            content: this.stripHtml(content),
             source: source,
             imageUrl: null,
-            tags: this.generateTags(title + ' ' + (description || ''), source.toLowerCase()),
+            tags: this.generateTags(title + ' ' + content, source.toLowerCase()),
             publishedAt: pubDate ? new Date(pubDate) : new Date()
           });
         }

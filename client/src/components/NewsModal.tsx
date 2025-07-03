@@ -101,42 +101,47 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
               <span className="font-medium text-white">Article Details</span>
             </div>
             
-            {article.content && article.content.length > 0 && article.content !== article.summary ? (
-              <div className="prose prose-invert max-w-none mb-6">
-                <div className="text-white leading-relaxed whitespace-pre-wrap">
-                  {article.content}
-                </div>
+            <div className="mb-6">
+              {/* Always show the fullest available content */}
+              <div className="text-white leading-relaxed mb-4 text-base">
+                {article.content && article.content.length > article.summary.length ? 
+                  article.content : 
+                  article.summary}
               </div>
-            ) : (
-              <div className="mb-6">
-                <div className="text-white leading-relaxed mb-4">
-                  {article.summary}
-                </div>
-                <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600">
-                  <p className="cyber-text-muted text-sm mb-3">
-                    This summary was aggregated from RSS feeds. For the complete article with full details, images, and analysis, visit the original source.
+              
+              {/* Show additional context if content is longer than summary */}
+              {article.content && article.content.length > article.summary.length && (
+                <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600 mb-4">
+                  <p className="cyber-text-muted text-sm">
+                    📄 Full content extracted from RSS feed
                   </p>
-                  <div className="grid grid-cols-2 gap-3 text-xs cyber-text-dim">
-                    <div className="flex items-center space-x-2">
-                      <span>Source:</span>
-                      <span className="font-mono">{article.source}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span>Published:</span>
-                      <span className="font-mono">{new Date(article.publishedAt).toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span>Article ID:</span>
-                      <span className="font-mono">#{article.id}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span>Category:</span>
-                      <span className="font-mono">Security News</span>
-                    </div>
+                </div>
+              )}
+              
+              <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600">
+                <p className="cyber-text-muted text-sm mb-3">
+                  This summary was aggregated from RSS feeds. For the complete article with full details, images, and analysis, visit the original source.
+                </p>
+                <div className="grid grid-cols-2 gap-3 text-xs cyber-text-dim">
+                  <div className="flex items-center space-x-2">
+                    <span>Source:</span>
+                    <span className="font-mono">{article.source}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span>Published:</span>
+                    <span className="font-mono">{new Date(article.publishedAt).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span>Article ID:</span>
+                    <span className="font-mono">#{article.id}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span>Category:</span>
+                    <span className="font-mono">Security News</span>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
             
             <Button
               className="cyber-button-primary w-full"
