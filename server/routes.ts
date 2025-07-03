@@ -121,6 +121,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/mitre/techniques", async (req, res) => {
+    try {
+      const { techniqueId } = req.query;
+      if (techniqueId) {
+        // Return specific technique details
+        const techniques = await mitreService.searchTechniques(techniqueId as string);
+        res.json(techniques);
+      } else {
+        // Return all techniques from all tactics
+        const tactics = await mitreService.getAllTactics();
+        const allTechniques = tactics.flatMap(tactic => tactic.techniques);
+        res.json(allTechniques);
+      }
+    } catch (error) {
+      console.error('MITRE techniques error:', error);
+      res.status(500).json({ error: "Failed to fetch MITRE techniques" });
+    }
+  });
+
   app.get("/api/mitre/search", async (req, res) => {
     try {
       const { q } = req.query;
@@ -133,6 +152,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('MITRE search error:', error);
       res.status(500).json({ error: "Failed to search MITRE techniques" });
+    }
+  });
+
+  app.get("/api/exploits", async (req, res) => {
+    try {
+      const { cveId } = req.query;
+      if (!cveId) {
+        return res.status(400).json({ error: "CVE ID required" });
+      }
+      
+      const exploits = await exploitService.getExploitsForCVE(cveId as string);
+      res.json(exploits);
+    } catch (error) {
+      console.error('Exploits API error:', error);
+      res.status(500).json({ error: "Failed to fetch exploits" });
     }
   });
 

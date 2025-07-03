@@ -34,6 +34,12 @@ export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalP
 
   const { data: exploits, isLoading: exploitsLoading } = useQuery({
     queryKey: ["/api/exploits", cve?.cveId],
+    queryFn: async () => {
+      if (!cve?.cveId) return [];
+      const response = await fetch(`/api/exploits?cveId=${encodeURIComponent(cve.cveId)}`);
+      if (!response.ok) throw new Error('Failed to fetch exploits');
+      return response.json();
+    },
     enabled: !!cve?.cveId,
   });
 

@@ -18,11 +18,11 @@ interface TechniqueModalProps {
 
 export default function TechniqueModal({ techniqueId, isOpen, onClose }: TechniqueModalProps) {
   const { data: techniques } = useQuery({
-    queryKey: ["/api/mitre/techniques", techniqueId],
+    queryKey: ["/api/mitre/techniques"],
     enabled: !!techniqueId,
   });
 
-  const technique = techniques?.find((t: any) => t.techniqueId === techniqueId);
+  const technique = Array.isArray(techniques) ? techniques.find((t: any) => t.techniqueId === techniqueId) : null;
 
   if (!technique) {
     return (
