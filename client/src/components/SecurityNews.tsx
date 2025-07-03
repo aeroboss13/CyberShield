@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ExternalLink, Globe, Clock, TrendingUp, MessageSquare } from "lucide-react";
 import type { NewsArticleType } from "@/lib/types";
 
 export default function SecurityNews() {
@@ -65,64 +66,116 @@ export default function SecurityNews() {
 
   return (
     <div className="space-y-6">
-      {news?.map((article) => (
-        <Card key={article.id} className="cyber-bg-slate border-slate-700">
-          <CardContent className="pt-6">
-            <article className="flex items-start space-x-4">
+      {/* Header with Stats */}
+      <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
+              <Globe className="w-8 h-8 cyber-text-green" />
+              <span>Security News</span>
+            </h2>
+            <p className="cyber-text-muted mt-1">Latest cybersecurity news from trusted sources</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold cyber-text-green">{news?.length || 0}</div>
+              <div className="text-xs cyber-text-dim">Articles</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold cyber-text-blue">Live</div>
+              <div className="text-xs cyber-text-dim">Updates</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* News Feed */}
+      <div className="space-y-4">
+        {news?.map((article) => (
+          <div key={article.id} className="news-card rounded-xl p-6">
+            <article className="flex items-start space-x-6">
               {article.imageUrl && (
-                <img
-                  src={article.imageUrl}
-                  alt={article.title}
-                  className="w-24 h-16 rounded-lg object-cover flex-shrink-0"
-                />
+                <div className="flex-shrink-0">
+                  <img
+                    src={article.imageUrl}
+                    alt={article.title}
+                    className="w-32 h-24 rounded-lg object-cover border cyber-border"
+                  />
+                </div>
               )}
               
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-slate-400 text-sm">{article.source}</span>
-                  <span className="text-slate-500 text-sm">• {formatTimestamp(article.publishedAt)}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center space-x-3 mb-3">
+                  <Badge className="cyber-bg-green text-white">
+                    {article.source}
+                  </Badge>
+                  <div className="flex items-center space-x-1 cyber-text-dim">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-xs">{formatTimestamp(article.publishedAt)}</span>
+                  </div>
                 </div>
                 
-                <h3 className="text-xl font-semibold text-white mb-2 hover:text-cyber-blue cursor-pointer transition-colors">
+                <h3 className="text-xl font-bold text-white mb-3 leading-tight hover:cyber-text-green cursor-pointer transition-colors line-clamp-2">
                   {article.title}
                 </h3>
                 
-                <p className="text-slate-300 mb-4">{article.summary}</p>
+                <p className="text-white mb-4 leading-relaxed line-clamp-3">{article.summary}</p>
                 
                 <div className="flex items-center justify-between">
                   <div className="flex flex-wrap gap-2">
-                    {article.tags.map((tag, index) => (
+                    {article.tags.slice(0, 4).map((tag, index) => (
                       <span
                         key={index}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${getTagColor(tag)}`}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${getTagColor(tag)}`}
                       >
                         #{tag}
                       </span>
                     ))}
+                    {article.tags.length > 4 && (
+                      <span className="cyber-text-dim text-xs px-2 py-1">
+                        +{article.tags.length - 4} more
+                      </span>
+                    )}
                   </div>
                   
-                  <Button
-                    variant="ghost"
-                    className="cyber-text-blue hover:text-blue-400 font-medium text-sm p-0 h-auto"
-                  >
-                    Read More
-                    <ExternalLink className="w-4 h-4 ml-1" />
-                  </Button>
+                  <div className="flex items-center space-x-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cyber-text-muted hover:cyber-text-blue"
+                    >
+                      <MessageSquare className="w-4 h-4 mr-1" />
+                      Discuss
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cyber-text-muted hover:cyber-text-blue"
+                    >
+                      <TrendingUp className="w-4 h-4 mr-1" />
+                      Share
+                    </Button>
+                    <Button
+                      className="cyber-button-secondary"
+                      onClick={() => window.open('#', '_blank')}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Read More
+                    </Button>
+                  </div>
                 </div>
               </div>
             </article>
-          </CardContent>
-        </Card>
-      ))}
+          </div>
+        ))}
+      </div>
       
       {news?.length === 0 && (
-        <Card className="cyber-bg-slate border-slate-700">
-          <CardContent className="pt-6">
-            <div className="text-center text-slate-400">
-              <p>No security news available at the moment.</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="text-center cyber-text-muted py-12">
+          <Globe className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <p className="text-lg">No security news available at the moment.</p>
+          <p className="text-sm mt-2">Check back soon for the latest updates.</p>
+        </div>
       )}
     </div>
   );

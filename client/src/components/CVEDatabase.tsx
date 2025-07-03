@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp } from "lucide-react";
+import ExploitViewer from "./ExploitViewer";
 import type { CVEWithDetails } from "@/lib/types";
 
 export default function CVEDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("All Severities");
+  const [viewingExploits, setViewingExploits] = useState<string | null>(null);
 
   const { data: cves, isLoading } = useQuery<CVEWithDetails[]>({
     queryKey: ["/api/cves", { search: searchQuery, severity: selectedSeverity }],
@@ -52,6 +54,16 @@ export default function CVEDatabase() {
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  // Show exploit viewer if a CVE is selected
+  if (viewingExploits) {
+    return (
+      <ExploitViewer 
+        cveId={viewingExploits} 
+        onClose={() => setViewingExploits(null)} 
+      />
     );
   }
 
@@ -174,7 +186,10 @@ export default function CVEDatabase() {
                   <Eye className="w-4 h-4 mr-2" />
                   Details
                 </Button>
-                <Button className="cyber-button-primary">
+                <Button 
+                  className="cyber-button-primary"
+                  onClick={() => setViewingExploits(cve.cveId)}
+                >
                   <Code className="w-4 h-4 mr-2" />
                   Exploits
                 </Button>
