@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Target, Search, Eye, ExternalLink, Grid3X3, List } from "lucide-react";
 import type { MitreTactic } from "@/lib/types";
+import TechniqueModal from "./TechniqueModal";
 
 export default function MitreMatrix() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -217,6 +218,13 @@ export default function MitreMatrix() {
           <p className="text-sm mt-2">Try adjusting your search terms or matrix selection.</p>
         </div>
       )}
+
+      {/* Technique Details Modal */}
+      <TechniqueModal
+        techniqueId={selectedTechnique}
+        isOpen={!!selectedTechnique}
+        onClose={() => setSelectedTechnique(null)}
+      />
     </div>
   );
 }

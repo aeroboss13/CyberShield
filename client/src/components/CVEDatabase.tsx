@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp } from "lucide-react";
-import ExploitViewer from "./ExploitViewer";
+import CVEDetailModal from "./CVEDetailModal";
 import type { CVEWithDetails } from "@/lib/types";
 
 export default function CVEDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("All Severities");
-  const [viewingExploits, setViewingExploits] = useState<string | null>(null);
+  const [selectedCVE, setSelectedCVE] = useState<CVEWithDetails | null>(null);
 
   const { data: cves, isLoading } = useQuery<CVEWithDetails[]>({
     queryKey: ["/api/cves", { search: searchQuery, severity: selectedSeverity }],
@@ -57,15 +57,7 @@ export default function CVEDatabase() {
     );
   }
 
-  // Show exploit viewer if a CVE is selected
-  if (viewingExploits) {
-    return (
-      <ExploitViewer 
-        cveId={viewingExploits} 
-        onClose={() => setViewingExploits(null)} 
-      />
-    );
-  }
+
 
   return (
     <div className="space-y-6">
@@ -182,13 +174,16 @@ export default function CVEDatabase() {
               </div>
               
               <div className="flex flex-col space-y-2 ml-6">
-                <Button className="cyber-button-secondary">
+                <Button 
+                  className="cyber-button-secondary"
+                  onClick={() => setSelectedCVE(cve)}
+                >
                   <Eye className="w-4 h-4 mr-2" />
                   Details
                 </Button>
                 <Button 
                   className="cyber-button-primary"
-                  onClick={() => setViewingExploits(cve.cveId)}
+                  onClick={() => setSelectedCVE(cve)}
                 >
                   <Code className="w-4 h-4 mr-2" />
                   Exploits
@@ -196,6 +191,7 @@ export default function CVEDatabase() {
                 <Button 
                   variant="outline" 
                   className="border-gray-600 text-gray-400 hover:text-white hover:border-gray-500"
+                  onClick={() => window.open(`https://nvd.nist.gov/vuln/detail/${cve.cveId}`, '_blank')}
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   NVD
@@ -213,6 +209,13 @@ export default function CVEDatabase() {
           <p className="text-sm mt-2">Try adjusting your filters or search terms.</p>
         </div>
       )}
+
+      {/* CVE Detail Modal */}
+      <CVEDetailModal
+        cve={selectedCVE}
+        isOpen={!!selectedCVE}
+        onClose={() => setSelectedCVE(null)}
+      />
     </div>
   );
 }
