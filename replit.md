@@ -101,7 +101,31 @@ SecHub is a comprehensive cybersecurity social platform that combines social net
 
 Preferred communication style: Simple, everyday language.
 
+## Data Sources
+
+### Real-time Security Data Integration
+- **CVE Database**: NVD API with CISA KEV integration for active exploitation status
+- **MITRE ATT&CK**: GitHub STIX data with comprehensive tactics and techniques
+- **Exploits**: ExploitDB integration with fallback generation for CVE-specific exploit code
+- **Security News**: Real-time RSS aggregation from multiple sources:
+  - The Hacker News (RSS feed)
+  - Krebs on Security (RSS feed)
+  - BleepingComputer (RSS feed)
+  - SecurityWeek (RSS feed)
+  - Hacker News (API integration)
+  - Reddit Security subreddits (API integration)
+
+### News Aggregation Features
+- Smart security-related content filtering with 40+ cybersecurity keywords
+- Automatic deduplication and source attribution
+- Real-time publication date sorting
+- Tag generation for categorization
+- Fallback content handling for offline scenarios
+
 ## Changelog
 
-Changelog:
-- July 03, 2025. Initial setup
+Recent Changes:
+- July 03, 2025: Implemented real-time security news aggregation with RSS feeds
+- July 03, 2025: Added interactive MITRE ATT&CK technique modals
+- July 03, 2025: Integrated CVE exploit database with real code samples
+- July 03, 2025: Initial setup
