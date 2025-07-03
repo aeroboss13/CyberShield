@@ -61,25 +61,15 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto cyber-bg-surface border-slate-700">
         <DialogHeader>
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3 mb-3">
-              <Badge className="cyber-bg-green text-white">
-                <Globe className="w-3 h-3 mr-1" />
-                {article.source}
-              </Badge>
-              <div className="flex items-center space-x-1 cyber-text-dim">
-                <Clock className="w-3 h-3" />
-                <span className="text-xs">{formatTimestamp(article.publishedAt)}</span>
-              </div>
+          <div className="flex items-center space-x-3 mb-4">
+            <Badge className="cyber-bg-green text-white">
+              <Globe className="w-3 h-3 mr-1" />
+              {article.source}
+            </Badge>
+            <div className="flex items-center space-x-1 cyber-text-dim">
+              <Clock className="w-3 h-3" />
+              <span className="text-xs">{formatTimestamp(article.publishedAt)}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="text-slate-400 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </Button>
           </div>
           
           <DialogTitle className="text-2xl font-bold text-white leading-tight mb-4">
@@ -104,30 +94,58 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
         )}
 
         <div className="space-y-6">
-          {article.content && article.content.length > 0 ? (
-            <div className="prose prose-invert max-w-none">
-              <div className="text-white leading-relaxed whitespace-pre-wrap">
-                {article.content}
-              </div>
+          {/* Full Content Section */}
+          <div className="cyber-bg-slate rounded-lg p-6 border border-slate-700">
+            <div className="flex items-center space-x-2 mb-4">
+              <Globe className="w-5 h-5 cyber-text-blue" />
+              <span className="font-medium text-white">Article Details</span>
             </div>
-          ) : (
-            <div className="cyber-bg-slate rounded-lg p-6 border border-slate-700">
-              <div className="flex items-center space-x-2 mb-3">
-                <Globe className="w-5 h-5 cyber-text-blue" />
-                <span className="font-medium text-white">Full Article</span>
+            
+            {article.content && article.content.length > 0 && article.content !== article.summary ? (
+              <div className="prose prose-invert max-w-none mb-6">
+                <div className="text-white leading-relaxed whitespace-pre-wrap">
+                  {article.content}
+                </div>
               </div>
-              <p className="cyber-text-muted mb-4">
-                This is a summary of the security news. Visit the original source for the complete article and additional details.
-              </p>
-              <Button
-                className="cyber-button-primary"
-                onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(article.title + ' ' + article.source)}`, '_blank')}
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Find Original Article
-              </Button>
-            </div>
-          )}
+            ) : (
+              <div className="mb-6">
+                <div className="text-white leading-relaxed mb-4">
+                  {article.summary}
+                </div>
+                <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600">
+                  <p className="cyber-text-muted text-sm mb-3">
+                    This summary was aggregated from RSS feeds. For the complete article with full details, images, and analysis, visit the original source.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 text-xs cyber-text-dim">
+                    <div className="flex items-center space-x-2">
+                      <span>Source:</span>
+                      <span className="font-mono">{article.source}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span>Published:</span>
+                      <span className="font-mono">{new Date(article.publishedAt).toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span>Article ID:</span>
+                      <span className="font-mono">#{article.id}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span>Category:</span>
+                      <span className="font-mono">Security News</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <Button
+              className="cyber-button-primary w-full"
+              onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(article.title + ' ' + article.source)}`, '_blank')}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Search for Original Article
+            </Button>
+          </div>
 
           {/* Tags */}
           <div>
