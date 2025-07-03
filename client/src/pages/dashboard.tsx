@@ -33,28 +33,28 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen cyber-bg-dark text-slate-100">
+    <div className="min-h-screen cyber-bg-dark text-white">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <aside className="lg:col-span-1">
+          <aside className="lg:col-span-1 fade-in">
             <Sidebar />
           </aside>
           
-          <main className="lg:col-span-3">
+          <main className="lg:col-span-3 slide-in-left">
             {/* Tab Navigation */}
             <div className="mb-8">
-              <div className="border-b border-slate-700">
-                <nav className="-mb-px flex space-x-8">
+              <div className="cyber-bg-surface rounded-xl p-1 border cyber-border">
+                <nav className="flex space-x-1">
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`border-b-2 py-2 px-1 font-medium transition-colors ${
+                      className={`flex-1 py-3 px-4 font-medium rounded-lg transition-all duration-300 ${
                         activeTab === tab.id
-                          ? 'border-cyber-blue text-cyber-blue'
-                          : 'border-transparent text-slate-400 hover:text-slate-300'
+                          ? 'cyber-gradient text-white shadow-lg cyber-glow-blue'
+                          : 'text-gray-400 hover:text-white hover:cyber-bg-surface-light'
                       }`}
                     >
                       {tab.label}
@@ -65,7 +65,9 @@ export default function Dashboard() {
             </div>
 
             {/* Tab Content */}
-            {renderTabContent()}
+            <div className="fade-in">
+              {renderTabContent()}
+            </div>
           </main>
         </div>
       </div>

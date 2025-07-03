@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp } from "lucide-react";
 import type { CVEWithDetails } from "@/lib/types";
 
 export default function CVEDatabase() {
@@ -55,104 +56,148 @@ export default function CVEDatabase() {
   }
 
   return (
-    <Card className="cyber-bg-slate border-slate-700">
-      <CardContent className="pt-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">CVE Database</h2>
-          <div className="flex space-x-4">
-            <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
-              <SelectTrigger className="w-40 cyber-bg-gray border-slate-600 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="cyber-bg-gray border-slate-600">
-                <SelectItem value="All Severities">All Severities</SelectItem>
-                <SelectItem value="CRITICAL">Critical</SelectItem>
-                <SelectItem value="HIGH">High</SelectItem>
-                <SelectItem value="MEDIUM">Medium</SelectItem>
-                <SelectItem value="LOW">Low</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Input
-              placeholder="Search CVE..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-64 cyber-bg-gray border-slate-600 text-white placeholder-slate-400 focus:ring-cyber-blue focus:border-cyber-blue"
-            />
+    <div className="space-y-6">
+      {/* Header with Stats */}
+      <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
+              <AlertTriangle className="w-8 h-8 cyber-text-red" />
+              <span>CVE Database</span>
+            </h2>
+            <p className="cyber-text-muted mt-1">Real-time vulnerability intelligence from NVD</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold cyber-text-red">{cves?.length || 0}</div>
+              <div className="text-xs cyber-text-dim">Total CVEs</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold cyber-text-amber">
+                {cves?.filter(cve => cve.activelyExploited).length || 0}
+              </div>
+              <div className="text-xs cyber-text-dim">Actively Exploited</div>
+            </div>
           </div>
         </div>
+        
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
+            <SelectTrigger className="cyber-input w-full sm:w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="cyber-bg-surface border cyber-border">
+              <SelectItem value="All Severities">All Severities</SelectItem>
+              <SelectItem value="CRITICAL">🔴 Critical</SelectItem>
+              <SelectItem value="HIGH">🟠 High</SelectItem>
+              <SelectItem value="MEDIUM">🟡 Medium</SelectItem>
+              <SelectItem value="LOW">🔵 Low</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Input
+            placeholder="Search CVE ID, description, or vendor..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="cyber-input flex-1"
+          />
+        </div>
+      </div>
 
-        <div className="space-y-4">
-          {cves?.map((cve) => (
-            <div key={cve.cveId} className="cyber-bg-gray rounded-lg p-6 border border-slate-600">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="font-mono cyber-text-red font-semibold text-lg">{cve.cveId}</h3>
-                    <Badge className={getSeverityColor(cve.severity)}>
-                      {cve.severity}
+      {/* CVE Cards */}
+      <div className="space-y-4">
+        {cves?.map((cve) => (
+          <div key={cve.cveId} className="cve-card rounded-xl p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-3">
+                  <h3 className="font-mono cyber-text-red font-bold text-xl">{cve.cveId}</h3>
+                  <Badge className={`${getSeverityColor(cve.severity)} px-3 py-1 text-sm font-semibold`}>
+                    {cve.severity}
+                  </Badge>
+                  {cve.activelyExploited && (
+                    <Badge className="cyber-bg-amber text-black px-3 py-1 text-sm font-semibold animate-pulse">
+                      🚨 Actively Exploited
                     </Badge>
-                    {cve.activelyExploited && (
-                      <Badge className="bg-yellow-500/20 text-yellow-400">
-                        Actively Exploited
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <p className="text-slate-300 mb-4">{cve.description}</p>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  )}
+                </div>
+                
+                <p className="text-white mb-4 leading-relaxed">{cve.description}</p>
+                
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="w-4 h-4 cyber-text-blue" />
                     <div>
-                      <span className="text-slate-400">CVSS Score:</span>
-                      <span className={`font-bold ml-2 ${getCVSSColor(cve.cvssScore)}`}>
+                      <span className="cyber-text-dim text-sm">CVSS Score</span>
+                      <div className={`font-bold ${getCVSSColor(cve.cvssScore)}`}>
                         {cve.cvssScore || 'N/A'}
-                      </span>
+                      </div>
                     </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 cyber-text-green" />
                     <div>
-                      <span className="text-slate-400">Published:</span>
-                      <span className="text-slate-300 ml-2">{cve.publishedDate || 'N/A'}</span>
+                      <span className="cyber-text-dim text-sm">Published</span>
+                      <div className="text-white">{cve.publishedDate || 'N/A'}</div>
                     </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 cyber-text-amber" />
                     <div>
-                      <span className="text-slate-400">Updated:</span>
-                      <span className="text-slate-300 ml-2">{cve.updatedDate || 'N/A'}</span>
+                      <span className="cyber-text-dim text-sm">Updated</span>
+                      <div className="text-white">{cve.updatedDate || 'N/A'}</div>
                     </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4 cyber-text-muted" />
                     <div>
-                      <span className="text-slate-400">Vendor:</span>
-                      <span className="text-slate-300 ml-2">{cve.vendor || 'N/A'}</span>
+                      <span className="cyber-text-dim text-sm">Vendor</span>
+                      <div className="text-white">{cve.vendor || 'N/A'}</div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex space-x-2 ml-4">
-                  <Button className="cyber-bg-blue hover:bg-blue-700 text-white text-sm">
-                    View Details
-                  </Button>
-                  <Button className="cyber-bg-green hover:bg-emerald-600 text-white text-sm">
-                    Exploits
-                  </Button>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {(cve.tags || []).map((tag, index) => (
+                    <span
+                      key={index}
+                      className="cyber-bg-surface-light text-white px-3 py-1 rounded-full text-xs font-medium border cyber-border"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
                 </div>
               </div>
               
-              <div className="flex flex-wrap gap-2">
-                {cve.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="bg-slate-500/20 text-slate-400 px-3 py-1 rounded-full text-xs font-medium"
-                  >
-                    #{tag}
-                  </span>
-                ))}
+              <div className="flex flex-col space-y-2 ml-6">
+                <Button className="cyber-button-secondary">
+                  <Eye className="w-4 h-4 mr-2" />
+                  Details
+                </Button>
+                <Button className="cyber-button-primary">
+                  <Code className="w-4 h-4 mr-2" />
+                  Exploits
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-gray-600 text-gray-400 hover:text-white hover:border-gray-500"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  NVD
+                </Button>
               </div>
             </div>
-          ))}
-        </div>
-        
-        {cves?.length === 0 && (
-          <div className="text-center text-slate-400 py-8">
-            <p>No CVEs found matching your search criteria.</p>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        ))}
+      </div>
+      
+      {cves?.length === 0 && (
+        <div className="text-center cyber-text-muted py-12">
+          <AlertTriangle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <p className="text-lg">No CVEs found matching your search criteria.</p>
+          <p className="text-sm mt-2">Try adjusting your filters or search terms.</p>
+        </div>
+      )}
+    </div>
   );
 }

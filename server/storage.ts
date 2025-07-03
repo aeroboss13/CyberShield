@@ -239,7 +239,14 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { ...insertUser, id, reputation: 0, postCount: 0, createdAt: new Date() };
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      reputation: 0, 
+      postCount: 0, 
+      createdAt: new Date(),
+      avatar: insertUser.avatar || null
+    };
     this.users.set(id, user);
     return user;
   }
@@ -249,7 +256,7 @@ export class MemStorage implements IStorage {
     return postsArray.map(post => ({
       ...post,
       user: this.users.get(post.userId)!
-    })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    })).sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
   async getPost(id: number): Promise<Post | undefined> {
@@ -264,13 +271,14 @@ export class MemStorage implements IStorage {
       likes: 0, 
       comments: 0, 
       shares: 0, 
-      createdAt: new Date() 
+      createdAt: new Date(),
+      tags: insertPost.tags || []
     };
     this.posts.set(id, post);
     
     // Update user post count
     const user = this.users.get(insertPost.userId);
-    if (user) {
+    if (user && user.postCount !== null) {
       user.postCount++;
       this.users.set(user.id, user);
     }
@@ -280,8 +288,8 @@ export class MemStorage implements IStorage {
 
   async updatePostInteraction(id: number, type: 'likes' | 'comments' | 'shares'): Promise<void> {
     const post = this.posts.get(id);
-    if (post) {
-      post[type]++;
+    if (post && post[type] !== null) {
+      post[type] = (post[type] || 0) + 1;
       this.posts.set(id, post);
     }
   }
@@ -340,7 +348,7 @@ export class MemStorage implements IStorage {
 
   async getAllNews(): Promise<NewsArticle[]> {
     return Array.from(this.news.values()).sort((a, b) => 
-      b.publishedAt.getTime() - a.publishedAt.getTime()
+      (b.publishedAt?.getTime() || 0) - (a.publishedAt?.getTime() || 0)
     );
   }
 

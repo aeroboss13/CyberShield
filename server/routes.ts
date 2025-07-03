@@ -3,8 +3,18 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertPostSchema } from "@shared/schema";
 import { z } from "zod";
+import { MitreService } from "./services/mitre-service";
+import { CVEService } from "./services/cve-service";
+import { ExploitService } from "./services/exploit-service";
+import { NewsService } from "./services/news-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize services
+  const mitreService = MitreService.getInstance();
+  const cveService = CVEService.getInstance();
+  const exploitService = ExploitService.getInstance();
+  const newsService = NewsService.getInstance();
+
   // Posts endpoints
   app.get("/api/posts", async (req, res) => {
     try {
@@ -39,46 +49,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CVE endpoints
+  // CVE endpoints - now using real NVD data
   app.get("/api/cves", async (req, res) => {
     try {
       const { search, severity } = req.query;
       let cves;
       
       if (search || severity) {
-        cves = await storage.searchCVEs(
+        cves = await cveService.searchCVEs(
           search as string || "",
           severity as string
         );
       } else {
-        cves = await storage.getAllCVEs();
+        cves = await cveService.getAllCVEs();
       }
       
       res.json(cves);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch CVEs" });
+      console.error('CVE API error:', error);
+      res.status(500).json({ error: "Failed to fetch CVEs from NVD" });
     }
   });
 
   app.get("/api/cves/:id", async (req, res) => {
     try {
-      const cve = await storage.getCVE(req.params.id);
+      const cve = await cveService.getCVE(req.params.id);
       if (!cve) {
         return res.status(404).json({ error: "CVE not found" });
       }
       res.json(cve);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch CVE" });
+      console.error('CVE details error:', error);
+      res.status(500).json({ error: "Failed to fetch CVE details" });
     }
   });
 
-  // MITRE ATT&CK endpoints
+  // Exploit endpoints - new functionality
+  app.get("/api/cves/:id/exploits", async (req, res) => {
+    try {
+      const exploits = await exploitService.getExploitsForCVE(req.params.id);
+      res.json(exploits);
+    } catch (error) {
+      console.error('Exploits API error:', error);
+      res.status(500).json({ error: "Failed to fetch exploits" });
+    }
+  });
+
+  app.get("/api/exploits/search", async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q) {
+        return res.status(400).json({ error: "Search query required" });
+      }
+      
+      const exploits = await exploitService.searchExploits(q as string);
+      res.json(exploits);
+    } catch (error) {
+      console.error('Exploit search error:', error);
+      res.status(500).json({ error: "Failed to search exploits" });
+    }
+  });
+
+  // MITRE ATT&CK endpoints - now using real MITRE data
   app.get("/api/mitre/tactics", async (req, res) => {
     try {
-      const tactics = await storage.getAllMitreTactics();
+      const tactics = await mitreService.getAllTactics();
       res.json(tactics);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch MITRE tactics" });
+      console.error('MITRE tactics error:', error);
+      res.status(500).json({ error: "Failed to fetch MITRE tactics from GitHub" });
     }
   });
 
@@ -89,31 +128,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Search query required" });
       }
       
-      const techniques = await storage.searchMitreTechniques(q as string);
+      const techniques = await mitreService.searchTechniques(q as string);
       res.json(techniques);
     } catch (error) {
+      console.error('MITRE search error:', error);
       res.status(500).json({ error: "Failed to search MITRE techniques" });
     }
   });
 
-  // News endpoints
+  // News endpoints - now using real security news aggregation
   app.get("/api/news", async (req, res) => {
     try {
-      const news = await storage.getAllNews();
+      const news = await newsService.getAllNews();
       res.json(news);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch news" });
+      console.error('News API error:', error);
+      res.status(500).json({ error: "Failed to fetch security news" });
     }
   });
 
   app.get("/api/news/:id", async (req, res) => {
     try {
-      const article = await storage.getNews(parseInt(req.params.id));
+      const article = await newsService.getNewsById(parseInt(req.params.id));
       if (!article) {
         return res.status(404).json({ error: "News article not found" });
       }
       res.json(article);
     } catch (error) {
+      console.error('News details error:', error);
       res.status(500).json({ error: "Failed to fetch news article" });
     }
   });
