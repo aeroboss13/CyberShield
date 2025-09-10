@@ -229,6 +229,30 @@ export default function CVEDatabase() {
                   </div>
                 </div>
                 
+                {/* EDB-ID Section - если есть */}
+                {cve.edbId && (
+                  <div className="mb-4 p-3 rounded-lg cyber-bg-surface border cyber-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Code className="w-4 h-4 cyber-text-red" />
+                        <div>
+                          <span className="cyber-text-dim text-sm">ExploitDB ID</span>
+                          <div className="text-white font-mono font-bold">EDB-{cve.edbId}</div>
+                        </div>
+                      </div>
+                      <a 
+                        href={`https://www.exploit-db.com/exploits/${cve.edbId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-2 px-3 py-1 rounded cyber-bg-red hover:opacity-80 transition-opacity text-white text-sm font-medium"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <span>View Exploit</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex flex-wrap gap-2 mb-4">
                   {(cve.tags || []).map((tag, index) => (
                     <span

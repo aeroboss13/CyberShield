@@ -89,10 +89,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Exploit endpoints - new functionality
+  // Exploit endpoints - with EDB-ID support
   app.get("/api/cves/:id/exploits", async (req, res) => {
     try {
-      const exploits = await exploitService.getExploitsForCVE(req.params.id);
+      const cveId = req.params.id;
+      const { edbId } = req.query; // Optional EDB-ID parameter
+      
+      console.log(`Fetching exploits for ${cveId}${edbId ? ` with EDB-ID: ${edbId}` : ''}`);
+      const exploits = await exploitService.getExploitsForCVE(cveId, edbId as string);
       res.json(exploits);
     } catch (error) {
       console.error('Exploits API error:', error);

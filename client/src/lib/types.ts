@@ -28,6 +28,7 @@ export interface CVEWithDetails {
   updatedDate: string | null;
   tags: string[];
   activelyExploited: boolean;
+  edbId: string | null; // ExploitDB ID for direct exploit access
 }
 
 export interface MitreTactic {

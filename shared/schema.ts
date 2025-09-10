@@ -36,7 +36,8 @@ export const cveEntries = pgTable("cve_entries", {
   publishedDate: text("published_date"),
   updatedDate: text("updated_date"),
   tags: text("tags").array().default([]),
-  activelyExploited: boolean("actively_exploited").default(false)
+  activelyExploited: boolean("actively_exploited").default(false),
+  edbId: text("edb_id") // ExploitDB ID for direct exploit access
 });
 
 export const mitreAttack = pgTable("mitre_attack", {
