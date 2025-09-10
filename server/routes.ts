@@ -73,44 +73,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (onlyWithExploits) {
         const exploitService = (await import('./services/exploit-service.js')).ExploitService.getInstance();
         
-        // Get CVEs with better chances of having exploits
-        // Search from pages 50-500 where older, more exploited CVEs are located  
-        const startPage = Math.max(50, pageNum + 49); // Start from page 50+ where older CVEs with exploits exist
-        const exploitResult = await cveService.getCVEsPaginated({
-          search: searchQuery,
-          severity: severityFilter,
-          page: startPage,
-          limit: limitNum * 10 // Get more CVEs to filter through
-        });
+        // List of known CVEs with exploits - search for these specifically
+        const knownCVEsWithExploits = [
+          'CVE-2024-3400', 'CVE-2021-44228', 'CVE-2023-4966', 
+          'CVE-2023-22515', 'CVE-2024-1086', 'CVE-2023-34362'
+        ];
         
-        console.log(`Searching for exploits in ${exploitResult.data.length} CVEs from page ${startPage}`);
+        console.log(`Searching for known CVEs with exploits: ${knownCVEsWithExploits.join(', ')}`);
         
-        // Filter and check exploits
+        // Search for these specific CVEs in our database
         const filteredCVEs = [];
-        for (const cve of exploitResult.data) {
+        
+        for (const knownCVE of knownCVEsWithExploits) {
           try {
-            const exploits = await exploitService.getExploitsForCVE(cve.cveId);
-            if (exploits.length > 0) {
-              console.log(`Found ${exploits.length} exploits for ${cve.cveId}`);
-              (cve as any).hasExploits = true;
-              (cve as any).exploitCount = exploits.length;
-              filteredCVEs.push(cve);
+            // Search for this specific CVE
+            const searchResult = await cveService.getCVEsPaginated({
+              search: knownCVE,
+              severity: severityFilter,
+              page: 1,
+              limit: 1
+            });
+            
+            if (searchResult.data.length > 0) {
+              const cve = searchResult.data[0];
+              const exploits = await exploitService.getExploitsForCVE(cve.cveId);
               
-              // Stop when we have enough results for this page
-              if (filteredCVEs.length >= limitNum) {
-                break;
+              if (exploits.length > 0) {
+                console.log(`Found ${exploits.length} exploits for ${cve.cveId}`);
+                (cve as any).hasExploits = true;
+                (cve as any).exploitCount = exploits.length;
+                filteredCVEs.push(cve);
               }
             }
           } catch (error) {
-            // Skip CVEs that fail exploit check
+            console.warn(`Error searching for ${knownCVE}:`, error);
           }
         }
         
-        result.data = filteredCVEs;
+        // Sort by CVSS score (highest first) and then by date
+        filteredCVEs.sort((a, b) => {
+          const scoreA = parseFloat(a.cvssScore || '0');
+          const scoreB = parseFloat(b.cvssScore || '0');
+          if (scoreA !== scoreB) return scoreB - scoreA;
+          return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+        });
+        
+        result.data = filteredCVEs.slice((pageNum - 1) * limitNum, pageNum * limitNum);
         result.total = filteredCVEs.length;
         result.totalPages = Math.ceil(filteredCVEs.length / limitNum);
         
-        console.log(`Exploit filter result: ${filteredCVEs.length} CVEs with exploits found`);
+        console.log(`Exploit filter result: ${result.data.length} CVEs with exploits found (total: ${filteredCVEs.length})`);
       }
       
       console.log(`CVE result: ${result.data.length} CVEs returned (page ${pageNum}/${result.totalPages}, total: ${result.total})`);
