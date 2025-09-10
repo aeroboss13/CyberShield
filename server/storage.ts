@@ -1,5 +1,12 @@
 import { users, posts, cveEntries, mitreAttack, newsArticles, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews } from "@shared/schema";
 
+interface CVESearchParams {
+  search?: string;
+  severity?: string;
+  page: number;
+  limit: number;
+}
+
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -15,7 +22,9 @@ export interface IStorage {
   // CVE
   getAllCVEs(): Promise<CVE[]>;
   searchCVEs(query: string, severity?: string): Promise<CVE[]>;
+  searchCVEsPaginated(params: CVESearchParams): Promise<{ cves: CVE[]; total: number; page: number; limit: number; totalPages: number }>;
   getCVE(id: string): Promise<CVE | undefined>;
+  getCVEById(id: number): Promise<CVE | undefined>;
   
   // MITRE ATT&CK
   getAllMitreTactics(): Promise<{ tacticId: string; tacticName: string; tacticDescription: string; techniques: MitreAttack[] }[]>;
@@ -130,7 +139,8 @@ export class MemStorage implements IStorage {
         publishedDate: "2024-01-15",
         updatedDate: "2024-01-20",
         tags: ["rce", "cms", "fileupload", "wordpress"],
-        activelyExploited: true
+        activelyExploited: true,
+        edbId: "51234"
       },
       {
         id: 2,
@@ -143,7 +153,64 @@ export class MemStorage implements IStorage {
         publishedDate: "2024-01-12",
         updatedDate: "2024-01-18",
         tags: ["sqli", "ecommerce", "magento"],
-        activelyExploited: false
+        activelyExploited: false,
+        edbId: null
+      },
+      {
+        id: 3,
+        cveId: "CVE-2024-0945",
+        title: "Authentication Bypass in Web Framework",
+        description: "Authentication bypass vulnerability in popular web framework allowing unauthorized access to admin functionality.",
+        cvssScore: "7.5",
+        severity: "HIGH",
+        vendor: "Laravel",
+        publishedDate: "2024-01-10",
+        updatedDate: "2024-01-15",
+        tags: ["auth", "bypass", "framework", "laravel"],
+        activelyExploited: true,
+        edbId: "51445"
+      },
+      {
+        id: 4,
+        cveId: "CVE-2024-0723",
+        title: "Cross-Site Scripting in Content Management",
+        description: "Stored XSS vulnerability in content management system allowing execution of arbitrary JavaScript in victim browsers.",
+        cvssScore: "6.1",
+        severity: "MEDIUM",
+        vendor: "Drupal",
+        publishedDate: "2024-01-08",
+        updatedDate: "2024-01-12",
+        tags: ["xss", "cms", "drupal", "stored"],
+        activelyExploited: false,
+        edbId: null
+      },
+      {
+        id: 5,
+        cveId: "CVE-2024-1456",
+        title: "Directory Traversal in File Manager",
+        description: "Directory traversal vulnerability in file manager application allowing unauthorized access to system files.",
+        cvssScore: "8.8",
+        severity: "HIGH",
+        vendor: "FileManager Pro",
+        publishedDate: "2024-01-20",
+        updatedDate: "2024-01-25",
+        tags: ["traversal", "filemanager", "disclosure"],
+        activelyExploited: true,
+        edbId: "51567"
+      },
+      {
+        id: 6,
+        cveId: "CVE-2022-46663",
+        title: "GFI LanGuard Code Injection",
+        description: "A vulnerability exists in GFI LanGuard that allows remote code execution through insecure validation of user input.",
+        cvssScore: "9.8",
+        severity: "CRITICAL",
+        vendor: "GFI Software",
+        publishedDate: "2022-12-15",
+        updatedDate: "2022-12-15",
+        tags: ["rce", "code-injection", "langford"],
+        activelyExploited: true,
+        edbId: "52410"
       }
     ];
 
@@ -316,6 +383,49 @@ export class MemStorage implements IStorage {
 
   async getCVE(id: string): Promise<CVE | undefined> {
     return this.cves.get(id);
+  }
+
+  async searchCVEsPaginated(params: CVESearchParams): Promise<{ cves: CVE[]; total: number; page: number; limit: number; totalPages: number }> {
+    const { search: query, severity, page, limit } = params;
+    const allCVEs = Array.from(this.cves.values());
+    
+    // Filter CVEs based on query and severity
+    const filteredCVEs = allCVEs.filter(cve => {
+      const matchesQuery = !query || 
+        cve.cveId.toLowerCase().includes(query.toLowerCase()) ||
+        cve.title.toLowerCase().includes(query.toLowerCase()) ||
+        cve.description.toLowerCase().includes(query.toLowerCase()) ||
+        (cve.vendor && cve.vendor.toLowerCase().includes(query.toLowerCase())) ||
+        (cve.tags && cve.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())));
+      
+      const matchesSeverity = !severity || severity === "All Severities" || cve.severity === severity;
+      
+      return matchesQuery && matchesSeverity;
+    });
+
+    // Sort by CVSS score (highest first)
+    const sortedCVEs = filteredCVEs.sort((a, b) => 
+      parseFloat(b.cvssScore || "0") - parseFloat(a.cvssScore || "0")
+    );
+
+    const total = sortedCVEs.length;
+    const totalPages = Math.ceil(total / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedCVEs = sortedCVEs.slice(startIndex, endIndex);
+
+    return {
+      cves: paginatedCVEs,
+      total,
+      page,
+      limit,
+      totalPages
+    };
+  }
+
+  async getCVEById(id: number): Promise<CVE | undefined> {
+    const allCVEs = Array.from(this.cves.values());
+    return allCVEs.find(cve => cve.id === id);
   }
 
   async getAllMitreTactics(): Promise<{ tacticId: string; tacticName: string; tacticDescription: string; techniques: MitreAttack[] }[]> {

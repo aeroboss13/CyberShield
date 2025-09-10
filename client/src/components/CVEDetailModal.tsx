@@ -33,10 +33,16 @@ export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalP
   const [selectedExploit, setSelectedExploit] = useState<string | null>(null);
 
   const { data: exploits, isLoading: exploitsLoading } = useQuery({
-    queryKey: ["/api/exploits", cve?.cveId],
+    queryKey: ["/api/cves", cve?.cveId, "exploits", cve?.edbId],
     queryFn: async () => {
       if (!cve?.cveId) return [];
-      const response = await fetch(`/api/exploits?cveId=${encodeURIComponent(cve.cveId)}`);
+      const params = new URLSearchParams();
+      if (cve.edbId) {
+        params.append('edbId', cve.edbId);
+      }
+      const url = `/api/cves/${encodeURIComponent(cve.cveId)}/exploits${params.toString() ? `?${params.toString()}` : ''}`;
+      console.log(`Fetching exploits from: ${url}`);
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch exploits');
       return response.json();
     },

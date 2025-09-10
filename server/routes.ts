@@ -11,7 +11,7 @@ import { NewsService } from "./services/news-service";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize services
   const mitreService = MitreService.getInstance();
-  const cveService = CVEService.getInstance();
+  const cveService = CVEService.getInstance(storage);
   const exploitService = ExploitService.getInstance();
   const newsService = NewsService.getInstance();
 
@@ -78,7 +78,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cves/:id", async (req, res) => {
     try {
-      const cve = await cveService.getCVE(req.params.id);
+      const id = req.params.id;
+      let cve;
+
+      // Check if the ID is numeric (database ID) or CVE ID string
+      if (/^\d+$/.test(id)) {
+        // It's a numeric ID, use getCVEById
+        console.log(`Fetching CVE by database ID: ${id}`);
+        cve = await cveService.getCVEById(parseInt(id));
+      } else {
+        // It's a CVE ID string, use getCVE
+        console.log(`Fetching CVE by CVE ID: ${id}`);
+        cve = await cveService.getCVE(id);
+      }
+
       if (!cve) {
         return res.status(404).json({ error: "CVE not found" });
       }
