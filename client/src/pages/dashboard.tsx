@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import SocialFeed from "@/components/SocialFeed";
@@ -7,12 +8,18 @@ import CVEDatabase from "@/components/CVEDatabase";
 import SecurityNews from "@/components/SecurityNews";
 import type { TabType } from "@/lib/types";
 
-interface DashboardProps {
-  initialTab?: TabType;
-}
-
-export default function Dashboard({ initialTab = 'feed' }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+export default function Dashboard() {
+  const [location] = useLocation();
+  
+  // Determine initial tab based on URL
+  const getInitialTab = (): TabType => {
+    if (location === '/cve-database') return 'cve';
+    if (location === '/mitre') return 'mitre';
+    if (location === '/news') return 'news';
+    return 'feed';
+  };
+  
+  const [activeTab, setActiveTab] = useState<TabType>(getInitialTab());
 
   const tabs = [
     { id: 'feed' as const, label: 'Social Feed' },
