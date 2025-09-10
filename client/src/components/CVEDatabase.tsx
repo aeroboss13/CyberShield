@@ -5,29 +5,48 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp } from "lucide-react";
+import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import CVEDetailModal from "./CVEDetailModal";
 import type { CVEWithDetails } from "@/lib/types";
+
+interface PaginatedCVEResult {
+  data: CVEWithDetails[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
 
 export default function CVEDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("All Severities");
   const [selectedCVE, setSelectedCVE] = useState<CVEWithDetails | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(100); // 100 CVEs per page
   
   // Debounced search query to reduce API calls
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   
-  // Debounce search input
+  // Debounce search input and reset page on search
   useMemo(() => {
     const timeoutId = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
+      setCurrentPage(1); // Reset to first page on search
     }, 500); // 500ms delay
     
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
+  
+  // Reset page when severity filter changes
+  const handleSeverityChange = (severity: string) => {
+    setSelectedSeverity(severity);
+    setCurrentPage(1);
+  };
 
-  const { data: cves, isLoading } = useQuery<CVEWithDetails[]>({
-    queryKey: ["/api/cves", { search: debouncedSearchQuery, severity: selectedSeverity }],
+  const { data: cveResult, isLoading } = useQuery<PaginatedCVEResult>({
+    queryKey: ["/api/cves", { search: debouncedSearchQuery, severity: selectedSeverity, page: currentPage, limit: pageSize }],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (debouncedSearchQuery.trim()) {
@@ -36,18 +55,29 @@ export default function CVEDatabase() {
       if (selectedSeverity && selectedSeverity !== 'All Severities') {
         params.append('severity', selectedSeverity);
       }
+      params.append('page', currentPage.toString());
+      params.append('limit', pageSize.toString());
       
-      const url = `/api/cves${params.toString() ? '?' + params.toString() : ''}`;
+      const url = `/api/cves?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch CVEs');
       }
       return response.json();
     },
-    staleTime: 30000, // 30 seconds
-    refetchInterval: false, // Disable auto-refetch to improve performance
-    enabled: true // Always enabled, but debounced
+    staleTime: 60000, // 1 minute
+    refetchInterval: false,
+    enabled: true
   });
+  
+  const cves = cveResult?.data || [];
+  const pagination = cveResult ? {
+    total: cveResult.total,
+    totalPages: cveResult.totalPages,
+    currentPage: cveResult.page,
+    hasNext: cveResult.hasNext,
+    hasPrev: cveResult.hasPrev
+  } : null;
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toUpperCase()) {
@@ -79,6 +109,9 @@ export default function CVEDatabase() {
         <CardContent className="pt-6">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-slate-600 rounded w-1/3"></div>
+            <div className="text-center text-cyan-400 py-4">
+              Loading CVEs from NVD database...
+            </div>
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-32 bg-slate-600 rounded"></div>
             ))}
@@ -104,20 +137,24 @@ export default function CVEDatabase() {
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-center">
-              <div className="text-2xl font-bold cyber-text-red">{cves?.length || 0}</div>
+              <div className="text-2xl font-bold cyber-text-red">{pagination?.total.toLocaleString() || 0}</div>
               <div className="text-xs cyber-text-dim">Total CVEs</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold cyber-text-amber">
                 {cves?.filter(cve => cve.activelyExploited).length || 0}
               </div>
-              <div className="text-xs cyber-text-dim">Actively Exploited</div>
+              <div className="text-xs cyber-text-dim">On This Page</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold cyber-text-blue">{pagination?.currentPage || 1}</div>
+              <div className="text-xs cyber-text-dim">Current Page</div>
             </div>
           </div>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4">
-          <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
+          <Select value={selectedSeverity} onValueChange={handleSeverityChange}>
             <SelectTrigger className="cyber-input w-full sm:w-48">
               <SelectValue />
             </SelectTrigger>
@@ -233,11 +270,95 @@ export default function CVEDatabase() {
         ))}
       </div>
       
-      {cves?.length === 0 && (
+      {/* Pagination Controls */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between cyber-bg-surface rounded-xl p-4 border cyber-border">
+          <div className="text-sm cyber-text-muted">
+            Showing {((pagination.currentPage - 1) * pageSize) + 1} to {Math.min(pagination.currentPage * pageSize, pagination.total)} of {pagination.total.toLocaleString()} CVEs
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={!pagination.hasPrev || isLoading}
+              className="cyber-button-secondary"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                const page = Math.max(1, Math.min(pagination.totalPages - 4, pagination.currentPage - 2)) + i;
+                if (page > pagination.totalPages) return null;
+                
+                return (
+                  <Button
+                    key={page}
+                    variant={page === pagination.currentPage ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    disabled={isLoading}
+                    className={page === pagination.currentPage ? "cyber-button-primary" : "cyber-button-secondary"}
+                  >
+                    {page}
+                  </Button>
+                );
+              })}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={!pagination.hasNext || isLoading}
+              className="cyber-button-secondary"
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {cves?.length === 0 && !isLoading && (
         <div className="text-center cyber-text-muted py-12">
           <AlertTriangle className="w-16 h-16 mx-auto mb-4 opacity-50" />
           <p className="text-lg">No CVEs found matching your search criteria.</p>
           <p className="text-sm mt-2">Try adjusting your filters or search terms.</p>
+        </div>
+      )}
+
+      {/* Bottom Pagination (duplicate for convenience) */}
+      {pagination && pagination.totalPages > 1 && cves.length > 0 && (
+        <div className="flex items-center justify-center space-x-2 cyber-bg-surface rounded-xl p-4 border cyber-border">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={!pagination.hasPrev || isLoading}
+            className="cyber-button-secondary"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Previous
+          </Button>
+          
+          <span className="text-sm cyber-text-muted px-4">
+            Page {pagination.currentPage} of {pagination.totalPages}
+          </span>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={!pagination.hasNext || isLoading}
+            className="cyber-button-secondary"
+          >
+            Next
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
         </div>
       )}
 
