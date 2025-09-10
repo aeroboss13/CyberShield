@@ -50,6 +50,24 @@ export const mitreAttack = pgTable("mitre_attack", {
   techniqueDescription: text("technique_description")
 });
 
+export const exploits = pgTable("exploits", {
+  id: serial("id").primaryKey(),
+  cveId: text("cve_id").notNull(),
+  exploitId: text("exploit_id").notNull(), // EDB-ID from ExploitDB
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  exploitType: text("exploit_type").notNull(),
+  platform: text("platform").notNull(),
+  verified: boolean("verified").default(false),
+  datePublished: text("date_published").notNull(),
+  author: text("author").notNull(),
+  sourceUrl: text("source_url").notNull(),
+  exploitCode: text("exploit_code"), // Nullable - lazy loaded
+  source: text("source").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export const newsArticles = pgTable("news_articles", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -84,6 +102,12 @@ export const insertMitreSchema = createInsertSchema(mitreAttack).omit({
   id: true
 });
 
+export const insertExploitSchema = createInsertSchema(exploits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export const insertNewsSchema = createInsertSchema(newsArticles).omit({
   id: true,
   publishedAt: true
@@ -97,5 +121,7 @@ export type InsertCVE = z.infer<typeof insertCVESchema>;
 export type CVE = typeof cveEntries.$inferSelect;
 export type InsertMitre = z.infer<typeof insertMitreSchema>;
 export type MitreAttack = typeof mitreAttack.$inferSelect;
+export type InsertExploit = z.infer<typeof insertExploitSchema>;
+export type Exploit = typeof exploits.$inferSelect;
 export type InsertNews = z.infer<typeof insertNewsSchema>;
 export type NewsArticle = typeof newsArticles.$inferSelect;

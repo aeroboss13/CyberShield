@@ -1,4 +1,4 @@
-import { users, posts, cveEntries, mitreAttack, newsArticles, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews } from "@shared/schema";
+import { users, posts, cveEntries, exploits, mitreAttack, newsArticles, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type Exploit, type InsertExploit, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews } from "@shared/schema";
 
 interface CVESearchParams {
   search?: string;
@@ -25,6 +25,17 @@ export interface IStorage {
   searchCVEsPaginated(params: CVESearchParams): Promise<{ cves: CVE[]; total: number; page: number; limit: number; totalPages: number }>;
   getCVE(id: string): Promise<CVE | undefined>;
   getCVEById(id: number): Promise<CVE | undefined>;
+  createOrUpdateCVE(cve: InsertCVE): Promise<CVE>;
+  
+  // Exploits
+  getExploitsForCVE(cveId: string): Promise<Exploit[]>;
+  createExploit(exploit: InsertExploit): Promise<Exploit>;
+  updateExploitCode(exploitId: string, code: string): Promise<void>;
+  getExploitByEdbId(edbId: string): Promise<Exploit | undefined>;
+  getExploitById(id: number): Promise<Exploit | undefined>;
+  deleteExploit(id: number): Promise<void>;
+  deleteExploitByEdbId(edbId: string): Promise<void>;
+  updateExploitMetadata(exploitId: string, metadata: Partial<Omit<InsertExploit, 'exploitId'>>): Promise<void>;
   
   // MITRE ATT&CK
   getAllMitreTactics(): Promise<{ tacticId: string; tacticName: string; tacticDescription: string; techniques: MitreAttack[] }[]>;
@@ -39,20 +50,24 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private posts: Map<number, Post>;
   private cves: Map<string, CVE>;
+  private exploits: Map<number, Exploit>;
   private mitreData: Map<string, MitreAttack>;
   private news: Map<number, NewsArticle>;
   private currentUserId: number;
   private currentPostId: number;
+  private currentExploitId: number;
   private currentNewsId: number;
 
   constructor() {
     this.users = new Map();
     this.posts = new Map();
     this.cves = new Map();
+    this.exploits = new Map();
     this.mitreData = new Map();
     this.news = new Map();
     this.currentUserId = 1;
     this.currentPostId = 1;
+    this.currentExploitId = 1;
     this.currentNewsId = 1;
     
     this.seedData();
@@ -426,6 +441,106 @@ export class MemStorage implements IStorage {
   async getCVEById(id: number): Promise<CVE | undefined> {
     const allCVEs = Array.from(this.cves.values());
     return allCVEs.find(cve => cve.id === id);
+  }
+
+  async createOrUpdateCVE(cve: InsertCVE): Promise<CVE> {
+    const existingCVE = this.cves.get(cve.cveId);
+    if (existingCVE) {
+      // Update existing CVE with proper null coalescing
+      const updatedCVE: CVE = { 
+        ...existingCVE, 
+        ...cve,
+        tags: cve.tags ?? existingCVE.tags,
+        cvssScore: cve.cvssScore ?? existingCVE.cvssScore,
+        vendor: cve.vendor ?? existingCVE.vendor,
+        publishedDate: cve.publishedDate ?? existingCVE.publishedDate,
+        updatedDate: cve.updatedDate ?? existingCVE.updatedDate,
+        activelyExploited: cve.activelyExploited ?? existingCVE.activelyExploited,
+        edbId: cve.edbId ?? existingCVE.edbId
+      };
+      this.cves.set(cve.cveId, updatedCVE);
+      return updatedCVE;
+    } else {
+      // Create new CVE
+      const newId = Array.from(this.cves.values()).length + 1;
+      const newCVE: CVE = { 
+        id: newId, 
+        ...cve,
+        tags: cve.tags ?? [],
+        cvssScore: cve.cvssScore ?? null,
+        vendor: cve.vendor ?? null,
+        publishedDate: cve.publishedDate ?? null,
+        updatedDate: cve.updatedDate ?? null,
+        activelyExploited: cve.activelyExploited ?? false,
+        edbId: cve.edbId ?? null
+      };
+      this.cves.set(cve.cveId, newCVE);
+      return newCVE;
+    }
+  }
+
+  async getExploitsForCVE(cveId: string): Promise<Exploit[]> {
+    const allExploits = Array.from(this.exploits.values());
+    return allExploits.filter(exploit => exploit.cveId === cveId);
+  }
+
+  async createExploit(exploit: InsertExploit): Promise<Exploit> {
+    const newExploit: Exploit = {
+      id: this.currentExploitId++,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...exploit,
+      verified: exploit.verified ?? false,
+      exploitCode: exploit.exploitCode ?? null
+    };
+    this.exploits.set(newExploit.id, newExploit);
+    return newExploit;
+  }
+
+  async updateExploitCode(exploitId: string, code: string): Promise<void> {
+    const allExploits = Array.from(this.exploits.values());
+    const exploit = allExploits.find(e => e.exploitId === exploitId);
+    if (exploit) {
+      exploit.exploitCode = code;
+      exploit.updatedAt = new Date();
+      this.exploits.set(exploit.id, exploit);
+    }
+  }
+
+  async getExploitByEdbId(edbId: string): Promise<Exploit | undefined> {
+    const allExploits = Array.from(this.exploits.values());
+    return allExploits.find(exploit => exploit.exploitId === edbId);
+  }
+
+  async getExploitById(id: number): Promise<Exploit | undefined> {
+    return this.exploits.get(id);
+  }
+
+  async deleteExploit(id: number): Promise<void> {
+    this.exploits.delete(id);
+  }
+
+  async deleteExploitByEdbId(edbId: string): Promise<void> {
+    const allExploits = Array.from(this.exploits.values());
+    const exploit = allExploits.find(e => e.exploitId === edbId);
+    if (exploit) {
+      this.exploits.delete(exploit.id);
+    }
+  }
+
+  async updateExploitMetadata(exploitId: string, metadata: Partial<Omit<InsertExploit, 'exploitId'>>): Promise<void> {
+    const allExploits = Array.from(this.exploits.values());
+    const exploit = allExploits.find(e => e.exploitId === exploitId);
+    if (exploit) {
+      const updatedExploit: Exploit = {
+        ...exploit,
+        ...metadata,
+        verified: metadata.verified ?? exploit.verified,
+        exploitCode: metadata.exploitCode ?? exploit.exploitCode,
+        updatedAt: new Date()
+      };
+      this.exploits.set(exploit.id, updatedExploit);
+    }
   }
 
   async getAllMitreTactics(): Promise<{ tacticId: string; tacticName: string; tacticDescription: string; techniques: MitreAttack[] }[]> {
