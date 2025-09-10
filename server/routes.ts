@@ -73,40 +73,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (onlyWithExploits) {
         const exploitService = (await import('./services/exploit-service.js')).ExploitService.getInstance();
         
-        // List of known CVEs with exploits - search for these specifically
-        const knownCVEsWithExploits = [
-          'CVE-2024-3400', 'CVE-2021-44228', 'CVE-2023-4966', 
-          'CVE-2023-22515', 'CVE-2024-1086', 'CVE-2023-34362'
-        ];
+        console.log(`Searching for CVEs with exploits from pages 100-300 (2020-2023 range)`);
         
-        console.log(`Searching for known CVEs with exploits: ${knownCVEsWithExploits.join(', ')}`);
-        
-        // Search for these specific CVEs in our database
+        // Search through older CVEs where exploits are more likely to exist
         const filteredCVEs = [];
+        const searchPages = [100, 150, 200, 250, 300]; // Different page ranges to find CVEs with exploits
         
-        for (const knownCVE of knownCVEsWithExploits) {
+        for (const searchPage of searchPages) {
           try {
-            // Search for this specific CVE
             const searchResult = await cveService.getCVEsPaginated({
-              search: knownCVE,
-              severity: severityFilter,
-              page: 1,
-              limit: 1
+              search: searchQuery,
+              severity: severityFilter, 
+              page: searchPage,
+              limit: 50 // Get more CVEs per page to check
             });
             
-            if (searchResult.data.length > 0) {
-              const cve = searchResult.data[0];
-              const exploits = await exploitService.getExploitsForCVE(cve.cveId);
-              
-              if (exploits.length > 0) {
-                console.log(`Found ${exploits.length} exploits for ${cve.cveId}`);
-                (cve as any).hasExploits = true;
-                (cve as any).exploitCount = exploits.length;
-                filteredCVEs.push(cve);
+            console.log(`Checking page ${searchPage}: ${searchResult.data.length} CVEs`);
+            
+            // Check each CVE for exploits
+            for (const cve of searchResult.data) {
+              try {
+                const exploits = await exploitService.getExploitsForCVE(cve.cveId);
+                
+                if (exploits.length > 0) {
+                  console.log(`Found ${exploits.length} exploits for ${cve.cveId}`);
+                  (cve as any).hasExploits = true;
+                  (cve as any).exploitCount = exploits.length;
+                  filteredCVEs.push(cve);
+                  
+                  // Stop once we have enough CVEs with exploits
+                  if (filteredCVEs.length >= limitNum * 3) {
+                    break;
+                  }
+                }
+              } catch (error) {
+                // Continue with next CVE if exploit check fails
               }
             }
+            
+            // Stop searching if we have enough results
+            if (filteredCVEs.length >= limitNum * 3) {
+              break;
+            }
           } catch (error) {
-            console.warn(`Error searching for ${knownCVE}:`, error);
+            console.warn(`Error searching page ${searchPage}:`, error);
           }
         }
         
@@ -115,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const scoreA = parseFloat(a.cvssScore || '0');
           const scoreB = parseFloat(b.cvssScore || '0');
           if (scoreA !== scoreB) return scoreB - scoreA;
-          return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+          return new Date(b.publishedDate || '2020-01-01').getTime() - new Date(a.publishedDate || '2020-01-01').getTime();
         });
         
         result.data = filteredCVEs.slice((pageNum - 1) * limitNum, pageNum * limitNum);
