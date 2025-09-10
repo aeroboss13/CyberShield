@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,9 +13,40 @@ export default function CVEDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("All Severities");
   const [selectedCVE, setSelectedCVE] = useState<CVEWithDetails | null>(null);
+  
+  // Debounced search query to reduce API calls
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  
+  // Debounce search input
+  useMemo(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500); // 500ms delay
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   const { data: cves, isLoading } = useQuery<CVEWithDetails[]>({
-    queryKey: ["/api/cves", { search: searchQuery, severity: selectedSeverity }],
+    queryKey: ["/api/cves", { search: debouncedSearchQuery, severity: selectedSeverity }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (debouncedSearchQuery.trim()) {
+        params.append('search', debouncedSearchQuery.trim());
+      }
+      if (selectedSeverity && selectedSeverity !== 'All Severities') {
+        params.append('severity', selectedSeverity);
+      }
+      
+      const url = `/api/cves${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch CVEs');
+      }
+      return response.json();
+    },
+    staleTime: 30000, // 30 seconds
+    refetchInterval: false, // Disable auto-refetch to improve performance
+    enabled: true // Always enabled, but debounced
   });
 
   const getSeverityColor = (severity: string) => {

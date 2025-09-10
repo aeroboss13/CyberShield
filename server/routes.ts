@@ -53,15 +53,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cves", async (req, res) => {
     try {
       const { search, severity } = req.query;
+      const searchQuery = (search as string)?.trim() || "";
+      const severityFilter = (severity as string)?.trim() || "";
+      
+      console.log(`CVE API request - search: "${searchQuery}", severity: "${severityFilter}"`);
+      
       let cves;
       
-      if (search || severity) {
-        cves = await cveService.searchCVEs(
-          search as string || "",
-          severity as string
-        );
+      // Use search function if any filters are provided
+      if (searchQuery || (severityFilter && severityFilter !== 'All Severities')) {
+        cves = await cveService.searchCVEs(searchQuery, severityFilter);
+        console.log(`CVE search result: ${cves.length} CVEs found`);
       } else {
         cves = await cveService.getAllCVEs();
+        console.log(`CVE all result: ${cves.length} total CVEs`);
       }
       
       res.json(cves);
