@@ -21,7 +21,10 @@ import {
   Eye,
   Copy
 } from "lucide-react";
-import type { CVEWithDetails } from "@/lib/types";
+import type { CVE, Exploit } from "@shared/schema";
+
+// Extended CVE type with details for frontend
+type CVEWithDetails = CVE;
 
 interface CVEDetailModalProps {
   cve: CVEWithDetails | null;
@@ -30,7 +33,7 @@ interface CVEDetailModalProps {
 }
 
 export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalProps) {
-  const [selectedExploit, setSelectedExploit] = useState<string | null>(null);
+  const [selectedExploit, setSelectedExploit] = useState<number | null>(null);
 
   const { data: exploits, isLoading: exploitsLoading } = useQuery({
     queryKey: ["/api/cves", cve?.cveId, "exploits", cve?.edbId],
@@ -203,7 +206,7 @@ export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalP
             <div>
               <h3 className="text-lg font-semibold text-white mb-3">Tags & Categories</h3>
               <div className="flex flex-wrap gap-2">
-                {cve.tags.map((tag, index) => (
+                {cve.tags && cve.tags.map((tag, index) => (
                   <Badge key={index} variant="outline" className="border-gray-600 text-gray-300">
                     #{tag}
                   </Badge>
@@ -224,7 +227,7 @@ export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalP
               </div>
             ) : exploits && exploits.length > 0 ? (
               <div className="space-y-4">
-                {exploits.map((exploit: any) => (
+                {exploits.map((exploit: Exploit) => (
                   <div key={exploit.id} className="cyber-bg-surface-light rounded-lg p-4 border cyber-border">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -260,7 +263,7 @@ export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalP
                           <Button
                             size="sm"
                             className="cyber-button-primary"
-                            onClick={() => window.open(exploit.sourceUrl, '_blank')}
+                            onClick={() => exploit.sourceUrl && window.open(exploit.sourceUrl, '_blank')}
                           >
                             <ExternalLink className="w-4 h-4 mr-1" />
                             Source
@@ -277,7 +280,7 @@ export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalP
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => copyToClipboard(exploit.exploitCode)}
+                              onClick={() => exploit.exploitCode && copyToClipboard(exploit.exploitCode)}
                               className="cyber-text-muted hover:cyber-text-blue"
                             >
                               <Copy className="w-4 h-4 mr-1" />
@@ -292,7 +295,7 @@ export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalP
                     )}
                     
                     <div className="mt-3 text-xs cyber-text-dim">
-                      Published: {formatDate(exploit.datePublished)} • Author: {exploit.author}
+                      Published: {formatDate(exploit.datePublished)} • Author: {exploit.author || 'Unknown'}
                     </div>
                   </div>
                 ))}

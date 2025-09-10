@@ -46,6 +46,21 @@ export interface MitreTactic {
   }[];
 }
 
+export interface ExploitWithDetails {
+  id: number;
+  cveId: string;
+  edbId: string;
+  title: string;
+  description: string | null;
+  exploitType: string | null;
+  platform: string | null;
+  author: string | null;
+  datePublished: string;
+  sourceUrl: string | null;
+  exploitCode: string | null;
+  verified: boolean;
+}
+
 export interface NewsArticleType {
   id: number;
   title: string;
