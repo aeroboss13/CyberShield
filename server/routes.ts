@@ -13,6 +13,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const mitreService = MitreService.getInstance();
   const cveService = CVEService.getInstance();
   const exploitService = ExploitService.getInstance();
+  
+  // Connect ExploitService to storage for database operations
+  exploitService.setStorage(storage);
   const newsService = NewsService.getInstance();
 
   // Posts endpoints
