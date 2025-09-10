@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight, Search as SearchIcon } from "lucide-react";
 import CVEDetailModal from "./CVEDetailModal";
 import type { CVEWithDetails } from "@/lib/types";
 
@@ -26,34 +26,33 @@ export default function CVEDatabase() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(100); // 100 CVEs per page
   
-  // Debounced search query to reduce API calls
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  // Committed search criteria that actually drive the query
+  const [committedSearch, setCommittedSearch] = useState("");
+  const [committedSeverity, setCommittedSeverity] = useState("All Severities");
+  const [pendingSeverity, setPendingSeverity] = useState("All Severities");
   
-  // Debounce search input and reset page on search
-  useMemo(() => {
-    const timeoutId = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-      setCurrentPage(1); // Reset to first page on search
-    }, 500); // 500ms delay
-    
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  // Handle explicit search trigger
+  const handleSearch = () => {
+    setCommittedSearch(searchQuery.trim());
+    setCommittedSeverity(pendingSeverity);
+    setCurrentPage(1); // Reset to first page on search
+  };
   
-  // Reset page when severity filter changes
+  // Handle severity filter changes (only pending, doesn't trigger search immediately)
   const handleSeverityChange = (severity: string) => {
-    setSelectedSeverity(severity);
-    setCurrentPage(1);
+    setPendingSeverity(severity);
+    // Note: Search will only execute when user clicks search or presses Enter
   };
 
   const { data: cveResult, isLoading } = useQuery<PaginatedCVEResult>({
-    queryKey: ["/api/cves", { search: debouncedSearchQuery, severity: selectedSeverity, page: currentPage, limit: pageSize }],
+    queryKey: ["/api/cves", { search: committedSearch, severity: committedSeverity === "All Severities" ? "" : committedSeverity, page: currentPage, limit: pageSize }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (debouncedSearchQuery.trim()) {
-        params.append('search', debouncedSearchQuery.trim());
+      if (committedSearch.trim()) {
+        params.append('search', committedSearch.trim());
       }
-      if (selectedSeverity && selectedSeverity !== 'All Severities') {
-        params.append('severity', selectedSeverity);
+      if (committedSeverity && committedSeverity !== 'All Severities') {
+        params.append('severity', committedSeverity);
       }
       params.append('page', currentPage.toString());
       params.append('limit', pageSize.toString());
@@ -67,6 +66,7 @@ export default function CVEDatabase() {
     },
     staleTime: 60000, // 1 minute
     refetchInterval: false,
+    refetchOnWindowFocus: false, // Prevent unexpected refetches
     enabled: true
   });
   
@@ -154,7 +154,7 @@ export default function CVEDatabase() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4">
-          <Select value={selectedSeverity} onValueChange={handleSeverityChange}>
+          <Select value={pendingSeverity} onValueChange={handleSeverityChange} data-testid="select-severity">
             <SelectTrigger className="cyber-input w-full sm:w-48">
               <SelectValue />
             </SelectTrigger>
@@ -167,12 +167,27 @@ export default function CVEDatabase() {
             </SelectContent>
           </Select>
           
-          <Input
-            placeholder="Search CVE ID, description, or vendor..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="cyber-input flex-1"
-          />
+          <div className="flex flex-1 gap-2">
+            <Input
+              placeholder="Search CVE ID, description, or vendor..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
+              className="cyber-input flex-1"
+              data-testid="input-search"
+            />
+            <Button 
+              onClick={handleSearch}
+              className="cyber-bg-blue hover:opacity-80 px-4"
+              data-testid="button-search"
+            >
+              <SearchIcon className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
