@@ -116,9 +116,7 @@ export class IngestionPipeline {
         // Fetch CVEs from NVD for this year
         const nvdParams = {
           resultsPerPage: Math.min(batchSize, maxCVEs - this.progress.processedCVEs).toString(),
-          startIndex: startIndex.toString(),
-          pubStartDate: `${year}-01-01T00:00:00.000`,
-          pubEndDate: `${year}-12-31T23:59:59.999`
+          startIndex: startIndex.toString()
         };
 
         console.log(`🔍 Fetching CVEs for ${year}, batch starting at ${startIndex}...`);
