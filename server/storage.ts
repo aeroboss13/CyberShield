@@ -26,6 +26,8 @@ export interface IStorage {
   getCVE(id: string): Promise<CVE | undefined>;
   getCVEById(id: number): Promise<CVE | undefined>;
   createOrUpdateCVE(cve: InsertCVE): Promise<CVE>;
+  updateCVEEdbId(cveId: string, edbId: string): Promise<void>;
+  updateCVEActiveExploitation(cveId: string, activelyExploited: boolean): Promise<void>;
   
   // Exploits
   getExploitsForCVE(cveId: string): Promise<Exploit[]>;
@@ -476,6 +478,28 @@ export class MemStorage implements IStorage {
       };
       this.cves.set(cve.cveId, newCVE);
       return newCVE;
+    }
+  }
+
+  async updateCVEEdbId(cveId: string, edbId: string): Promise<void> {
+    const existingCVE = this.cves.get(cveId);
+    if (existingCVE) {
+      const updatedCVE: CVE = {
+        ...existingCVE,
+        edbId
+      };
+      this.cves.set(cveId, updatedCVE);
+    }
+  }
+
+  async updateCVEActiveExploitation(cveId: string, activelyExploited: boolean): Promise<void> {
+    const existingCVE = this.cves.get(cveId);
+    if (existingCVE) {
+      const updatedCVE: CVE = {
+        ...existingCVE,
+        activelyExploited
+      };
+      this.cves.set(cveId, updatedCVE);
     }
   }
 
