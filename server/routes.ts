@@ -92,14 +92,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cves/:id", async (req, res) => {
     try {
-      const cve = await cveService.getCVE(req.params.id);
+      console.log(`Fetching CVE details from DATABASE for: ${req.params.id}`);
+      const cve = await storage.getCVE(req.params.id);
       if (!cve) {
         return res.status(404).json({ error: "CVE not found" });
       }
+      console.log(`Found CVE ${req.params.id} in database`);
       res.json(cve);
     } catch (error) {
       console.error('CVE details error:', error);
-      res.status(500).json({ error: "Failed to fetch CVE details" });
+      res.status(500).json({ error: "Failed to fetch CVE details from database" });
     }
   });
 
