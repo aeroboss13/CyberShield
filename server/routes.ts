@@ -13,9 +13,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const mitreService = MitreService.getInstance();
   const cveService = CVEService.getInstance();
   const exploitService = ExploitService.getInstance();
-  
-  // Connect ExploitService to storage for database operations
-  exploitService.setStorage(storage);
   const newsService = NewsService.getInstance();
 
   // Posts endpoints
@@ -52,72 +49,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CVE endpoints - fast database queries only
+  // CVE endpoints - with server-side pagination
   app.get("/api/cves", async (req, res) => {
     try {
       const { search, severity, page = '1', limit = '100' } = req.query;
       const searchQuery = (search as string)?.trim() || "";
       const severityFilter = (severity as string)?.trim() || "";
-      const onlyWithExploits = req.query.onlyWithExploits === 'true';
       const pageNum = Math.max(1, parseInt(page as string));
       const limitNum = Math.min(100, Math.max(10, parseInt(limit as string))); // Min 10, Max 100 per page
       
-      console.log(`CVE API request - LOCAL DB SEARCH: "${searchQuery}", severity: "${severityFilter}", onlyWithExploits: ${onlyWithExploits}, page: ${pageNum}, limit: ${limitNum}`);
+      console.log(`CVE API request - search: "${searchQuery}", severity: "${severityFilter}", page: ${pageNum}, limit: ${limitNum}`);
       
-      // Use database storage directly for fast queries
-      const result = await storage.getCVEsPaginated(
-        pageNum,
-        limitNum,
-        searchQuery,
-        severityFilter === "All Severities" ? undefined : severityFilter,
-        onlyWithExploits
-      );
-
-      // Format response to match expected structure
-      const response = {
-        data: result.cves,
-        total: result.total,
+      const result = await cveService.getCVEsPaginated({
+        search: searchQuery,
+        severity: severityFilter,
         page: pageNum,
-        limit: limitNum,
-        totalPages: Math.ceil(result.total / limitNum),
-        hasNext: pageNum < Math.ceil(result.total / limitNum),
-        hasPrev: pageNum > 1
-      };
+        limit: limitNum
+      });
       
-      console.log(`CVE result FROM DATABASE: ${response.data.length} CVEs returned (page ${pageNum}/${response.totalPages}, total: ${response.total})`);
+      console.log(`CVE result: ${result.data.length} CVEs returned (page ${pageNum}/${result.totalPages}, total: ${result.total})`);
       
-      res.json(response);
+      res.json(result);
     } catch (error) {
       console.error('CVE API error:', error);
-      res.status(500).json({ error: "Failed to fetch CVEs from database" });
+      res.status(500).json({ error: "Failed to fetch CVEs from NVD" });
     }
   });
 
   app.get("/api/cves/:id", async (req, res) => {
     try {
-      console.log(`Fetching CVE details from DATABASE for: ${req.params.id}`);
-      const cve = await storage.getCVE(req.params.id);
+      const cve = await cveService.getCVE(req.params.id);
       if (!cve) {
         return res.status(404).json({ error: "CVE not found" });
       }
-      console.log(`Found CVE ${req.params.id} in database`);
       res.json(cve);
     } catch (error) {
       console.error('CVE details error:', error);
-      res.status(500).json({ error: "Failed to fetch CVE details from database" });
+      res.status(500).json({ error: "Failed to fetch CVE details" });
     }
   });
 
-  // Exploit endpoints - fast database queries only
+  // Exploit endpoints - new functionality
   app.get("/api/cves/:id/exploits", async (req, res) => {
     try {
-      console.log(`Fetching exploits from DATABASE for CVE: ${req.params.id}`);
-      const exploits = await storage.getExploitsForCVE(req.params.id);
-      console.log(`Found ${exploits.length} exploits in database for ${req.params.id}`);
+      const exploits = await exploitService.getExploitsForCVE(req.params.id);
       res.json(exploits);
     } catch (error) {
       console.error('Exploits API error:', error);
-      res.status(500).json({ error: "Failed to fetch exploits from database" });
+      res.status(500).json({ error: "Failed to fetch exploits" });
     }
   });
 
@@ -188,13 +167,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "CVE ID required" });
       }
       
-      console.log(`Fetching exploits from DATABASE for CVE: ${cveId}`);
-      const exploits = await storage.getExploitsForCVE(cveId as string);
-      console.log(`Found ${exploits.length} exploits in database for ${cveId}`);
+      const exploits = await exploitService.getExploitsForCVE(cveId as string);
       res.json(exploits);
     } catch (error) {
       console.error('Exploits API error:', error);
-      res.status(500).json({ error: "Failed to fetch exploits from database" });
+      res.status(500).json({ error: "Failed to fetch exploits" });
     }
   });
 

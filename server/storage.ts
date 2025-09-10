@@ -1,4 +1,4 @@
-import { users, posts, cveEntries, mitreAttack, newsArticles, exploits, cveUpdateLog, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews, type Exploit, type InsertExploit, type CveUpdateLog, type InsertCveUpdateLog } from "@shared/schema";
+import { users, posts, cveEntries, mitreAttack, newsArticles, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews } from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -14,15 +14,8 @@ export interface IStorage {
   
   // CVE
   getAllCVEs(): Promise<CVE[]>;
-  searchCVEs(query: string, severity?: string, onlyWithExploits?: boolean): Promise<{ cves: CVE[], total: number }>;
+  searchCVEs(query: string, severity?: string): Promise<CVE[]>;
   getCVE(id: string): Promise<CVE | undefined>;
-  createOrUpdateCVE(cve: InsertCVE): Promise<CVE>;
-  getCVEsPaginated(page: number, limit: number, search?: string, severity?: string, onlyWithExploits?: boolean): Promise<{ cves: CVE[], total: number }>;
-  
-  // Exploits
-  getExploitsForCVE(cveId: string): Promise<Exploit[]>;
-  createExploit(exploit: InsertExploit): Promise<Exploit>;
-  updateCVEExploitCount(cveId: string): Promise<void>;
   
   // MITRE ATT&CK
   getAllMitreTactics(): Promise<{ tacticId: string; tacticName: string; tacticDescription: string; techniques: MitreAttack[] }[]>;
@@ -31,10 +24,6 @@ export interface IStorage {
   // News
   getAllNews(): Promise<NewsArticle[]>;
   getNews(id: number): Promise<NewsArticle | undefined>;
-  
-  // Update logging
-  logCVEUpdate(log: InsertCveUpdateLog): Promise<CveUpdateLog>;
-  getLatestUpdateLog(): Promise<CveUpdateLog | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -141,9 +130,7 @@ export class MemStorage implements IStorage {
         publishedDate: "2024-01-15",
         updatedDate: "2024-01-20",
         tags: ["rce", "cms", "fileupload", "wordpress"],
-        activelyExploited: true,
-        exploitCount: 2,
-        lastExploitCheck: new Date()
+        activelyExploited: true
       },
       {
         id: 2,
@@ -156,9 +143,7 @@ export class MemStorage implements IStorage {
         publishedDate: "2024-01-12",
         updatedDate: "2024-01-18",
         tags: ["sqli", "ecommerce", "magento"],
-        activelyExploited: false,
-        exploitCount: 0,
-        lastExploitCheck: null
+        activelyExploited: false
       }
     ];
 
@@ -315,90 +300,22 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async searchCVEs(query: string, severity?: string, onlyWithExploits?: boolean): Promise<{ cves: CVE[], total: number }> {
+  async searchCVEs(query: string, severity?: string): Promise<CVE[]> {
     const allCVEs = Array.from(this.cves.values());
-    const filtered = allCVEs.filter(cve => {
+    return allCVEs.filter(cve => {
       const matchesQuery = !query || 
         cve.cveId.toLowerCase().includes(query.toLowerCase()) ||
         cve.title.toLowerCase().includes(query.toLowerCase()) ||
         cve.description.toLowerCase().includes(query.toLowerCase());
       
       const matchesSeverity = !severity || severity === "All Severities" || cve.severity === severity;
-      const matchesExploits = !onlyWithExploits || (cve.exploitCount && cve.exploitCount > 0);
       
-      return matchesQuery && matchesSeverity && matchesExploits;
+      return matchesQuery && matchesSeverity;
     });
-    
-    return { cves: filtered, total: filtered.length };
   }
 
   async getCVE(id: string): Promise<CVE | undefined> {
     return this.cves.get(id);
-  }
-
-  async createOrUpdateCVE(cve: InsertCVE): Promise<CVE> {
-    const newCVE: CVE = {
-      id: this.cves.size + 1,
-      ...cve,
-      tags: cve.tags || null,
-      cvssScore: cve.cvssScore || null,
-      vendor: cve.vendor || null,
-      publishedDate: cve.publishedDate || null,
-      updatedDate: cve.updatedDate || null,
-      activelyExploited: cve.activelyExploited || null,
-      exploitCount: cve.exploitCount || 0,
-      lastExploitCheck: cve.lastExploitCheck || null
-    };
-    this.cves.set(cve.cveId, newCVE);
-    return newCVE;
-  }
-
-  async getCVEsPaginated(page: number, limit: number, search?: string, severity?: string, onlyWithExploits?: boolean): Promise<{ cves: CVE[], total: number }> {
-    const result = await this.searchCVEs(search || "", severity, onlyWithExploits);
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    return {
-      cves: result.cves.slice(start, end),
-      total: result.total
-    };
-  }
-
-  // Exploits
-  async getExploitsForCVE(cveId: string): Promise<Exploit[]> {
-    return [];
-  }
-
-  async createExploit(exploit: InsertExploit): Promise<Exploit> {
-    const newExploit: Exploit = {
-      id: 1,
-      ...exploit,
-      verified: exploit.verified || null,
-      exploitCode: exploit.exploitCode || null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    return newExploit;
-  }
-
-  async updateCVEExploitCount(cveId: string): Promise<void> {
-    // No-op in memory storage
-  }
-
-  // Update logging
-  async logCVEUpdate(log: InsertCveUpdateLog): Promise<CveUpdateLog> {
-    return {
-      id: 1,
-      ...log,
-      totalCves: log.totalCves || null,
-      newCves: log.newCves || null,
-      updatedCves: log.updatedCves || null,
-      errorMessage: log.errorMessage || null,
-      lastUpdate: new Date()
-    };
-  }
-
-  async getLatestUpdateLog(): Promise<CveUpdateLog | undefined> {
-    return undefined;
   }
 
   async getAllMitreTactics(): Promise<{ tacticId: string; tacticName: string; tacticDescription: string; techniques: MitreAttack[] }[]> {
@@ -440,6 +357,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-import { DatabaseStorage } from "./storage-db";
-
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();

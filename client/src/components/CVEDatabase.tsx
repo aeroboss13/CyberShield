@@ -4,9 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight, Zap, Shield, Search } from "lucide-react";
+import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import CVEDetailModal from "./CVEDetailModal";
 import type { CVEWithDetails } from "@/lib/types";
 
@@ -23,57 +22,38 @@ interface PaginatedCVEResult {
 export default function CVEDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("All Severities");
-  const [showOnlyWithExploits, setShowOnlyWithExploits] = useState(false);
   const [selectedCVE, setSelectedCVE] = useState<CVEWithDetails | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(100); // 100 CVEs per page
   
-  // Active search query (only when user presses Enter or clicks search)
-  const [activeSearchQuery, setActiveSearchQuery] = useState("");
+  // Debounced search query to reduce API calls
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   
-  // Handle search execution
-  const handleSearch = () => {
-    const trimmed = searchQuery.trim();
-    if (!trimmed || trimmed.length >= 3) {
-      setActiveSearchQuery(trimmed);
+  // Debounce search input and reset page on search
+  useMemo(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
       setCurrentPage(1); // Reset to first page on search
-    }
-  };
-  
-  // Handle Enter key press
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
+    }, 500); // 500ms delay
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
   
   // Reset page when severity filter changes
   const handleSeverityChange = (severity: string) => {
     setSelectedSeverity(severity);
     setCurrentPage(1);
   };
-  
-  // Reset page when exploit filter changes
-  const handleExploitFilterChange = (checked: boolean) => {
-    setShowOnlyWithExploits(checked);
-    setCurrentPage(1);
-  };
 
   const { data: cveResult, isLoading } = useQuery<PaginatedCVEResult>({
-    queryKey: ["/api/cves", { search: activeSearchQuery, severity: selectedSeverity, onlyWithExploits: showOnlyWithExploits, page: currentPage, limit: pageSize }],
+    queryKey: ["/api/cves", { search: debouncedSearchQuery, severity: selectedSeverity, page: currentPage, limit: pageSize }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      
-      // Add search param if provided
-      if (activeSearchQuery) {
-        params.append('search', activeSearchQuery);
+      if (debouncedSearchQuery.trim()) {
+        params.append('search', debouncedSearchQuery.trim());
       }
-      
       if (selectedSeverity && selectedSeverity !== 'All Severities') {
         params.append('severity', selectedSeverity);
-      }
-      if (showOnlyWithExploits) {
-        params.append('onlyWithExploits', 'true');
       }
       params.append('page', currentPage.toString());
       params.append('limit', pageSize.toString());
@@ -85,7 +65,7 @@ export default function CVEDatabase() {
       }
       return response.json();
     },
-    staleTime: 30000, // 30 seconds to reduce calls
+    staleTime: 60000, // 1 minute
     refetchInterval: false,
     enabled: true
   });
@@ -187,40 +167,12 @@ export default function CVEDatabase() {
             </SelectContent>
           </Select>
           
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="exploits-filter"
-              checked={showOnlyWithExploits}
-              onCheckedChange={handleExploitFilterChange}
-              className="cyber-checkbox"
-            />
-            <label htmlFor="exploits-filter" className="text-white text-sm cursor-pointer flex items-center space-x-1">
-              <Zap className="w-4 h-4 text-yellow-400" />
-              <span>Only with exploits</span>
-            </label>
-          </div>
-          
-          <div className="flex space-x-2 flex-1">
-            <Input
-              placeholder="Search CVE ID, description, or vendor (min 3 chars)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="cyber-input flex-1"
-            />
-            <Button
-              onClick={handleSearch}
-              disabled={searchQuery.trim().length > 0 && searchQuery.trim().length < 3}
-              className="cyber-button-primary px-4"
-            >
-              <Search className="w-4 h-4" />
-            </Button>
-          </div>
-          {searchQuery.trim() && searchQuery.trim().length < 3 && (
-            <p className="text-sm text-yellow-400 mt-1">
-              Enter at least 3 characters to search
-            </p>
-          )}
+          <Input
+            placeholder="Search CVE ID, description, or vendor..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="cyber-input flex-1"
+          />
         </div>
       </div>
 
@@ -238,12 +190,6 @@ export default function CVEDatabase() {
                   {cve.activelyExploited && (
                     <Badge className="cyber-bg-amber text-black px-3 py-1 text-sm font-semibold animate-pulse">
                       🚨 Actively Exploited
-                    </Badge>
-                  )}
-                  {cve.hasExploits && (
-                    <Badge className="cyber-bg-green text-white px-3 py-1 text-sm font-semibold flex items-center space-x-1">
-                      <Zap className="w-3 h-3" />
-                      <span>{cve.exploitCount || 1} Exploit{(cve.exploitCount || 1) > 1 ? 's' : ''}</span>
                     </Badge>
                   )}
                 </div>
@@ -303,15 +249,13 @@ export default function CVEDatabase() {
                   <Eye className="w-4 h-4 mr-2" />
                   Details
                 </Button>
-                {cve.hasExploits && (
-                  <Button 
-                    className="cyber-button-primary"
-                    onClick={() => setSelectedCVE(cve)}
-                  >
-                    <Code className="w-4 h-4 mr-2" />
-                    Exploits
-                  </Button>
-                )}
+                <Button 
+                  className="cyber-button-primary"
+                  onClick={() => setSelectedCVE(cve)}
+                >
+                  <Code className="w-4 h-4 mr-2" />
+                  Exploits
+                </Button>
                 <Button 
                   variant="outline" 
                   className="border-gray-600 text-gray-400 hover:text-white hover:border-gray-500"

@@ -28,8 +28,6 @@ export interface CVEWithDetails {
   updatedDate: string | null;
   tags: string[];
   activelyExploited: boolean;
-  hasExploits?: boolean;
-  exploitCount?: number;
 }
 
 export interface MitreTactic {
