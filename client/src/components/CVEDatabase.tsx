@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight, Zap, Shield, Search } from "lucide-react";
 import CVEDetailModal from "./CVEDetailModal";
@@ -22,6 +23,7 @@ interface PaginatedCVEResult {
 export default function CVEDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("All Severities");
+  const [showOnlyWithExploits, setShowOnlyWithExploits] = useState(false);
   const [selectedCVE, setSelectedCVE] = useState<CVEWithDetails | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(100); // 100 CVEs per page
@@ -50,9 +52,15 @@ export default function CVEDatabase() {
     setSelectedSeverity(severity);
     setCurrentPage(1);
   };
+  
+  // Reset page when exploit filter changes
+  const handleExploitFilterChange = (checked: boolean) => {
+    setShowOnlyWithExploits(checked);
+    setCurrentPage(1);
+  };
 
   const { data: cveResult, isLoading } = useQuery<PaginatedCVEResult>({
-    queryKey: ["/api/cves", { search: activeSearchQuery, severity: selectedSeverity, page: currentPage, limit: pageSize }],
+    queryKey: ["/api/cves", { search: activeSearchQuery, severity: selectedSeverity, onlyWithExploits: showOnlyWithExploits, page: currentPage, limit: pageSize }],
     queryFn: async () => {
       const params = new URLSearchParams();
       
@@ -63,6 +71,9 @@ export default function CVEDatabase() {
       
       if (selectedSeverity && selectedSeverity !== 'All Severities') {
         params.append('severity', selectedSeverity);
+      }
+      if (showOnlyWithExploits) {
+        params.append('onlyWithExploits', 'true');
       }
       params.append('page', currentPage.toString());
       params.append('limit', pageSize.toString());
@@ -175,6 +186,19 @@ export default function CVEDatabase() {
               <SelectItem value="LOW">🔵 Low</SelectItem>
             </SelectContent>
           </Select>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="exploits-filter"
+              checked={showOnlyWithExploits}
+              onCheckedChange={handleExploitFilterChange}
+              className="cyber-checkbox"
+            />
+            <label htmlFor="exploits-filter" className="text-white text-sm cursor-pointer flex items-center space-x-1">
+              <Zap className="w-4 h-4 text-yellow-400" />
+              <span>Only with exploits</span>
+            </label>
+          </div>
           
           <div className="flex space-x-2 flex-1">
             <Input

@@ -55,20 +55,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { search, severity, page = '1', limit = '100' } = req.query;
       const searchQuery = (search as string)?.trim() || "";
       const severityFilter = (severity as string)?.trim() || "";
+      const onlyWithExploits = req.query.onlyWithExploits === 'true';
       const pageNum = Math.max(1, parseInt(page as string));
       const limitNum = Math.min(100, Math.max(10, parseInt(limit as string))); // Min 10, Max 100 per page
       
-      console.log(`CVE API request - search: "${searchQuery}", severity: "${severityFilter}", page: ${pageNum}, limit: ${limitNum}`);
+      console.log(`CVE API request - search: "${searchQuery}", severity: "${severityFilter}", onlyWithExploits: ${onlyWithExploits}, page: ${pageNum}, limit: ${limitNum}`);
       
       const result = await cveService.getCVEsPaginated({
         search: searchQuery,
         severity: severityFilter,
+        onlyWithExploits: onlyWithExploits,
         page: pageNum,
         limit: limitNum
       });
       
-      // Skip real-time exploit checking for faster loading
-      // Exploits will be checked only when user opens specific CVE details
+      // Add exploit information if exploit filter is enabled
+      if (onlyWithExploits) {
+        const exploitService = (await import('./services/exploit-service.js')).ExploitService.getInstance();
+        
+        // Filter and check exploits only for CVEs that need it
+        const filteredCVEs = [];
+        for (const cve of result.data) {
+          try {
+            const exploits = await exploitService.getExploitsForCVE(cve.cveId);
+            if (exploits.length > 0) {
+              (cve as any).hasExploits = true;
+              (cve as any).exploitCount = exploits.length;
+              filteredCVEs.push(cve);
+            }
+          } catch (error) {
+            // Skip CVEs that fail exploit check
+          }
+        }
+        
+        result.data = filteredCVEs;
+        result.total = filteredCVEs.length;
+        result.totalPages = Math.ceil(filteredCVEs.length / limitNum);
+      }
       
       console.log(`CVE result: ${result.data.length} CVEs returned (page ${pageNum}/${result.totalPages}, total: ${result.total})`);
       
