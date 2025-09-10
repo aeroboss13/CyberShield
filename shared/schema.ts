@@ -36,7 +36,37 @@ export const cveEntries = pgTable("cve_entries", {
   publishedDate: text("published_date"),
   updatedDate: text("updated_date"),
   tags: text("tags").array().default([]),
-  activelyExploited: boolean("actively_exploited").default(false)
+  activelyExploited: boolean("actively_exploited").default(false),
+  exploitCount: integer("exploit_count").default(0),
+  lastExploitCheck: timestamp("last_exploit_check")
+});
+
+export const exploits = pgTable("exploits", {
+  id: serial("id").primaryKey(),
+  cveId: text("cve_id").notNull(),
+  exploitId: text("exploit_id").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  exploitType: text("exploit_type").notNull(),
+  platform: text("platform").notNull(),
+  verified: boolean("verified").default(false),
+  datePublished: text("date_published").notNull(),
+  author: text("author").notNull(),
+  sourceUrl: text("source_url").notNull(),
+  exploitCode: text("exploit_code"),
+  source: text("source").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const cveUpdateLog = pgTable("cve_update_log", {
+  id: serial("id").primaryKey(),
+  lastUpdate: timestamp("last_update").defaultNow(),
+  totalCves: integer("total_cves").default(0),
+  newCves: integer("new_cves").default(0),
+  updatedCves: integer("updated_cves").default(0),
+  status: text("status").notNull(),
+  errorMessage: text("error_message")
 });
 
 export const mitreAttack = pgTable("mitre_attack", {
@@ -88,6 +118,17 @@ export const insertNewsSchema = createInsertSchema(newsArticles).omit({
   publishedAt: true
 });
 
+export const insertExploitSchema = createInsertSchema(exploits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertCveUpdateLogSchema = createInsertSchema(cveUpdateLog).omit({
+  id: true,
+  lastUpdate: true
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
@@ -98,3 +139,7 @@ export type InsertMitre = z.infer<typeof insertMitreSchema>;
 export type MitreAttack = typeof mitreAttack.$inferSelect;
 export type InsertNews = z.infer<typeof insertNewsSchema>;
 export type NewsArticle = typeof newsArticles.$inferSelect;
+export type InsertExploit = z.infer<typeof insertExploitSchema>;
+export type Exploit = typeof exploits.$inferSelect;
+export type InsertCveUpdateLog = z.infer<typeof insertCveUpdateLogSchema>;
+export type CveUpdateLog = typeof cveUpdateLog.$inferSelect;
