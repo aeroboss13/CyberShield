@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight, Zap, Shield } from "lucide-react";
+import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight, Zap, Shield, Search } from "lucide-react";
 import CVEDetailModal from "./CVEDetailModal";
 import type { CVEWithDetails } from "@/lib/types";
 
@@ -26,21 +26,24 @@ export default function CVEDatabase() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(100); // 100 CVEs per page
   
-  // Debounced search query to reduce API calls
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  // Active search query (only when user presses Enter or clicks search)
+  const [activeSearchQuery, setActiveSearchQuery] = useState("");
   
-  // Debounce search input and reset page on search
-  useMemo(() => {
-    const timeoutId = setTimeout(() => {
-      // Only search if query has at least 3 characters or is empty
-      if (!searchQuery.trim() || searchQuery.trim().length >= 3) {
-        setDebouncedSearchQuery(searchQuery);
-        setCurrentPage(1); // Reset to first page on search
-      }
-    }, 800); // Increase delay to 800ms to reduce API calls
-    
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  // Handle search execution
+  const handleSearch = () => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed || trimmed.length >= 3) {
+      setActiveSearchQuery(trimmed);
+      setCurrentPage(1); // Reset to first page on search
+    }
+  };
+  
+  // Handle Enter key press
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
   
   // Reset page when severity filter changes
   const handleSeverityChange = (severity: string) => {
@@ -49,14 +52,13 @@ export default function CVEDatabase() {
   };
 
   const { data: cveResult, isLoading } = useQuery<PaginatedCVEResult>({
-    queryKey: ["/api/cves", { search: debouncedSearchQuery, severity: selectedSeverity, page: currentPage, limit: pageSize }],
+    queryKey: ["/api/cves", { search: activeSearchQuery, severity: selectedSeverity, page: currentPage, limit: pageSize }],
     queryFn: async () => {
       const params = new URLSearchParams();
       
-      // Only add search param if it's empty or has at least 3 characters
-      const trimmedSearch = debouncedSearchQuery.trim();
-      if (trimmedSearch && trimmedSearch.length >= 3) {
-        params.append('search', trimmedSearch);
+      // Add search param if provided
+      if (activeSearchQuery) {
+        params.append('search', activeSearchQuery);
       }
       
       if (selectedSeverity && selectedSeverity !== 'All Severities') {
@@ -174,12 +176,22 @@ export default function CVEDatabase() {
             </SelectContent>
           </Select>
           
-          <Input
-            placeholder="Search CVE ID, description, or vendor (min 3 chars)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="cyber-input flex-1"
-          />
+          <div className="flex space-x-2 flex-1">
+            <Input
+              placeholder="Search CVE ID, description, or vendor (min 3 chars)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="cyber-input flex-1"
+            />
+            <Button
+              onClick={handleSearch}
+              disabled={searchQuery.trim().length > 0 && searchQuery.trim().length < 3}
+              className="cyber-button-primary px-4"
+            >
+              <Search className="w-4 h-4" />
+            </Button>
+          </div>
           {searchQuery.trim() && searchQuery.trim().length < 3 && (
             <p className="text-sm text-yellow-400 mt-1">
               Enter at least 3 characters to search
