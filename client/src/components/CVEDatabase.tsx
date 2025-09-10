@@ -255,13 +255,15 @@ export default function CVEDatabase() {
                   <Eye className="w-4 h-4 mr-2" />
                   Details
                 </Button>
-                <Button 
-                  className="cyber-button-primary"
-                  onClick={() => setSelectedCVE(cve)}
-                >
-                  <Code className="w-4 h-4 mr-2" />
-                  Exploits
-                </Button>
+                {cve.hasExploits && (
+                  <Button 
+                    className="cyber-button-primary"
+                    onClick={() => setSelectedCVE(cve)}
+                  >
+                    <Code className="w-4 h-4 mr-2" />
+                    Exploits
+                  </Button>
+                )}
                 <Button 
                   variant="outline" 
                   className="border-gray-600 text-gray-400 hover:text-white hover:border-gray-500"
