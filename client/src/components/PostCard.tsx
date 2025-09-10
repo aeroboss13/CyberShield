@@ -62,6 +62,11 @@ export default function PostCard({ post }: PostCardProps) {
     return colors[index];
   };
 
+  // Handle case where user is null
+  if (!post.user) {
+    return null;
+  }
+
   return (
     <Card className="social-card cyber-bg-slate border-slate-700">
       <CardContent className="pt-6">
