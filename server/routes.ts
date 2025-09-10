@@ -67,6 +67,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         limit: limitNum
       });
       
+      // Check which CVEs have real exploits
+      const exploitService = (await import('./services/exploit-service.js')).ExploitService.getInstance();
+      
+      // Add exploit availability to each CVE
+      for (const cve of result.data) {
+        try {
+          const exploits = await exploitService.getExploitsForCVE(cve.cveId);
+          (cve as any).hasExploits = exploits.length > 0;
+          (cve as any).exploitCount = exploits.length;
+        } catch (error) {
+          (cve as any).hasExploits = false;
+          (cve as any).exploitCount = 0;
+        }
+      }
+      
       console.log(`CVE result: ${result.data.length} CVEs returned (page ${pageNum}/${result.totalPages}, total: ${result.total})`);
       
       res.json(result);

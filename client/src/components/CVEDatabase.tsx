@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, Eye, Code, ExternalLink, Calendar, User, TrendingUp, ChevronLeft, ChevronRight, Zap, Shield } from "lucide-react";
 import CVEDetailModal from "./CVEDetailModal";
 import type { CVEWithDetails } from "@/lib/types";
 
@@ -190,6 +190,12 @@ export default function CVEDatabase() {
                   {cve.activelyExploited && (
                     <Badge className="cyber-bg-amber text-black px-3 py-1 text-sm font-semibold animate-pulse">
                       🚨 Actively Exploited
+                    </Badge>
+                  )}
+                  {cve.hasExploits && (
+                    <Badge className="cyber-bg-green text-white px-3 py-1 text-sm font-semibold flex items-center space-x-1">
+                      <Zap className="w-3 h-3" />
+                      <span>{cve.exploitCount || 1} Exploit{(cve.exploitCount || 1) > 1 ? 's' : ''}</span>
                     </Badge>
                   )}
                 </div>
