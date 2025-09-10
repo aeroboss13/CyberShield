@@ -7,8 +7,12 @@ import CVEDatabase from "@/components/CVEDatabase";
 import SecurityNews from "@/components/SecurityNews";
 import type { TabType } from "@/lib/types";
 
-export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<TabType>('feed');
+interface DashboardProps {
+  initialTab?: TabType;
+}
+
+export default function Dashboard({ initialTab = 'feed' }: DashboardProps) {
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
 
   const tabs = [
     { id: 'feed' as const, label: 'Social Feed' },

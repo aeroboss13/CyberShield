@@ -10,6 +10,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/cve-database" component={() => <Dashboard initialTab="cve" />} />
+      <Route path="/mitre" component={() => <Dashboard initialTab="mitre" />} />
+      <Route path="/news" component={() => <Dashboard initialTab="news" />} />
       <Route component={NotFound} />
     </Switch>
   );
