@@ -73,15 +73,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (onlyWithExploits) {
         const exploitService = (await import('./services/exploit-service.js')).ExploitService.getInstance();
         
-        // Filter and check exploits only for CVEs that need it
+        // Get CVEs with better chances of having exploits
+        // Search from pages 50-500 where older, more exploited CVEs are located  
+        const startPage = Math.max(50, pageNum + 49); // Start from page 50+ where older CVEs with exploits exist
+        const exploitResult = await cveService.getCVEsPaginated({
+          search: searchQuery,
+          severity: severityFilter,
+          page: startPage,
+          limit: limitNum * 10 // Get more CVEs to filter through
+        });
+        
+        console.log(`Searching for exploits in ${exploitResult.data.length} CVEs from page ${startPage}`);
+        
+        // Filter and check exploits
         const filteredCVEs = [];
-        for (const cve of result.data) {
+        for (const cve of exploitResult.data) {
           try {
             const exploits = await exploitService.getExploitsForCVE(cve.cveId);
             if (exploits.length > 0) {
+              console.log(`Found ${exploits.length} exploits for ${cve.cveId}`);
               (cve as any).hasExploits = true;
               (cve as any).exploitCount = exploits.length;
               filteredCVEs.push(cve);
+              
+              // Stop when we have enough results for this page
+              if (filteredCVEs.length >= limitNum) {
+                break;
+              }
             }
           } catch (error) {
             // Skip CVEs that fail exploit check
@@ -91,6 +109,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         result.data = filteredCVEs;
         result.total = filteredCVEs.length;
         result.totalPages = Math.ceil(filteredCVEs.length / limitNum);
+        
+        console.log(`Exploit filter result: ${filteredCVEs.length} CVEs with exploits found`);
       }
       
       console.log(`CVE result: ${result.data.length} CVEs returned (page ${pageNum}/${result.totalPages}, total: ${result.total})`);
