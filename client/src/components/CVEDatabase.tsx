@@ -32,9 +32,12 @@ export default function CVEDatabase() {
   // Debounce search input and reset page on search
   useMemo(() => {
     const timeoutId = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-      setCurrentPage(1); // Reset to first page on search
-    }, 500); // 500ms delay
+      // Only search if query has at least 3 characters or is empty
+      if (!searchQuery.trim() || searchQuery.trim().length >= 3) {
+        setDebouncedSearchQuery(searchQuery);
+        setCurrentPage(1); // Reset to first page on search
+      }
+    }, 800); // Increase delay to 800ms to reduce API calls
     
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
@@ -49,9 +52,13 @@ export default function CVEDatabase() {
     queryKey: ["/api/cves", { search: debouncedSearchQuery, severity: selectedSeverity, page: currentPage, limit: pageSize }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (debouncedSearchQuery.trim()) {
-        params.append('search', debouncedSearchQuery.trim());
+      
+      // Only add search param if it's empty or has at least 3 characters
+      const trimmedSearch = debouncedSearchQuery.trim();
+      if (trimmedSearch && trimmedSearch.length >= 3) {
+        params.append('search', trimmedSearch);
       }
+      
       if (selectedSeverity && selectedSeverity !== 'All Severities') {
         params.append('severity', selectedSeverity);
       }
@@ -65,7 +72,7 @@ export default function CVEDatabase() {
       }
       return response.json();
     },
-    staleTime: 60000, // 1 minute
+    staleTime: 30000, // 30 seconds to reduce calls
     refetchInterval: false,
     enabled: true
   });
@@ -168,11 +175,16 @@ export default function CVEDatabase() {
           </Select>
           
           <Input
-            placeholder="Search CVE ID, description, or vendor..."
+            placeholder="Search CVE ID, description, or vendor (min 3 chars)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="cyber-input flex-1"
           />
+          {searchQuery.trim() && searchQuery.trim().length < 3 && (
+            <p className="text-sm text-yellow-400 mt-1">
+              Enter at least 3 characters to search
+            </p>
+          )}
         </div>
       </div>
 
