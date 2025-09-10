@@ -7,6 +7,7 @@ import { MitreService } from "./services/mitre-service";
 import { CVEService } from "./services/cve-service";
 import { ExploitService } from "./services/exploit-service";
 import { NewsService } from "./services/news-service";
+import { ingestionPipeline } from "./services/ingestion-pipeline";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize services
@@ -213,6 +214,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('News details error:', error);
       res.status(500).json({ error: "Failed to fetch news article" });
+    }
+  });
+
+  // Ingestion pipeline endpoints
+  app.post("/api/ingest/run", async (req, res) => {
+    try {
+      if (ingestionPipeline.isIngestionRunning()) {
+        return res.status(409).json({ error: "Ingestion pipeline is already running" });
+      }
+
+      const { maxCVEs, startYear, endYear, concurrency } = req.body;
+      const options = {
+        maxCVEs: maxCVEs || 1000,      // Default: 1000 CVEs
+        startYear: startYear || 2020,   // Default: from 2020
+        endYear: endYear || new Date().getFullYear(),
+        concurrency: concurrency || 3  // Default: 3 concurrent requests
+      };
+
+      console.log(`🚀 Starting ingestion pipeline with options:`, options);
+      
+      // Start ingestion in background (don't await)
+      ingestionPipeline.startIngestion(options).catch(error => {
+        console.error('Background ingestion error:', error);
+      });
+
+      res.json({ 
+        message: "Ingestion pipeline started successfully",
+        options
+      });
+    } catch (error) {
+      console.error('Ingestion start error:', error);
+      res.status(500).json({ error: "Failed to start ingestion pipeline" });
+    }
+  });
+
+  app.get("/api/ingest/status", async (req, res) => {
+    try {
+      const progress = ingestionPipeline.getProgress();
+      const isRunning = ingestionPipeline.isIngestionRunning();
+      
+      res.json({
+        isRunning,
+        ...progress
+      });
+    } catch (error) {
+      console.error('Ingestion status error:', error);
+      res.status(500).json({ error: "Failed to get ingestion status" });
+    }
+  });
+
+  app.post("/api/ingest/stop", async (req, res) => {
+    try {
+      if (!ingestionPipeline.isIngestionRunning()) {
+        return res.status(400).json({ error: "Ingestion pipeline is not running" });
+      }
+
+      await ingestionPipeline.stopIngestion();
+      res.json({ message: "Ingestion pipeline stopped successfully" });
+    } catch (error) {
+      console.error('Ingestion stop error:', error);
+      res.status(500).json({ error: "Failed to stop ingestion pipeline" });
     }
   });
 
