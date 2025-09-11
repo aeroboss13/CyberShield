@@ -312,39 +312,46 @@ export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalP
           <TabsContent value="details" className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold text-white mb-3">Technical Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="cyber-bg-surface-light rounded-lg p-4 border cyber-border">
-                  <h4 className="cyber-text-blue font-semibold mb-2">CVE Details</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">CVE ID:</span>
-                      <span className="text-white font-mono">{cve.cveId}</span>
-                    </div>
-                    {cve.cvssScore && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">CVSS Score:</span>
-                        <span className="text-white">{cve.cvssScore}/10.0</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Severity:</span>
-                      <span className="text-white">{cve.severity}</span>
-                    </div>
-                  </div>
-                </div>
+              {(() => {
+                let references = [];
+                try {
+                  references = cve.references ? JSON.parse(cve.references) : [];
+                } catch (e) {
+                  references = [];
+                }
                 
-                {cve.vendor && (
+                return references.length > 0 ? (
                   <div className="cyber-bg-surface-light rounded-lg p-4 border cyber-border">
-                    <h4 className="cyber-text-blue font-semibold mb-2">Vendor Information</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Vendor:</span>
-                        <span className="text-white">{cve.vendor}</span>
-                      </div>
+                    <h4 className="cyber-text-blue font-semibold mb-3">References to Advisories, Solutions, and Tools</h4>
+                    <div className="space-y-3">
+                      {references.map((ref: any, index: number) => (
+                        <div key={index} className="border-l-2 border-cyan-500 pl-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-400 text-sm">{ref.source || 'Reference'}</span>
+                            <a
+                              href={ref.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="cyber-text-blue hover:text-cyan-300 transition-colors text-sm flex items-center"
+                              data-testid={`link-reference-${index}`}
+                            >
+                              View Resource
+                              <ExternalLink className="w-3 h-3 ml-1" />
+                            </a>
+                          </div>
+                          <div className="text-white text-sm mt-1 break-all">
+                            {ref.url}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
-              </div>
+                ) : (
+                  <div className="cyber-bg-surface-light rounded-lg p-4 border cyber-border text-center">
+                    <p className="text-gray-400">No technical references available for this CVE</p>
+                  </div>
+                );
+              })()}
             </div>
           </TabsContent>
 
