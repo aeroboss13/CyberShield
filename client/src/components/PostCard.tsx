@@ -11,8 +11,6 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const [liked, setLiked] = useState(false);
-
   const likeMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", `/api/posts/${post.id}/like`);
@@ -20,7 +18,6 @@ export default function PostCard({ post }: PostCardProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-      setLiked(true);
     },
   });
 
@@ -106,15 +103,12 @@ export default function PostCard({ post }: PostCardProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => likeMutation.mutate()}
-                disabled={likeMutation.isPending || liked}
-                className={`flex items-center space-x-2 transition-colors p-0 h-auto ${
-                  liked 
-                    ? 'text-red-400 hover:text-red-400' 
-                    : 'hover:text-red-400'
-                }`}
+                disabled={likeMutation.isPending}
+                className="flex items-center space-x-2 hover:text-red-400 transition-colors p-0 h-auto"
+                data-testid={`button-like-${post.id}`}
               >
-                <Heart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
-                <span>{post.likes + (liked ? 1 : 0)}</span>
+                <Heart className="w-5 h-5" />
+                <span>{post.likes}</span>
               </Button>
               
               <Button
