@@ -1,11 +1,18 @@
-import { Search, Shield, Bell, Settings, Activity, Plus } from "lucide-react";
+import { Search, Shield, Bell, Settings, Activity, Plus, UserCog } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import PostModal from "./PostModal";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Get current user to check admin privileges
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/current"],
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +67,20 @@ export default function Header() {
                   </Button>
                 }
               />
+
+              {/* Admin Panel Link - Only show for administrators */}
+              {currentUser?.role === "admin" && (
+                <Link href="/admin">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                    data-testid="button-admin-panel"
+                  >
+                    <UserCog className="w-5 h-5 cyber-text-orange" />
+                  </Button>
+                </Link>
+              )}
               
               <Button
                 variant="ghost"
