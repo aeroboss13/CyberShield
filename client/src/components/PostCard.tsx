@@ -5,12 +5,15 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, Heart, Share2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PostWithUser } from "@/lib/types";
+import PostComments from "./PostComments";
 
 interface PostCardProps {
   post: PostWithUser;
 }
 
 export default function PostCard({ post }: PostCardProps) {
+  const [showComments, setShowComments] = useState(false);
+
   const likeMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", `/api/posts/${post.id}/like`);
@@ -93,7 +96,13 @@ export default function PostCard({ post }: PostCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center space-x-2 hover:text-cyber-blue transition-colors p-0 h-auto"
+                onClick={() => setShowComments(!showComments)}
+                className={`flex items-center space-x-2 transition-colors p-0 h-auto ${
+                  showComments 
+                    ? 'text-cyber-blue hover:text-cyber-blue' 
+                    : 'hover:text-cyber-blue'
+                }`}
+                data-testid={`button-comment-${post.id}`}
               >
                 <MessageCircle className="w-5 h-5" />
                 <span>{post.comments}</span>
@@ -120,6 +129,13 @@ export default function PostCard({ post }: PostCardProps) {
                 <span>{post.shares}</span>
               </Button>
             </div>
+            
+            {/* Comments Section */}
+            {showComments && (
+              <div className="mt-6 pt-4 border-t border-slate-700">
+                <PostComments postId={post.id} />
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
