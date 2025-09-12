@@ -212,6 +212,15 @@ export const insertUserSchema = createInsertSchema(users).omit({
   verifiedSubmissions: true
 });
 
+export const updateUserSchema = insertUserSchema.pick({
+  name: true,
+  role: true,
+  bio: true,
+  location: true,
+  website: true,
+  avatar: true
+});
+
 export const insertPostSchema = createInsertSchema(posts).omit({
   id: true,
   createdAt: true,

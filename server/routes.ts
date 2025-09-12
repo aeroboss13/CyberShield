@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema, insertUserSubmissionSchema, publicUserSchema } from "@shared/schema";
+import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema, insertUserSubmissionSchema, publicUserSchema, updateUserSchema } from "@shared/schema";
 
 // Helper to sanitize user data (remove email)
 const toPublicUser = (u: any) => (u ? publicUserSchema.parse(u) : undefined);
@@ -284,6 +284,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(toPublicUser(user));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch current user" });
+    }
+  });
+
+  app.put("/api/users/current", async (req, res) => {
+    try {
+      const currentUser = await storage.getCurrentUser(req);
+      if (!currentUser) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const updateData = updateUserSchema.parse(req.body);
+      const updatedUser = await storage.updateUser(currentUser.id, updateData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json(toPublicUser(updatedUser));
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid profile data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update profile" });
+      }
     }
   });
 
