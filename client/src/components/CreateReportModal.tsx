@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +29,26 @@ import { Plus, Bug, AlertTriangle, Code, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+// Validation schemas
+const vulnerabilitySchema = z.object({
+  title: z.string().min(10, "Title must be at least 10 characters").max(200, "Title must be less than 200 characters"),
+  description: z.string().min(50, "Description must be at least 50 characters").max(2000, "Description must be less than 2000 characters"),
+  severity: z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]),
+  category: z.enum(["injection", "authentication", "authorization", "xss", "csrf", "rce", "lfi", "other"]),
+  affectedSoftware: z.string().optional(),
+  versions: z.string().optional(),
+});
+
+const exploitSchema = z.object({
+  title: z.string().min(10, "Title must be at least 10 characters").max(200, "Title must be less than 200 characters"),
+  description: z.string().min(50, "Description must be at least 50 characters").max(2000, "Description must be less than 2000 characters"),
+  category: z.enum(["rce", "privilege-escalation", "information-disclosure", "buffer-overflow", "other"]),
+  platform: z.enum(["linux", "windows", "macos", "web", "mobile", "multi"]),
+  exploitType: z.enum(["remote", "local", "webapp", "dos", "poc"]),
+  exploitCode: z.string().min(20, "Exploit code must be at least 20 characters"),
+  targetCve: z.string().optional(),
+});
+
 interface CreateReportModalProps {
   trigger?: React.ReactNode;
 }
@@ -35,25 +59,30 @@ export default function CreateReportModal({ trigger }: CreateReportModalProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
-  // Vulnerability form data
-  const [vulnFormData, setVulnFormData] = useState({
-    title: "",
-    description: "",
-    severity: "",
-    category: "",
-    affectedSoftware: "",
-    versions: "",
+  // Form setup with react-hook-form
+  const vulnForm = useForm({
+    resolver: zodResolver(vulnerabilitySchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      severity: undefined,
+      category: undefined,
+      affectedSoftware: "",
+      versions: "",
+    },
   });
 
-  // Exploit form data
-  const [exploitFormData, setExploitFormData] = useState({
-    title: "",
-    description: "",
-    category: "",
-    platform: "",
-    exploitType: "",
-    exploitCode: "",
-    targetCve: "",
+  const exploitForm = useForm({
+    resolver: zodResolver(exploitSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      category: undefined,
+      platform: undefined,
+      exploitType: undefined,
+      exploitCode: "",
+      targetCve: "",
+    },
   });
 
   const { toast } = useToast();
@@ -83,23 +112,8 @@ export default function CreateReportModal({ trigger }: CreateReportModalProps) {
   });
 
   const resetForm = () => {
-    setVulnFormData({
-      title: "",
-      description: "",
-      severity: "",
-      category: "",
-      affectedSoftware: "",
-      versions: "",
-    });
-    setExploitFormData({
-      title: "",
-      description: "",
-      category: "",
-      platform: "",
-      exploitType: "",
-      exploitCode: "",
-      targetCve: "",
-    });
+    vulnForm.reset();
+    exploitForm.reset();
     setTags([]);
     setTagInput("");
     setActiveTab('vulnerability');
@@ -117,25 +131,16 @@ export default function CreateReportModal({ trigger }: CreateReportModalProps) {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = (data: any) => {
     const baseData = {
       type: activeTab,
       tags,
     };
 
-    if (activeTab === 'vulnerability') {
-      createSubmissionMutation.mutate({
-        ...baseData,
-        ...vulnFormData,
-      });
-    } else {
-      createSubmissionMutation.mutate({
-        ...baseData,
-        ...exploitFormData,
-      });
-    }
+    createSubmissionMutation.mutate({
+      ...baseData,
+      ...data,
+    });
   };
 
   const defaultTrigger = (
@@ -209,10 +214,10 @@ export default function CreateReportModal({ trigger }: CreateReportModalProps) {
                         <SelectValue placeholder="Select severity" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="critical">Critical</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="CRITICAL">Critical</SelectItem>
+                        <SelectItem value="HIGH">High</SelectItem>
+                        <SelectItem value="MEDIUM">Medium</SelectItem>
+                        <SelectItem value="LOW">Low</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
