@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,13 +29,15 @@ export default function SecurityNews() {
   };
 
   const handleShare = (article: NewsArticleType) => {
-    const shareText = `${article.title}\n\n${article.link || window.location.href}`;
+    // Generate link to article in our project
+    const projectUrl = `${window.location.origin}${window.location.pathname}?article=${article.id}`;
+    const shareText = `${article.title}\n\n${projectUrl}`;
     
     if (navigator.share) {
       navigator.share({
         title: article.title,
         text: `Check out this security news: ${article.title}`,
-        url: article.link || window.location.href
+        url: projectUrl
       }).catch(err => {
         console.log('Error sharing:', err);
         copyToClipboard(shareText);

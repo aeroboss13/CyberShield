@@ -5,16 +5,17 @@ import { Separator } from "@/components/ui/separator";
 import { ExternalLink, Clock, Globe, Share, MessageSquare, X, Download, Loader } from "lucide-react";
 import NewsComments from "./NewsComments";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { NewsArticleType, FullContentResponse } from "@/lib/types";
 
 interface NewsModalProps {
   article: NewsArticleType | null;
   isOpen: boolean;
   onClose: () => void;
+  shouldFocusComments?: boolean;
 }
 
-export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) {
+export default function NewsModal({ article, isOpen, onClose, shouldFocusComments = false }: NewsModalProps) {
   const [showFullContent, setShowFullContent] = useState(false);
   
   // Always render hooks consistently - derive values after hooks
@@ -32,6 +33,29 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
     enabled: Boolean(articleId && (shouldAutoFetch || showFullContent)),
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
   });
+  
+  // Auto-focus comments when modal opens with shouldFocusComments
+  useEffect(() => {
+    if (isOpen && shouldFocusComments && article) {
+      // Wait for modal to fully render
+      const timer = setTimeout(() => {
+        const commentsSection = document.querySelector('[data-testid="news-comments-section"]');
+        if (commentsSection) {
+          commentsSection.scrollIntoView({ behavior: 'smooth' });
+          
+          // Focus on the comment textarea after scrolling
+          setTimeout(() => {
+            const textarea = document.querySelector('[data-testid="textarea-new-comment"]') as HTMLTextAreaElement;
+            if (textarea) {
+              textarea.focus();
+            }
+          }, 300);
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, shouldFocusComments, article]);
   
   if (!article) return null;
 
@@ -69,13 +93,15 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
   const handleShare = () => {
     console.log('Share button clicked!', article.title);
     
-    const shareText = `${article.title}\n\n${article.link || window.location.href}`;
+    // Generate link to article in our project 
+    const projectUrl = `${window.location.origin}${window.location.pathname}?article=${article.id}`;
+    const shareText = `${article.title}\n\n${projectUrl}`;
     
     if (navigator.share) {
       navigator.share({
         title: article.title,
         text: `Check out this security news: ${article.title}`,
-        url: article.link || window.location.href
+        url: projectUrl
       }).catch(err => {
         console.log('Error sharing:', err);
         // Fallback to text selection
