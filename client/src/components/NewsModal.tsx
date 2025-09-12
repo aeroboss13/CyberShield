@@ -14,16 +14,16 @@ interface NewsModalProps {
 }
 
 export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) {
-  const [showFullContent, setShowFullContent] = useState(false);
-
   if (!article) return null;
+  
+  const [showFullContent, setShowFullContent] = useState(false);
   
   // Fetch full content when modal opens if content is short
   const shouldFetchFullContent = isOpen && article && 
     (article.content || article.summary).length < 300 && article.link;
   
   const { data: fullContent, isLoading: isLoadingFullContent } = useQuery<FullContentResponse>({
-    queryKey: ['/api/news', article?.id, 'full'],
+    queryKey: ['/api/news', article.id, 'full'],
     enabled: Boolean(shouldFetchFullContent || showFullContent),
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
   });
