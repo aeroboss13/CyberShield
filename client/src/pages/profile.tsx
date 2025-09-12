@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Trophy, Target, Shield, Users, MessageCircle, Heart, Calendar, MapPin, Link as LinkIcon, Edit } from 'lucide-react';
+import EditProfileModal from '@/components/EditProfileModal';
 import { PublicUser } from '@shared/schema';
 import { useState } from 'react';
 
@@ -95,15 +96,18 @@ export default function ProfilePage() {
             </Avatar>
             
             <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h1 className="text-3xl font-bold" data-testid="text-name">{currentUser.name}</h1>
-                  <p className="text-xl text-muted-foreground" data-testid="text-username">@{currentUser.username}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h1 className="text-3xl font-bold" data-testid="text-name">{currentUser.name}</h1>
+                    <p className="text-xl text-muted-foreground" data-testid="text-username">@{currentUser.username}</p>
+                  </div>
+                  <Badge variant="outline" className={`${reputationLevel.color} text-white`} data-testid="badge-reputation-level">
+                    <Trophy className="w-3 h-3 mr-1" />
+                    {reputationLevel.level}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className={`${reputationLevel.color} text-white`} data-testid="badge-reputation-level">
-                  <Trophy className="w-3 h-3 mr-1" />
-                  {reputationLevel.level}
-                </Badge>
+                <EditProfileModal user={currentUser} />
               </div>
 
               {currentUser.bio && (
