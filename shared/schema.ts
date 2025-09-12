@@ -206,11 +206,4 @@ export type NewsComment = typeof newsComments.$inferSelect;
 export type InsertPostComment = z.infer<typeof insertPostCommentSchema>;
 export type PostComment = typeof postComments.$inferSelect;
 
-export const insertNewsCommentSchema = createInsertSchema(newsComments).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-export type InsertNewsComment = z.infer<typeof insertNewsCommentSchema>;
-export type NewsComment = typeof newsComments.$inferSelect;
 export type NewsArticle = typeof newsArticles.$inferSelect;

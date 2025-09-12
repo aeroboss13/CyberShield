@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPostSchema, insertNewsCommentSchema } from "@shared/schema";
+import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema } from "@shared/schema";
 import { z } from "zod";
 import { MitreService } from "./services/mitre-service";
 import { CVEService } from "./services/cve-service";
@@ -338,6 +338,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       console.error('Delete comment error:', error);
+      res.status(500).json({ error: "Failed to delete comment" });
+    }
+  });
+
+  // Post Comments endpoints
+  app.get("/api/posts/:id/comments", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ error: "Invalid post ID" });
+      }
+      
+      const comments = await storage.getPostComments(postId);
+      res.json(comments);
+    } catch (error) {
+      console.error('Get post comments error:', error);
+      res.status(500).json({ error: "Failed to fetch comments" });
+    }
+  });
+
+  app.post("/api/posts/:id/comments", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ error: "Invalid post ID" });
+      }
+
+      // Get current user (for demo, use user ID 1)
+      const currentUser = await storage.getUser(1);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const commentData = insertPostCommentSchema.parse({
+        ...req.body,
+        postId,
+        userId: currentUser.id
+      });
+
+      const comment = await storage.createPostComment(commentData);
+      
+      // Return comment with user info
+      const commentWithUser = {
+        ...comment,
+        user: currentUser
+      };
+      
+      res.status(201).json(commentWithUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid comment data", details: error.errors });
+      } else {
+        console.error('Create post comment error:', error);
+        res.status(500).json({ error: "Failed to create comment" });
+      }
+    }
+  });
+
+  app.delete("/api/posts/comments/:commentId", async (req, res) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      if (isNaN(commentId)) {
+        return res.status(400).json({ error: "Invalid comment ID" });
+      }
+
+      await storage.deletePostComment(commentId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Delete post comment error:', error);
       res.status(500).json({ error: "Failed to delete comment" });
     }
   });
