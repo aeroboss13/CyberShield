@@ -10,19 +10,22 @@ import type { NewsArticleType } from "@/lib/types";
 export default function SecurityNews() {
   const [selectedArticle, setSelectedArticle] = useState<NewsArticleType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [shouldFocusComments, setShouldFocusComments] = useState(false);
 
   const { data: news, isLoading } = useQuery<NewsArticleType[]>({
     queryKey: ["/api/news"],
   });
 
-  const openArticle = (article: NewsArticleType) => {
+  const openArticle = (article: NewsArticleType, focusComments = false) => {
     setSelectedArticle(article);
     setIsModalOpen(true);
+    setShouldFocusComments(focusComments);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedArticle(null);
+    setShouldFocusComments(false);
   };
 
   const handleShare = (article: NewsArticleType) => {
@@ -76,9 +79,7 @@ export default function SecurityNews() {
 
   const handleDiscuss = (article: NewsArticleType) => {
     // Open article modal with comments section focused
-    openArticle(article);
-    // For now, just open the modal - comments system will be added
-    // TODO: Focus on comments section when implemented
+    openArticle(article, true);
   };
 
   const formatTimestamp = (date: Date) => {
@@ -260,6 +261,7 @@ export default function SecurityNews() {
         article={selectedArticle}
         isOpen={isModalOpen}
         onClose={closeModal}
+        shouldFocusComments={shouldFocusComments}
       />
     </div>
   );

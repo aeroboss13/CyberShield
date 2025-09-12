@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, Clock, Globe, Share, MessageSquare, X, Download, Loader } from "lucide-react";
+import NewsComments from "./NewsComments";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { NewsArticleType, FullContentResponse } from "@/lib/types";
@@ -124,11 +125,19 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
   const handleDiscuss = () => {
     console.log('Discuss button clicked!', article.title);
     
-    // Create a discussion post about this article
-    const discussionContent = `📰 **Security News Discussion**\n\n**${article.title}**\n\n${(article.content || article.summary).substring(0, 200)}...\n\nRead more: ${article.link}\n\n#${article.tags.join(' #')}`;
-    
-    copyToClipboardFallback(discussionContent);
-    alert('💬 Discussion template ready! You can now paste it as a new post in the social feed.');
+    // Scroll to comments section
+    const commentsSection = document.querySelector('[data-testid="news-comments-section"]');
+    if (commentsSection) {
+      commentsSection.scrollIntoView({ behavior: 'smooth' });
+      
+      // Focus on the comment textarea after scrolling
+      setTimeout(() => {
+        const textarea = document.querySelector('[data-testid="textarea-new-comment"]') as HTMLTextAreaElement;
+        if (textarea) {
+          textarea.focus();
+        }
+      }, 300);
+    }
   };
 
   return (
@@ -322,6 +331,14 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
               <ExternalLink className="w-4 h-4 mr-2" />
               Search Original
             </Button>
+          </div>
+
+          {/* Comments Section */}
+          <div data-testid="news-comments-section">
+            <NewsComments 
+              articleId={article.id} 
+              articleTitle={article.title}
+            />
           </div>
         </div>
       </DialogContent>
