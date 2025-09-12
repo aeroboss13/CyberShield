@@ -102,13 +102,13 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
             </div>
             
             <div className="mb-6">
-              {/* Show the fullest available content */}
-              <div className="text-white leading-relaxed mb-6 text-base">
+              {/* Always show the fullest available content */}
+              <div className="text-white leading-relaxed mb-6 text-base whitespace-pre-wrap">
                 {article.content || article.summary}
               </div>
               
-              {/* RSS Content Notice - only show for truncated content */}
-              {((article.content || article.summary).includes('[...]') || (article.content || article.summary).length < 200) && (
+              {/* RSS Content Notice - only show for very short content */}
+              {(article.content || article.summary).length < 100 && (
                 <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600 mb-4">
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 mt-0.5">
@@ -117,7 +117,7 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
                     <div>
                       <p className="cyber-text-muted text-sm font-medium mb-2">RSS Feed Extract</p>
                       <p className="cyber-text-muted text-sm">
-                        This content appears to be truncated from the RSS feed. 
+                        This content appears to be very short from the RSS feed. 
                         For the complete article with full details and analysis, 
                         click "Read Full Article" below.
                       </p>
