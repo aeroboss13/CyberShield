@@ -150,7 +150,7 @@ export default function MitreMatrix() {
                   <Button 
                     variant="ghost" 
                     className="w-full cyber-text-blue hover:cyber-bg-surface-light"
-                    onClick={() => setSelectedTechnique(tactic.tacticId)}
+                    onClick={() => setSelectedTechnique(tactic.techniques[4]?.techniqueId || tactic.techniques[0]?.techniqueId)}
                   >
                     View all {tactic.techniques.length} techniques
                   </Button>
