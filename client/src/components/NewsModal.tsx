@@ -95,28 +95,31 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
 
         <div className="space-y-6">
           {/* Full Content Section */}
-          <div className="cyber-bg-slate rounded-lg p-6 border border-slate-700">
+          <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-6 border border-slate-300 dark:border-slate-600">
             <div className="flex items-center space-x-2 mb-4">
-              <Globe className="w-5 h-5 cyber-text-blue" />
-              <span className="font-medium text-white">Article Details</span>
+              <Globe className="w-5 h-5 text-blue-500" />
+              <span className="font-medium text-slate-900 dark:text-slate-100">Article Details</span>
             </div>
             
             <div className="mb-6">
               {/* Always show the fullest available content */}
-              <div className="text-white leading-relaxed mb-6 text-base whitespace-pre-wrap">
+              <div 
+                className="text-slate-900 dark:text-slate-100 leading-relaxed mb-6 text-base whitespace-pre-wrap"
+                data-testid="text-article-content"
+              >
                 {article.content || article.summary}
               </div>
               
               {/* RSS Content Notice - only show for very short content */}
               {(article.content || article.summary).length < 100 && (
-                <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600 mb-4">
+                <div className="bg-slate-200 dark:bg-slate-700 rounded-lg p-4 border border-slate-300 dark:border-slate-600 mb-4">
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 mt-0.5">
                       <span className="text-lg">📰</span>
                     </div>
                     <div>
-                      <p className="cyber-text-muted text-sm font-medium mb-2">RSS Feed Extract</p>
-                      <p className="cyber-text-muted text-sm">
+                      <p className="text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">RSS Feed Extract</p>
+                      <p className="text-slate-600 dark:text-slate-400 text-sm">
                         This content appears to be very short from the RSS feed. 
                         For the complete article with full details and analysis, 
                         click "Read Full Article" below.
@@ -126,26 +129,26 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
                 </div>
               )}
               
-              <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600">
-                <p className="cyber-text-muted text-sm mb-3 font-medium">
+              <div className="bg-slate-200 dark:bg-slate-700 rounded-lg p-4 border border-slate-300 dark:border-slate-600">
+                <p className="text-slate-700 dark:text-slate-300 text-sm mb-3 font-medium">
                   Article Metadata
                 </p>
-                <div className="grid grid-cols-2 gap-3 text-xs cyber-text-dim">
+                <div className="grid grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-400">
                   <div className="flex items-center space-x-2">
                     <span>Source:</span>
-                    <span className="font-mono text-white">{article.source}</span>
+                    <span className="font-mono text-slate-900 dark:text-slate-100">{article.source}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span>Published:</span>
-                    <span className="font-mono text-white">{new Date(article.publishedAt).toLocaleString()}</span>
+                    <span className="font-mono text-slate-900 dark:text-slate-100">{new Date(article.publishedAt).toLocaleString()}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span>Content Length:</span>
-                    <span className="font-mono text-white">{(article.content || article.summary).length} chars</span>
+                    <span className="font-mono text-slate-900 dark:text-slate-100">{(article.content || article.summary).length} chars</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span>Article ID:</span>
-                    <span className="font-mono text-white">#{article.id}</span>
+                    <span className="font-mono text-slate-900 dark:text-slate-100">#{article.id}</span>
                   </div>
                 </div>
               </div>
