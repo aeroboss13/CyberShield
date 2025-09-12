@@ -11,6 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Plus, 
   Search, 
@@ -22,7 +29,8 @@ import {
   Clock,
   User,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Eye
 } from "lucide-react";
 import CreateReportModal from "@/components/CreateReportModal";
 
@@ -46,6 +54,8 @@ export default function UserReports() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [selectedSubmission, setSelectedSubmission] = useState<UserSubmission | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const { data: submissions = [], isLoading } = useQuery<UserSubmission[]>({
     queryKey: ["/api/submissions"]
@@ -254,6 +264,10 @@ export default function UserReports() {
                     variant="ghost" 
                     size="sm"
                     className="text-blue-400 hover:text-blue-300"
+                    onClick={() => {
+                      setSelectedSubmission(submission);
+                      setIsDetailModalOpen(true);
+                    }}
                     data-testid={`button-view-report-${submission.id}`}
                   >
                     View Details
@@ -265,6 +279,93 @@ export default function UserReports() {
           ))
         )}
       </div>
+
+      {/* Detail Modal */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="cyber-bg-dark border-cyber-blue max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center">
+              {selectedSubmission?.type === 'vulnerability' ? (
+                <Bug className="w-5 h-5 mr-2 text-red-400" />
+              ) : (
+                <AlertTriangle className="w-5 h-5 mr-2 text-orange-400" />
+              )}
+              {selectedSubmission?.title}
+            </DialogTitle>
+            <DialogDescription className="cyber-text-dim">
+              Submitted by {selectedSubmission?.user.name} (@{selectedSubmission?.user.username})
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedSubmission && (
+            <div className="space-y-6">
+              {/* Status and Info Bar */}
+              <div className="flex items-center justify-between p-4 cyber-bg-surface rounded-lg border border-gray-700">
+                <div className="flex items-center space-x-4">
+                  <Badge className={getStatusColor(selectedSubmission.status)}>
+                    {getStatusIcon(selectedSubmission.status)}
+                    <span className="ml-1 capitalize">{selectedSubmission.status}</span>
+                  </Badge>
+                  {selectedSubmission.verified && (
+                    <Badge className="bg-blue-500 text-white">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Verified
+                    </Badge>
+                  )}
+                  {selectedSubmission.severity && (
+                    <Badge className={getSeverityColor(selectedSubmission.severity)}>
+                      {selectedSubmission.severity.toUpperCase()}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center text-sm cyber-text-dim">
+                  <Calendar className="w-4 h-4 mr-1" />
+                  {new Date(selectedSubmission.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">Description</h3>
+                <div className="cyber-bg-surface p-4 rounded-lg border border-gray-700">
+                  <p className="text-gray-300 whitespace-pre-wrap leading-relaxed">
+                    {selectedSubmission.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Additional Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-white mb-2">Type</h4>
+                  <Badge variant="outline" className="text-blue-400 border-blue-400">
+                    {selectedSubmission.type === 'vulnerability' ? 'Vulnerability Report' : 'Exploit Code'}
+                  </Badge>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-white mb-2">Submitter</h4>
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-300">{selectedSubmission.user.name}</span>
+                    <span className="text-gray-500">@{selectedSubmission.user.username}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDetailModalOpen(false)}
+                  className="cyber-button-ghost"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
