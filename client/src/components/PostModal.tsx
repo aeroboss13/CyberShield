@@ -29,19 +29,10 @@ export default function PostModal({ trigger }: PostModalProps) {
 
   const createPostMutation = useMutation({
     mutationFn: async (newPost: { content: string; tags: string[] }) => {
-      const response = await fetch("/api/posts", {
+      return apiRequest("/api/posts", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(newPost),
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create post');
-      }
-      
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });

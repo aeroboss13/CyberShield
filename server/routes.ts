@@ -466,7 +466,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const userStats = await storage.getUserStats(userId);
-      res.json(userStats);
+      // Sanitize user data to prevent email exposure
+      res.json(toPublicUser(userStats));
     } catch (error) {
       console.error('Get user stats error:', error);
       res.status(500).json({ error: "Failed to fetch user statistics" });
