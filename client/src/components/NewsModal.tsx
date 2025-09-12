@@ -103,27 +103,28 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
             
             <div className="mb-6">
               {/* Show the fullest available content */}
-              <div className="text-white leading-relaxed mb-4 text-base">
+              <div className="text-white leading-relaxed mb-6 text-base">
                 {article.content || article.summary}
               </div>
               
-              {/* RSS Content Notice */}
-              <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600 mb-4">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <span className="text-lg">📰</span>
-                  </div>
-                  <div>
-                    <p className="cyber-text-muted text-sm font-medium mb-2">RSS Feed Extract</p>
-                    <p className="cyber-text-muted text-sm">
-                      This content was extracted from RSS feeds and may be truncated. 
-                      RSS sources typically provide summaries rather than full articles. 
-                      For complete content with images, detailed analysis, and full text, 
-                      click "Read Full Article" below to visit the original source.
-                    </p>
+              {/* RSS Content Notice - only show for truncated content */}
+              {((article.content || article.summary).includes('[...]') || (article.content || article.summary).length < 200) && (
+                <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600 mb-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <span className="text-lg">📰</span>
+                    </div>
+                    <div>
+                      <p className="cyber-text-muted text-sm font-medium mb-2">RSS Feed Extract</p>
+                      <p className="cyber-text-muted text-sm">
+                        This content appears to be truncated from the RSS feed. 
+                        For the complete article with full details and analysis, 
+                        click "Read Full Article" below.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
               
               <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600">
                 <p className="cyber-text-muted text-sm mb-3 font-medium">
