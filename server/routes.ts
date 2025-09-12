@@ -7,6 +7,7 @@ import { MitreService } from "./services/mitre-service";
 import { CVEService } from "./services/cve-service";
 import { ExploitService } from "./services/exploit-service";
 import { NewsService } from "./services/news-service";
+import { newsRouter } from "./routes/news.js";
 import { ingestionPipeline } from "./services/ingestion-pipeline";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -15,6 +16,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const cveService = CVEService.getInstance(storage);
   const exploitService = ExploitService.getInstance();
   const newsService = NewsService.getInstance();
+
+  // News routes with content extraction
+  app.use("/api/news", newsRouter);
 
   // Posts endpoints
   app.get("/api/posts", async (req, res) => {
@@ -193,29 +197,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // News endpoints - now using real security news aggregation
-  app.get("/api/news", async (req, res) => {
-    try {
-      const news = await newsService.getAllNews();
-      res.json(news);
-    } catch (error) {
-      console.error('News API error:', error);
-      res.status(500).json({ error: "Failed to fetch security news" });
-    }
-  });
-
-  app.get("/api/news/:id", async (req, res) => {
-    try {
-      const article = await newsService.getNewsById(parseInt(req.params.id));
-      if (!article) {
-        return res.status(404).json({ error: "News article not found" });
-      }
-      res.json(article);
-    } catch (error) {
-      console.error('News details error:', error);
-      res.status(500).json({ error: "Failed to fetch news article" });
-    }
-  });
 
   // Ingestion pipeline endpoints
   app.post("/api/ingest/run", async (req, res) => {

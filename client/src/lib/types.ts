@@ -73,4 +73,15 @@ export interface NewsArticleType {
   publishedAt: Date;
 }
 
+export interface FullContentResponse {
+  success: boolean;
+  articleId: number;
+  sourceUrl: string;
+  title: string;
+  content: string;
+  extractedAt: string;
+  originalSummary: string;
+  error?: string;
+}
+
 export type TabType = 'feed' | 'mitre' | 'cve' | 'news';

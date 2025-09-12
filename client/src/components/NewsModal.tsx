@@ -2,8 +2,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, Clock, Globe, Share, MessageSquare, X } from "lucide-react";
-import type { NewsArticleType } from "@/lib/types";
+import { ExternalLink, Clock, Globe, Share, MessageSquare, X, Download, Loader } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import type { NewsArticleType, FullContentResponse } from "@/lib/types";
 
 interface NewsModalProps {
   article: NewsArticleType | null;
@@ -12,7 +14,19 @@ interface NewsModalProps {
 }
 
 export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) {
+  const [showFullContent, setShowFullContent] = useState(false);
+
   if (!article) return null;
+  
+  // Fetch full content when modal opens if content is short
+  const shouldFetchFullContent = isOpen && article && 
+    (article.content || article.summary).length < 300 && article.link;
+  
+  const { data: fullContent, isLoading: isLoadingFullContent } = useQuery<FullContentResponse>({
+    queryKey: ['/api/news', article?.id, 'full'],
+    enabled: Boolean(shouldFetchFullContent || showFullContent),
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours
+  });
 
   const formatTimestamp = (date: Date) => {
     const now = new Date();
@@ -102,29 +116,61 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
             </div>
             
             <div className="mb-6">
-              {/* Always show the fullest available content */}
-              <div 
-                className="text-slate-900 dark:text-slate-100 leading-relaxed mb-6 text-base whitespace-pre-wrap"
-                data-testid="text-article-content"
-              >
-                {article.content || article.summary}
-              </div>
+              {/* Show loading state while fetching full content */}
+              {(isLoadingFullContent && shouldFetchFullContent) ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader className="w-6 h-6 animate-spin text-blue-500 mr-2" />
+                  <span className="text-slate-600 dark:text-slate-400">Loading full article...</span>
+                </div>
+              ) : (
+                <div 
+                  className="text-slate-900 dark:text-slate-100 leading-relaxed mb-6 text-base whitespace-pre-wrap"
+                  data-testid="text-article-content"
+                >
+                  {/* Display full content if available, otherwise use original */}
+                  {(fullContent?.success ? fullContent.content : null) || article.content || article.summary}
+                </div>
+              )}
               
-              {/* RSS Content Notice - only show for very short content */}
-              {(article.content || article.summary).length < 100 && (
-                <div className="bg-slate-200 dark:bg-slate-700 rounded-lg p-4 border border-slate-300 dark:border-slate-600 mb-4">
+              {/* Show full content button if not already loaded and content is truncated */}
+              {!fullContent && !showFullContent && article.link && 
+               (article.content || article.summary).length < 500 && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 mb-4">
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 mt-0.5">
-                      <span className="text-lg">📰</span>
+                      <Download className="w-5 h-5 text-blue-500" />
                     </div>
-                    <div>
-                      <p className="text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">RSS Feed Extract</p>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">
-                        This content appears to be very short from the RSS feed. 
-                        For the complete article with full details and analysis, 
-                        click "Read Full Article" below.
+                    <div className="flex-1">
+                      <p className="text-blue-900 dark:text-blue-100 text-sm font-medium mb-2">Limited Content Available</p>
+                      <p className="text-blue-700 dark:text-blue-300 text-sm mb-3">
+                        This appears to be truncated content from the RSS feed. 
+                        Load the full article with complete details and analysis.
                       </p>
+                      <Button
+                        size="sm"
+                        onClick={() => setShowFullContent(true)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                        data-testid="button-load-full-content"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Load Full Article
+                      </Button>
                     </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Success message when full content is loaded */}
+              {fullContent?.success && (
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <p className="text-green-800 dark:text-green-200 text-sm font-medium">
+                      Full article content loaded • {fullContent.content.length} characters
+                    </p>
+                    <span className="text-green-600 dark:text-green-400 text-xs">
+                      Extracted {new Date(fullContent.extractedAt).toLocaleTimeString()}
+                    </span>
                   </div>
                 </div>
               )}
