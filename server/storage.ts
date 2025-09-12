@@ -1,4 +1,4 @@
-import { users, posts, cveEntries, exploits, mitreAttack, newsArticles, newsComments, postComments, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type Exploit, type InsertExploit, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews, type NewsComment, type InsertNewsComment, type PostComment, type InsertPostComment } from "@shared/schema";
+import { users, posts, cveEntries, exploits, mitreAttack, newsArticles, newsComments, postComments, userSubmissions, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type Exploit, type InsertExploit, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews, type NewsComment, type InsertNewsComment, type PostComment, type InsertPostComment, type UserSubmission, type InsertUserSubmission } from "@shared/schema";
 
 interface CVESearchParams {
   search?: string;
@@ -57,6 +57,16 @@ export interface IStorage {
   createPostComment(comment: InsertPostComment): Promise<PostComment>;
   deletePostComment(id: number): Promise<void>;
   getPostCommentById(id: number): Promise<PostComment | undefined>;
+  
+  // User Submissions
+  createUserSubmission(submission: InsertUserSubmission): Promise<UserSubmission>;
+  getUserSubmissions(userId: number): Promise<(UserSubmission & { user: User })[]>;
+  getAllSubmissions(): Promise<(UserSubmission & { user: User })[]>;
+  updateSubmissionStatus(id: number, status: string, reviewNotes?: string, reviewerId?: number): Promise<void>;
+  
+  // User Statistics
+  updateUserStats(userId: number, field: string, delta: number): Promise<void>;
+  getUserStats(userId: number): Promise<User>;
 }
 
 export class MemStorage implements IStorage {
@@ -68,7 +78,9 @@ export class MemStorage implements IStorage {
   private news: Map<number, NewsArticle>;
   private newsComments: Map<number, NewsComment>;
   private postComments: Map<number, PostComment>;
+  private userSubmissions: Map<number, UserSubmission>;
   private currentUserId: number;
+  private currentSubmissionId: number;
   private currentPostId: number;
   private currentExploitId: number;
   private currentNewsId: number;
@@ -83,7 +95,9 @@ export class MemStorage implements IStorage {
     this.news = new Map();
     this.newsComments = new Map();
     this.postComments = new Map();
+    this.userSubmissions = new Map();
     this.currentUserId = 1;
+    this.currentSubmissionId = 1;
     this.currentPostId = 1;
     this.currentExploitId = 1;
     this.currentNewsId = 1;
@@ -102,8 +116,16 @@ export class MemStorage implements IStorage {
         name: "John Smith",
         role: "Senior Security Analyst",
         avatar: null,
+        bio: null,
+        location: null,
+        website: null,
         reputation: 12500,
         postCount: 847,
+        likesReceived: 2340,
+        commentsCount: 156,
+        cveSubmissions: 23,
+        exploitSubmissions: 8,
+        verifiedSubmissions: 18,
         createdAt: new Date()
       },
       {
@@ -113,8 +135,16 @@ export class MemStorage implements IStorage {
         name: "Mike Anderson",
         role: "Threat Hunter",
         avatar: null,
+        bio: null,
+        location: null,
+        website: null,
         reputation: 8900,
         postCount: 423,
+        likesReceived: 1856,
+        commentsCount: 89,
+        cveSubmissions: 12,
+        exploitSubmissions: 15,
+        verifiedSubmissions: 11,
         createdAt: new Date()
       },
       {
@@ -124,8 +154,16 @@ export class MemStorage implements IStorage {
         name: "Sarah Kim",
         role: "Incident Response Specialist",
         avatar: null,
+        bio: null,
+        location: null,
+        website: null,
         reputation: 15200,
         postCount: 672,
+        likesReceived: 3120,
+        commentsCount: 234,
+        cveSubmissions: 34,
+        exploitSubmissions: 19,
+        verifiedSubmissions: 28,
         createdAt: new Date()
       }
     ];
@@ -174,7 +212,8 @@ export class MemStorage implements IStorage {
         updatedDate: "2024-01-20",
         tags: ["rce", "cms", "fileupload", "wordpress"],
         activelyExploited: true,
-        edbId: "51234"
+        edbId: "51234",
+        references: null
       },
       {
         id: 2,
@@ -188,7 +227,8 @@ export class MemStorage implements IStorage {
         updatedDate: "2024-01-18",
         tags: ["sqli", "ecommerce", "magento"],
         activelyExploited: false,
-        edbId: null
+        edbId: null,
+        references: null
       },
       {
         id: 3,
@@ -202,7 +242,8 @@ export class MemStorage implements IStorage {
         updatedDate: "2024-01-15",
         tags: ["auth", "bypass", "framework", "laravel"],
         activelyExploited: true,
-        edbId: "51445"
+        edbId: "51445",
+        references: null
       },
       {
         id: 4,
@@ -216,7 +257,8 @@ export class MemStorage implements IStorage {
         updatedDate: "2024-01-12",
         tags: ["xss", "cms", "drupal", "stored"],
         activelyExploited: false,
-        edbId: null
+        edbId: null,
+        references: null
       },
       {
         id: 5,
@@ -230,7 +272,8 @@ export class MemStorage implements IStorage {
         updatedDate: "2024-01-25",
         tags: ["traversal", "filemanager", "disclosure"],
         activelyExploited: true,
-        edbId: "51567"
+        edbId: "51567",
+        references: null
       },
       {
         id: 6,
@@ -244,7 +287,8 @@ export class MemStorage implements IStorage {
         updatedDate: "2022-12-15",
         tags: ["rce", "code-injection", "langford"],
         activelyExploited: true,
-        edbId: "52410"
+        edbId: "52410",
+        references: null
       }
     ];
 
@@ -302,6 +346,7 @@ export class MemStorage implements IStorage {
         source: "ThreatPost",
         imageUrl: "https://images.unsplash.com/photo-1563206767-5b18f218e8de?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200",
         tags: ["apt", "zeroday", "infrastructure"],
+        link: null,
         publishedAt: new Date(Date.now() - 3 * 60 * 60 * 1000)
       },
       {
@@ -312,6 +357,7 @@ export class MemStorage implements IStorage {
         source: "Dark Reading",
         imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200",
         tags: ["ransomware", "ai", "evasion"],
+        link: null,
         publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000)
       },
       {
@@ -322,6 +368,7 @@ export class MemStorage implements IStorage {
         source: "SecurityWeek",
         imageUrl: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200",
         tags: ["cisa", "directive", "federal"],
+        link: null,
         publishedAt: new Date(Date.now() - 8 * 60 * 60 * 1000)
       }
     ];
@@ -343,10 +390,18 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id, 
-      reputation: 0, 
-      postCount: 0, 
+      bio: insertUser.bio ?? null,
+      location: insertUser.location ?? null,
+      website: insertUser.website ?? null,
+      reputation: 0,
+      postCount: 0,
+      likesReceived: 0,
+      commentsCount: 0,
+      cveSubmissions: 0,
+      exploitSubmissions: 0,
+      verifiedSubmissions: 0,
       createdAt: new Date(),
-      avatar: insertUser.avatar || null
+      avatar: insertUser.avatar ?? null
     };
     this.users.set(id, user);
     return user;
@@ -475,7 +530,8 @@ export class MemStorage implements IStorage {
         publishedDate: cve.publishedDate ?? existingCVE.publishedDate,
         updatedDate: cve.updatedDate ?? existingCVE.updatedDate,
         activelyExploited: cve.activelyExploited ?? existingCVE.activelyExploited,
-        edbId: cve.edbId ?? existingCVE.edbId
+        edbId: cve.edbId ?? existingCVE.edbId,
+        references: cve.references ?? existingCVE.references ?? null
       };
       this.cves.set(cve.cveId, updatedCVE);
       return updatedCVE;
@@ -491,7 +547,8 @@ export class MemStorage implements IStorage {
         publishedDate: cve.publishedDate ?? null,
         updatedDate: cve.updatedDate ?? null,
         activelyExploited: cve.activelyExploited ?? false,
-        edbId: cve.edbId ?? null
+        edbId: cve.edbId ?? null,
+        references: cve.references ?? null
       };
       this.cves.set(cve.cveId, newCVE);
       return newCVE;
@@ -682,6 +739,104 @@ export class MemStorage implements IStorage {
 
   async getPostCommentById(id: number): Promise<PostComment | undefined> {
     return this.postComments.get(id);
+  }
+
+  // User Submissions
+  async createUserSubmission(submission: InsertUserSubmission): Promise<UserSubmission> {
+    const newSubmission: UserSubmission = {
+      id: this.currentSubmissionId++,
+      ...submission,
+      tags: submission.tags ?? null,
+      cvssScore: submission.cvssScore ?? null,
+      severity: submission.severity ?? null,
+      platform: submission.platform ?? null,
+      exploitType: submission.exploitType ?? null,
+      exploitCode: submission.exploitCode ?? null,
+      affectedSoftware: submission.affectedSoftware ?? null,
+      versions: submission.versions ?? null,
+      targetCve: submission.targetCve ?? null,
+      status: 'pending',
+      verified: false,
+      reviewNotes: null,
+      reviewedBy: null,
+      reviewedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.userSubmissions.set(newSubmission.id, newSubmission);
+    
+    // Update user stats
+    if (submission.type === 'vulnerability') {
+      this.updateUserStats(submission.userId, 'cveSubmissions', 1);
+    } else if (submission.type === 'exploit') {
+      this.updateUserStats(submission.userId, 'exploitSubmissions', 1);
+    }
+    
+    return newSubmission;
+  }
+
+  async getUserSubmissions(userId: number): Promise<(UserSubmission & { user: User })[]> {
+    const submissions = Array.from(this.userSubmissions.values())
+      .filter(submission => submission.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+    
+    return submissions.map(submission => {
+      const user = this.users.get(submission.userId);
+      return {
+        ...submission,
+        user: user!
+      };
+    });
+  }
+
+  async getAllSubmissions(): Promise<(UserSubmission & { user: User })[]> {
+    const submissions = Array.from(this.userSubmissions.values())
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+    
+    return submissions.map(submission => {
+      const user = this.users.get(submission.userId);
+      return {
+        ...submission,
+        user: user!
+      };
+    });
+  }
+
+  async updateSubmissionStatus(id: number, status: string, reviewNotes?: string, reviewerId?: number): Promise<void> {
+    const submission = this.userSubmissions.get(id);
+    if (submission) {
+      submission.status = status;
+      submission.reviewNotes = reviewNotes ?? null;
+      submission.reviewedBy = reviewerId ?? null;
+      submission.reviewedAt = new Date();
+      submission.updatedAt = new Date();
+      
+      if (status === 'approved') {
+        submission.verified = true;
+        // Update user verified submissions count
+        this.updateUserStats(submission.userId, 'verifiedSubmissions', 1);
+      }
+      
+      this.userSubmissions.set(id, submission);
+    }
+  }
+
+  // User Statistics
+  async updateUserStats(userId: number, field: string, delta: number): Promise<void> {
+    const user = this.users.get(userId);
+    if (user && field in user) {
+      const currentValue = user[field as keyof User] as number;
+      (user as any)[field] = Math.max(0, (currentValue || 0) + delta);
+      this.users.set(userId, user);
+    }
+  }
+
+  async getUserStats(userId: number): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error(`User with id ${userId} not found`);
+    }
+    return user;
   }
 }
 

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema } from "@shared/schema";
+import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema, insertUserSubmissionSchema } from "@shared/schema";
 import { z } from "zod";
 import { MitreService } from "./services/mitre-service";
 import { CVEService } from "./services/cve-service";
@@ -438,6 +438,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Delete post comment error:', error);
       res.status(500).json({ error: "Failed to delete comment" });
+    }
+  });
+
+  // User Statistics endpoints
+  app.get("/api/users/:id/stats", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      const userStats = await storage.getUserStats(userId);
+      res.json(userStats);
+    } catch (error) {
+      console.error('Get user stats error:', error);
+      res.status(500).json({ error: "Failed to fetch user statistics" });
+    }
+  });
+
+  // User Submissions endpoints
+  app.post("/api/submissions", async (req, res) => {
+    try {
+      // Get current user (for demo, use user ID 1)
+      const currentUser = await storage.getUser(1);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const submissionData = insertUserSubmissionSchema.parse({
+        ...req.body,
+        userId: currentUser.id
+      });
+
+      const submission = await storage.createUserSubmission(submissionData);
+      
+      // Return submission with user info
+      const submissionWithUser = {
+        ...submission,
+        user: currentUser
+      };
+      
+      res.status(201).json(submissionWithUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid submission data", details: error.errors });
+      } else {
+        console.error('Create submission error:', error);
+        res.status(500).json({ error: "Failed to create submission" });
+      }
+    }
+  });
+
+  app.get("/api/submissions", async (req, res) => {
+    try {
+      const submissions = await storage.getAllSubmissions();
+      res.json(submissions);
+    } catch (error) {
+      console.error('Get submissions error:', error);
+      res.status(500).json({ error: "Failed to fetch submissions" });
+    }
+  });
+
+  app.get("/api/users/:id/submissions", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      const submissions = await storage.getUserSubmissions(userId);
+      res.json(submissions);
+    } catch (error) {
+      console.error('Get user submissions error:', error);
+      res.status(500).json({ error: "Failed to fetch user submissions" });
     }
   });
 
