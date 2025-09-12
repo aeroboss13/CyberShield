@@ -92,6 +92,16 @@ export const newsComments = pgTable("news_comments", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Comments for posts
+export const postComments = pgTable("post_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
 // Relations
 export const newsArticleRelations = relations(newsArticles, ({ many }) => ({
   comments: many(newsComments)
@@ -108,8 +118,29 @@ export const newsCommentRelations = relations(newsComments, ({ one }) => ({
   })
 }));
 
+// Post relations
+export const postRelations = relations(posts, ({ many, one }) => ({
+  comments: many(postComments),
+  user: one(users, {
+    fields: [posts.userId],
+    references: [users.id]
+  })
+}));
+
+export const postCommentRelations = relations(postComments, ({ one }) => ({
+  post: one(posts, {
+    fields: [postComments.postId],
+    references: [posts.id]
+  }),
+  user: one(users, {
+    fields: [postComments.userId],
+    references: [users.id]
+  })
+}));
+
 export const userNewsRelations = relations(users, ({ many }) => ({
-  newsComments: many(newsComments)
+  newsComments: many(newsComments),
+  postComments: many(postComments)
 }));
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -146,6 +177,18 @@ export const insertNewsSchema = createInsertSchema(newsArticles).omit({
   publishedAt: true
 });
 
+export const insertNewsCommentSchema = createInsertSchema(newsComments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertPostCommentSchema = createInsertSchema(postComments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
@@ -158,6 +201,10 @@ export type InsertExploit = z.infer<typeof insertExploitSchema>;
 export type Exploit = typeof exploits.$inferSelect;
 export type InsertNews = z.infer<typeof insertNewsSchema>;
 export type News = typeof newsArticles.$inferSelect;
+export type InsertNewsComment = z.infer<typeof insertNewsCommentSchema>;
+export type NewsComment = typeof newsComments.$inferSelect;
+export type InsertPostComment = z.infer<typeof insertPostCommentSchema>;
+export type PostComment = typeof postComments.$inferSelect;
 
 export const insertNewsCommentSchema = createInsertSchema(newsComments).omit({
   id: true,
