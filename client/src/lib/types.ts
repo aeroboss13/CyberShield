@@ -68,6 +68,7 @@ export interface NewsArticleType {
   content: string | null;
   source: string;
   imageUrl: string | null;
+  link: string | null; // Original article URL
   tags: string[];
   publishedAt: Date;
 }

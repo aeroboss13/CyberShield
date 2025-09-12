@@ -76,6 +76,7 @@ export const newsArticles = pgTable("news_articles", {
   content: text("content"),
   source: text("source").notNull(),
   imageUrl: text("image_url"),
+  link: text("link"), // Original article URL
   tags: text("tags").array().default([]),
   publishedAt: timestamp("published_at").defaultNow()
 });

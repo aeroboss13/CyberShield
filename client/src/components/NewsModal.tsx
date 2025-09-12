@@ -102,42 +102,49 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
             </div>
             
             <div className="mb-6">
-              {/* Always show the fullest available content */}
+              {/* Show the fullest available content */}
               <div className="text-white leading-relaxed mb-4 text-base">
-                {article.content && article.content.length > article.summary.length ? 
-                  article.content : 
-                  article.summary}
+                {article.content || article.summary}
               </div>
               
-              {/* Show additional context if content is longer than summary */}
-              {article.content && article.content.length > article.summary.length && (
-                <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600 mb-4">
-                  <p className="cyber-text-muted text-sm">
-                    📄 Full content extracted from RSS feed
-                  </p>
+              {/* RSS Content Notice */}
+              <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600 mb-4">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <span className="text-lg">📰</span>
+                  </div>
+                  <div>
+                    <p className="cyber-text-muted text-sm font-medium mb-2">RSS Feed Extract</p>
+                    <p className="cyber-text-muted text-sm">
+                      This content was extracted from RSS feeds and may be truncated. 
+                      RSS sources typically provide summaries rather than full articles. 
+                      For complete content with images, detailed analysis, and full text, 
+                      click "Read Full Article" below to visit the original source.
+                    </p>
+                  </div>
                 </div>
-              )}
+              </div>
               
               <div className="cyber-bg-surface rounded-lg p-4 border border-slate-600">
-                <p className="cyber-text-muted text-sm mb-3">
-                  This summary was aggregated from RSS feeds. For the complete article with full details, images, and analysis, visit the original source.
+                <p className="cyber-text-muted text-sm mb-3 font-medium">
+                  Article Metadata
                 </p>
                 <div className="grid grid-cols-2 gap-3 text-xs cyber-text-dim">
                   <div className="flex items-center space-x-2">
                     <span>Source:</span>
-                    <span className="font-mono">{article.source}</span>
+                    <span className="font-mono text-white">{article.source}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span>Published:</span>
-                    <span className="font-mono">{new Date(article.publishedAt).toLocaleString()}</span>
+                    <span className="font-mono text-white">{new Date(article.publishedAt).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span>Content Length:</span>
+                    <span className="font-mono text-white">{(article.content || article.summary).length} chars</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span>Article ID:</span>
-                    <span className="font-mono">#{article.id}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span>Category:</span>
-                    <span className="font-mono">Security News</span>
+                    <span className="font-mono text-white">#{article.id}</span>
                   </div>
                 </div>
               </div>
@@ -145,10 +152,17 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
             
             <Button
               className="cyber-button-primary w-full"
-              onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(article.title + ' ' + article.source)}`, '_blank')}
+              onClick={() => {
+                if (article.link) {
+                  window.open(article.link, '_blank', 'noopener,noreferrer');
+                } else {
+                  window.open(`https://www.google.com/search?q=${encodeURIComponent(article.title + ' ' + article.source)}`, '_blank');
+                }
+              }}
+              data-testid="button-read-full-article"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Search for Original Article
+              {article.link ? 'Read Full Article at Source' : 'Search for Original Article'}
             </Button>
           </div>
 

@@ -118,6 +118,7 @@ export class NewsService {
               content: this.stripHtml(fullContent),
               source: source,
               imageUrl: item.thumbnail || item.enclosure?.url || null,
+              link: item.link,
               tags: this.generateTags(item.title + ' ' + (fullContent || summary), source.toLowerCase()),
               publishedAt: item.pubDate ? new Date(item.pubDate) : new Date()
             });
@@ -186,6 +187,7 @@ export class NewsService {
             content: this.stripHtml(content),
             source: source,
             imageUrl: null,
+            link: link,
             tags: this.generateTags(title + ' ' + content, source.toLowerCase()),
             publishedAt: pubDate ? new Date(pubDate) : new Date()
           });
@@ -238,6 +240,7 @@ export class NewsService {
               content: story.text || '',
               source: 'Hacker News',
               imageUrl: null,
+              link: story.url || `https://news.ycombinator.com/item?id=${story.id}`,
               tags: this.generateTags(story.title, 'hacker-news'),
               publishedAt: new Date(story.time * 1000)
             });
@@ -288,6 +291,7 @@ export class NewsService {
                   content: post.selftext || null,
                   source: `Reddit - r/${post.subreddit}`,
                   imageUrl: null,
+                  link: `https://reddit.com${post.permalink}`,
                   tags: this.generateTags(post.title + ' ' + (post.selftext || ''), post.subreddit),
                   publishedAt: new Date(post.created_utc * 1000)
                 });
@@ -418,6 +422,7 @@ export class NewsService {
         content: 'A critical zero-day vulnerability (CVE-2024-XXXX) has been discovered in widely-used enterprise software, allowing attackers to execute arbitrary code remotely. The vulnerability affects versions 2.0 through 3.5 and has already been exploited by advanced persistent threat (APT) groups targeting financial institutions and government agencies.',
         source: 'Security Research Labs',
         imageUrl: null,
+        link: null,
         tags: ['zero-day', 'enterprise', 'rce', 'apt'],
         publishedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000)
       },
@@ -428,6 +433,7 @@ export class NewsService {
         content: 'Healthcare organizations across North America are facing a new ransomware threat that combines advanced encryption techniques with data theft capabilities. The attackers are demanding ransom payments while threatening to release sensitive patient data on dark web marketplaces.',
         source: 'Cybersecurity News',
         imageUrl: null,
+        link: null,
         tags: ['ransomware', 'healthcare', 'data-theft', 'darkweb'],
         publishedAt: new Date(now.getTime() - 4 * 60 * 60 * 1000)
       },
@@ -438,6 +444,7 @@ export class NewsService {
         content: 'CISA has issued an emergency directive requiring federal agencies and critical infrastructure operators to implement additional security measures following recent attacks on power grid systems. The directive includes mandatory network segmentation and enhanced monitoring requirements.',
         source: 'CISA',
         imageUrl: null,
+        link: null,
         tags: ['cisa', 'critical-infrastructure', 'directive', 'government'],
         publishedAt: new Date(now.getTime() - 6 * 60 * 60 * 1000)
       }
