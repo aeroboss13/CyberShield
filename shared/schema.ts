@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -81,6 +82,36 @@ export const newsArticles = pgTable("news_articles", {
   publishedAt: timestamp("published_at").defaultNow()
 });
 
+// Comments for news articles
+export const newsComments = pgTable("news_comments", {
+  id: serial("id").primaryKey(),
+  articleId: integer("article_id").notNull().references(() => newsArticles.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Relations
+export const newsArticleRelations = relations(newsArticles, ({ many }) => ({
+  comments: many(newsComments)
+}));
+
+export const newsCommentRelations = relations(newsComments, ({ one }) => ({
+  article: one(newsArticles, {
+    fields: [newsComments.articleId],
+    references: [newsArticles.id]
+  }),
+  user: one(users, {
+    fields: [newsComments.userId],
+    references: [users.id]
+  })
+}));
+
+export const userNewsRelations = relations(users, ({ many }) => ({
+  newsComments: many(newsComments)
+}));
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -126,4 +157,13 @@ export type MitreAttack = typeof mitreAttack.$inferSelect;
 export type InsertExploit = z.infer<typeof insertExploitSchema>;
 export type Exploit = typeof exploits.$inferSelect;
 export type InsertNews = z.infer<typeof insertNewsSchema>;
+export type News = typeof newsArticles.$inferSelect;
+
+export const insertNewsCommentSchema = createInsertSchema(newsComments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type InsertNewsComment = z.infer<typeof insertNewsCommentSchema>;
+export type NewsComment = typeof newsComments.$inferSelect;
 export type NewsArticle = typeof newsArticles.$inferSelect;

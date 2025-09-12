@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Globe, Clock, TrendingUp, MessageSquare } from "lucide-react";
+import { ExternalLink, Globe, Clock, TrendingUp, MessageSquare, Share } from "lucide-react";
 import NewsModal from "./NewsModal";
 import type { NewsArticleType } from "@/lib/types";
 
@@ -23,6 +23,62 @@ export default function SecurityNews() {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedArticle(null);
+  };
+
+  const handleShare = (article: NewsArticleType) => {
+    const shareText = `${article.title}\n\n${article.link || window.location.href}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: article.title,
+        text: `Check out this security news: ${article.title}`,
+        url: article.link || window.location.href
+      }).catch(err => {
+        console.log('Error sharing:', err);
+        copyToClipboard(shareText);
+      });
+    } else {
+      copyToClipboard(shareText);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text)
+        .then(() => alert('✅ Article link copied to clipboard!'))
+        .catch(() => copyTextManually(text));
+    } else {
+      copyTextManually(text);
+    }
+  };
+  
+  const copyTextManually = (text: string) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        alert('✅ Article link copied to clipboard!');
+      } else {
+        alert('Please copy this text manually: ' + text);
+      }
+    } catch (err) {
+      alert('Please copy this text manually: ' + text);
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  };
+
+  const handleDiscuss = (article: NewsArticleType) => {
+    // Open article modal with comments section focused
+    openArticle(article);
+    // For now, just open the modal - comments system will be added
+    // TODO: Focus on comments section when implemented
   };
 
   const formatTimestamp = (date: Date) => {
@@ -161,6 +217,8 @@ export default function SecurityNews() {
                       variant="ghost"
                       size="sm"
                       className="cyber-text-muted hover:cyber-text-blue"
+                      onClick={() => handleDiscuss(article)}
+                      data-testid={`button-discuss-${article.id}`}
                     >
                       <MessageSquare className="w-4 h-4 mr-1" />
                       Discuss
@@ -169,8 +227,10 @@ export default function SecurityNews() {
                       variant="ghost"
                       size="sm"
                       className="cyber-text-muted hover:cyber-text-blue"
+                      onClick={() => handleShare(article)}
+                      data-testid={`button-share-${article.id}`}
                     >
-                      <TrendingUp className="w-4 h-4 mr-1" />
+                      <Share className="w-4 h-4 mr-1" />
                       Share
                     </Button>
                     <Button

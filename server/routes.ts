@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPostSchema } from "@shared/schema";
+import { insertPostSchema, insertNewsCommentSchema } from "@shared/schema";
 import { z } from "zod";
 import { MitreService } from "./services/mitre-service";
 import { CVEService } from "./services/cve-service";
@@ -270,6 +270,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(user);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch current user" });
+    }
+  });
+
+  // News Comments endpoints
+  app.get("/api/news/:id/comments", async (req, res) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      if (isNaN(articleId)) {
+        return res.status(400).json({ error: "Invalid article ID" });
+      }
+      
+      const comments = await storage.getNewsComments(articleId);
+      res.json(comments);
+    } catch (error) {
+      console.error('Get comments error:', error);
+      res.status(500).json({ error: "Failed to fetch comments" });
+    }
+  });
+
+  app.post("/api/news/:id/comments", async (req, res) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      if (isNaN(articleId)) {
+        return res.status(400).json({ error: "Invalid article ID" });
+      }
+
+      // Get current user (for demo, use user ID 1)
+      const currentUser = await storage.getUser(1);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const commentData = insertNewsCommentSchema.parse({
+        ...req.body,
+        articleId,
+        userId: currentUser.id
+      });
+
+      const comment = await storage.createNewsComment(commentData);
+      
+      // Return comment with user info
+      const commentWithUser = {
+        ...comment,
+        user: currentUser
+      };
+      
+      res.status(201).json(commentWithUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid comment data", details: error.errors });
+      } else {
+        console.error('Create comment error:', error);
+        res.status(500).json({ error: "Failed to create comment" });
+      }
+    }
+  });
+
+  app.delete("/api/news/comments/:commentId", async (req, res) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      if (isNaN(commentId)) {
+        return res.status(400).json({ error: "Invalid comment ID" });
+      }
+
+      await storage.deleteNewsComment(commentId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      res.status(500).json({ error: "Failed to delete comment" });
     }
   });
 

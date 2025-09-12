@@ -1,4 +1,4 @@
-import { users, posts, cveEntries, exploits, mitreAttack, newsArticles, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type Exploit, type InsertExploit, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews } from "@shared/schema";
+import { users, posts, cveEntries, exploits, mitreAttack, newsArticles, newsComments, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type Exploit, type InsertExploit, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews, type NewsComment, type InsertNewsComment } from "@shared/schema";
 
 interface CVESearchParams {
   search?: string;
@@ -46,6 +46,11 @@ export interface IStorage {
   // News
   getAllNews(): Promise<NewsArticle[]>;
   getNews(id: number): Promise<NewsArticle | undefined>;
+  
+  // News Comments
+  getNewsComments(articleId: number): Promise<(NewsComment & { user: User })[]>;
+  createNewsComment(comment: InsertNewsComment): Promise<NewsComment>;
+  deleteNewsComment(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -55,10 +60,12 @@ export class MemStorage implements IStorage {
   private exploits: Map<number, Exploit>;
   private mitreData: Map<string, MitreAttack>;
   private news: Map<number, NewsArticle>;
+  private newsComments: Map<number, NewsComment>;
   private currentUserId: number;
   private currentPostId: number;
   private currentExploitId: number;
   private currentNewsId: number;
+  private currentCommentId: number;
 
   constructor() {
     this.users = new Map();
@@ -67,10 +74,12 @@ export class MemStorage implements IStorage {
     this.exploits = new Map();
     this.mitreData = new Map();
     this.news = new Map();
+    this.newsComments = new Map();
     this.currentUserId = 1;
     this.currentPostId = 1;
     this.currentExploitId = 1;
     this.currentNewsId = 1;
+    this.currentCommentId = 1;
     
     this.seedData();
   }
@@ -603,6 +612,35 @@ export class MemStorage implements IStorage {
 
   async getNews(id: number): Promise<NewsArticle | undefined> {
     return this.news.get(id);
+  }
+
+  async getNewsComments(articleId: number): Promise<(NewsComment & { user: User })[]> {
+    const comments = Array.from(this.newsComments.values())
+      .filter(comment => comment.articleId === articleId)
+      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+    
+    return comments.map(comment => {
+      const user = this.users.get(comment.userId);
+      return {
+        ...comment,
+        user: user!
+      };
+    });
+  }
+
+  async createNewsComment(comment: InsertNewsComment): Promise<NewsComment> {
+    const newComment: NewsComment = {
+      id: this.currentCommentId++,
+      ...comment,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.newsComments.set(newComment.id, newComment);
+    return newComment;
+  }
+
+  async deleteNewsComment(id: number): Promise<void> {
+    this.newsComments.delete(id);
   }
 }
 
