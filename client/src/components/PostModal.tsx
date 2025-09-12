@@ -29,7 +29,7 @@ export default function PostModal({ trigger }: PostModalProps) {
 
   const createPostMutation = useMutation({
     mutationFn: async (newPost: { content: string; tags: string[] }) => {
-      return apiRequest("/api/posts", "POST", newPost);
+      return apiRequest("POST", "/api/posts", newPost);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
