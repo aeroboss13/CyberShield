@@ -1,7 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema, insertUserSubmissionSchema } from "@shared/schema";
+import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema, insertUserSubmissionSchema, publicUserSchema } from "@shared/schema";
+
+// Helper to sanitize user data (remove email)
+const toPublicUser = (u: any) => (u ? publicUserSchema.parse(u) : undefined);
 import { z } from "zod";
 import { MitreService } from "./services/mitre-service";
 import { CVEService } from "./services/cve-service";
@@ -24,7 +27,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/posts", async (req, res) => {
     try {
       const posts = await storage.getAllPosts();
-      res.json(posts);
+      // Sanitize user data to prevent email exposure
+      const safePosts = posts.map(post => ({
+        ...post,
+        user: toPublicUser((post as any).user)
+      }));
+      res.json(safePosts);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch posts" });
     }
@@ -267,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      res.json(user);
+      res.json(toPublicUser(user));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch current user" });
     }
@@ -282,7 +290,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const comments = await storage.getNewsComments(articleId);
-      res.json(comments);
+      // Sanitize user data to prevent email exposure
+      const safeComments = Array.isArray(comments)
+        ? comments.map(c => ({ ...c, user: toPublicUser((c as any).user) }))
+        : comments;
+      res.json(safeComments);
     } catch (error) {
       console.error('Get comments error:', error);
       res.status(500).json({ error: "Failed to fetch comments" });
@@ -310,10 +322,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const comment = await storage.createNewsComment(commentData);
       
-      // Return comment with user info
+      // Return comment with safe user info (no email)
       const commentWithUser = {
         ...comment,
-        user: currentUser
+        user: toPublicUser(currentUser)
       };
       
       res.status(201).json(commentWithUser);
@@ -351,7 +363,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const comments = await storage.getPostComments(postId);
-      res.json(comments);
+      // Sanitize user data to prevent email exposure
+      const safeComments = Array.isArray(comments)
+        ? comments.map(c => ({ ...c, user: toPublicUser((c as any).user) }))
+        : comments;
+      res.json(safeComments);
     } catch (error) {
       console.error('Get post comments error:', error);
       res.status(500).json({ error: "Failed to fetch comments" });
@@ -388,10 +404,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Increment post comment count
       await storage.updatePostInteraction(postId, 'comments');
       
-      // Return comment with user info
+      // Return comment with safe user info (no email) 
       const commentWithUser = {
         ...comment,
-        user: currentUser
+        user: toPublicUser(currentUser)
       };
       
       res.status(201).json(commentWithUser);
@@ -473,10 +489,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const submission = await storage.createUserSubmission(submissionData);
       
-      // Return submission with user info
+      // Return submission with safe user info (no email)
       const submissionWithUser = {
         ...submission,
-        user: currentUser
+        user: toPublicUser(currentUser)
       };
       
       res.status(201).json(submissionWithUser);

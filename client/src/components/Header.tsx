@@ -91,13 +91,19 @@ export default function Header() {
             </div>
             
             <div className="flex items-center space-x-2 pl-4 border-l cyber-border">
-              <div className="w-9 h-9 cyber-gradient rounded-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform shadow-lg">
-                <span className="text-white font-semibold text-sm">JS</span>
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium text-white">John Smith</p>
-                <p className="text-xs cyber-text-dim">Security Analyst</p>
-              </div>
+              <a 
+                href="/profile" 
+                data-testid="link-profile"
+                className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+              >
+                <div className="w-9 h-9 cyber-gradient rounded-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform shadow-lg">
+                  <span className="text-white font-semibold text-sm">JS</span>
+                </div>
+                <div className="hidden sm:block">
+                  <p className="text-sm font-medium text-white">John Smith</p>
+                  <p className="text-xs cyber-text-dim">Security Analyst</p>
+                </div>
+              </a>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
@@ -260,6 +260,10 @@ export const insertUserSubmissionSchema = createInsertSchema(userSubmissions).om
   reviewNotes: true,
   reviewedBy: true,
   reviewedAt: true
+}).extend({
+  type: z.enum(['vulnerability', 'exploit']),
+  cvssScore: z.string().nullable().optional(),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).nullable().optional()
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -280,5 +284,12 @@ export type InsertPostComment = z.infer<typeof insertPostCommentSchema>;
 export type PostComment = typeof postComments.$inferSelect;
 export type InsertUserSubmission = z.infer<typeof insertUserSubmissionSchema>;
 export type UserSubmission = typeof userSubmissions.$inferSelect;
+
+// Public user type without sensitive information
+export const publicUserSchema = createSelectSchema(users).omit({
+  email: true
+});
+
+export type PublicUser = z.infer<typeof publicUserSchema>;
 
 export type NewsArticle = typeof newsArticles.$inferSelect;
