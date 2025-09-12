@@ -24,7 +24,9 @@ export class ContentExtractorService {
     'krebsonsecurity.com', 
     'bleepingcomputer.com',
     'securityweek.com',
+    'www.securityweek.com',
     'feeds.feedburner.com',
+    'feedproxy.google.com',  // The Hacker News proxy
     'threatpost.com',
     'darkreading.com',
     'cyberscoop.com',

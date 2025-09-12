@@ -14,19 +14,25 @@ interface NewsModalProps {
 }
 
 export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) {
-  if (!article) return null;
-  
   const [showFullContent, setShowFullContent] = useState(false);
   
-  // Fetch full content when modal opens if content is short
-  const shouldFetchFullContent = isOpen && article && 
-    (article.content || article.summary).length < 300 && article.link;
+  // Always render hooks consistently - derive values after hooks
+  const articleId = article?.id;
+  const hasLink = !!article?.link;
+  const contentLength = (article?.content || article?.summary || '').length;
+  const isProbablyTruncated = contentLength < 500;
+  
+  // Fetch full content when modal opens if content is short or user requests it
+  const shouldAutoFetch = isOpen && hasLink && isProbablyTruncated;
   
   const { data: fullContent, isLoading: isLoadingFullContent } = useQuery<FullContentResponse>({
-    queryKey: ['/api/news', article.id, 'full'],
-    enabled: Boolean(shouldFetchFullContent || showFullContent),
+    queryKey: ['/api/news', articleId ?? 'none', 'full'],
+    queryFn: () => fetch(`/api/news/${articleId}/full`).then(r => r.json()),
+    enabled: Boolean(articleId && (shouldAutoFetch || showFullContent)),
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
   });
+  
+  if (!article) return null;
 
   const formatTimestamp = (date: Date) => {
     const now = new Date();
@@ -132,9 +138,8 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
                 </div>
               )}
               
-              {/* Show full content button if not already loaded and content is truncated */}
-              {!fullContent && !showFullContent && article.link && 
-               (article.content || article.summary).length < 500 && (
+              {/* Show full content button if not already loaded and has link */}
+              {!fullContent?.success && !showFullContent && hasLink && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 mb-4">
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 mt-0.5">
