@@ -10,8 +10,16 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   role: text("role").notNull(),
   avatar: text("avatar"),
+  bio: text("bio"),
+  location: text("location"),
+  website: text("website"),
   reputation: integer("reputation").default(0),
   postCount: integer("post_count").default(0),
+  likesReceived: integer("likes_received").default(0),
+  commentsCount: integer("comments_count").default(0),
+  cveSubmissions: integer("cve_submissions").default(0),
+  exploitSubmissions: integer("exploit_submissions").default(0),
+  verifiedSubmissions: integer("verified_submissions").default(0),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -102,6 +110,41 @@ export const postComments = pgTable("post_comments", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// User-submitted vulnerabilities and exploits
+export const userSubmissions = pgTable("user_submissions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text("type").notNull(), // 'vulnerability' or 'exploit'
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  
+  // Common fields
+  severity: text("severity"),
+  category: text("category").notNull(),
+  tags: text("tags").array().default([]),
+  
+  // CVE-specific fields
+  affectedSoftware: text("affected_software"),
+  versions: text("versions"),
+  cvssScore: decimal("cvss_score"),
+  
+  // Exploit-specific fields
+  platform: text("platform"),
+  exploitType: text("exploit_type"),
+  exploitCode: text("exploit_code"),
+  targetCve: text("target_cve"), // Related CVE ID if applicable
+  
+  // Status and verification
+  status: text("status").notNull().default('pending'), // 'pending', 'approved', 'rejected'
+  verified: boolean("verified").default(false),
+  reviewNotes: text("review_notes"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
 // Relations
 export const newsArticleRelations = relations(newsArticles, ({ many }) => ({
   comments: many(newsComments)
@@ -138,16 +181,35 @@ export const postCommentRelations = relations(postComments, ({ one }) => ({
   })
 }));
 
-export const userNewsRelations = relations(users, ({ many }) => ({
+export const userRelations = relations(users, ({ many }) => ({
   newsComments: many(newsComments),
-  postComments: many(postComments)
+  postComments: many(postComments),
+  posts: many(posts),
+  submissions: many(userSubmissions),
+  reviewedSubmissions: many(userSubmissions) // As a reviewer
+}));
+
+export const userSubmissionRelations = relations(userSubmissions, ({ one }) => ({
+  user: one(users, {
+    fields: [userSubmissions.userId],
+    references: [users.id]
+  }),
+  reviewer: one(users, {
+    fields: [userSubmissions.reviewedBy],
+    references: [users.id]
+  })
 }));
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   reputation: true,
-  postCount: true
+  postCount: true,
+  likesReceived: true,
+  commentsCount: true,
+  cveSubmissions: true,
+  exploitSubmissions: true,
+  verifiedSubmissions: true
 });
 
 export const insertPostSchema = createInsertSchema(posts).omit({
@@ -189,6 +251,17 @@ export const insertPostCommentSchema = createInsertSchema(postComments).omit({
   updatedAt: true
 });
 
+export const insertUserSubmissionSchema = createInsertSchema(userSubmissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
+  verified: true,
+  reviewNotes: true,
+  reviewedBy: true,
+  reviewedAt: true
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
@@ -205,5 +278,7 @@ export type InsertNewsComment = z.infer<typeof insertNewsCommentSchema>;
 export type NewsComment = typeof newsComments.$inferSelect;
 export type InsertPostComment = z.infer<typeof insertPostCommentSchema>;
 export type PostComment = typeof postComments.$inferSelect;
+export type InsertUserSubmission = z.infer<typeof insertUserSubmissionSchema>;
+export type UserSubmission = typeof userSubmissions.$inferSelect;
 
 export type NewsArticle = typeof newsArticles.$inferSelect;
