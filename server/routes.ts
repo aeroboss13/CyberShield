@@ -562,6 +562,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoints
+  app.get("/api/admin/submissions", async (req, res) => {
+    try {
+      // Get current user (for demo, use user ID 1 who is admin)
+      const currentUser = await storage.getUser(1);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      // Check admin privileges
+      const isAdminUser = await storage.isAdmin(currentUser.id);
+      if (!isAdminUser) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const submissions = await storage.getAllSubmissionsForAdmin();
+      // Sanitize user data to prevent email exposure
+      const safeSubmissions = submissions.map(submission => ({
+        ...submission,
+        user: toPublicUser(submission.user)
+      }));
+
+      res.json(safeSubmissions);
+    } catch (error) {
+      console.error('Get admin submissions error:', error);
+      res.status(500).json({ error: "Failed to fetch submissions" });
+    }
+  });
+
+  app.get("/api/admin/submissions/pending", async (req, res) => {
+    try {
+      // Get current user (for demo, use user ID 1 who is admin)
+      const currentUser = await storage.getUser(1);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      // Check admin privileges
+      const isAdminUser = await storage.isAdmin(currentUser.id);
+      if (!isAdminUser) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const submissions = await storage.getPendingSubmissions();
+      // Sanitize user data to prevent email exposure
+      const safeSubmissions = submissions.map(submission => ({
+        ...submission,
+        user: toPublicUser(submission.user)
+      }));
+
+      res.json(safeSubmissions);
+    } catch (error) {
+      console.error('Get pending submissions error:', error);
+      res.status(500).json({ error: "Failed to fetch pending submissions" });
+    }
+  });
+
+  app.post("/api/admin/submissions/:id/approve", async (req, res) => {
+    try {
+      const submissionId = parseInt(req.params.id);
+      if (isNaN(submissionId)) {
+        return res.status(400).json({ error: "Invalid submission ID" });
+      }
+
+      // Get current user (for demo, use user ID 1 who is admin)
+      const currentUser = await storage.getUser(1);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      // Check admin privileges
+      const isAdminUser = await storage.isAdmin(currentUser.id);
+      if (!isAdminUser) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const { reviewNotes } = req.body;
+
+      await storage.approveSubmission(submissionId, currentUser.id, reviewNotes);
+
+      res.json({ message: "Submission approved successfully" });
+    } catch (error) {
+      console.error('Approve submission error:', error);
+      res.status(500).json({ error: "Failed to approve submission" });
+    }
+  });
+
+  app.post("/api/admin/submissions/:id/reject", async (req, res) => {
+    try {
+      const submissionId = parseInt(req.params.id);
+      if (isNaN(submissionId)) {
+        return res.status(400).json({ error: "Invalid submission ID" });
+      }
+
+      // Get current user (for demo, use user ID 1 who is admin)
+      const currentUser = await storage.getUser(1);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      // Check admin privileges
+      const isAdminUser = await storage.isAdmin(currentUser.id);
+      if (!isAdminUser) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const { reviewNotes } = req.body;
+
+      await storage.rejectSubmission(submissionId, currentUser.id, reviewNotes);
+
+      res.json({ message: "Submission rejected successfully" });
+    } catch (error) {
+      console.error('Reject submission error:', error);
+      res.status(500).json({ error: "Failed to reject submission" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
