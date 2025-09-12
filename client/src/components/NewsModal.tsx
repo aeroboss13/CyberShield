@@ -115,7 +115,7 @@ export default function NewsModal({ article, isOpen, onClose, shouldFocusComment
   const copyToClipboardFallback = (text: string) => {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text)
-        .then(() => alert('✅ Article link copied to clipboard!'))
+        .then(() => {})
         .catch(() => copyTextManually(text));
     } else {
       copyTextManually(text);
@@ -136,7 +136,7 @@ export default function NewsModal({ article, isOpen, onClose, shouldFocusComment
     try {
       const successful = document.execCommand('copy');
       if (successful) {
-        alert('✅ Article link copied to clipboard!');
+        // Link copied silently
       } else {
         prompt('Copy this text manually:', text);
       }

@@ -50,7 +50,7 @@ export default function SecurityNews() {
   const copyToClipboard = (text: string) => {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text)
-        .then(() => alert('✅ Article link copied to clipboard!'))
+        .then(() => {})
         .catch(() => copyTextManually(text));
     } else {
       copyTextManually(text);
@@ -68,7 +68,7 @@ export default function SecurityNews() {
     try {
       const successful = document.execCommand('copy');
       if (successful) {
-        alert('✅ Article link copied to clipboard!');
+        // Link copied silently
       } else {
         alert('Please copy this text manually: ' + text);
       }
