@@ -17,7 +17,7 @@ export interface IStorage {
   getAllPosts(): Promise<(Post & { user: User })[]>;
   getPost(id: number): Promise<Post | undefined>;
   createPost(post: InsertPost): Promise<Post>;
-  updatePostInteraction(id: number, type: 'likes' | 'comments' | 'shares'): Promise<void>;
+  updatePostInteraction(id: number, type: 'likes' | 'comments' | 'shares', delta?: number): Promise<void>;
   
   // CVE
   getAllCVEs(): Promise<CVE[]>;
@@ -56,6 +56,7 @@ export interface IStorage {
   getPostComments(postId: number): Promise<(PostComment & { user: User })[]>;
   createPostComment(comment: InsertPostComment): Promise<PostComment>;
   deletePostComment(id: number): Promise<void>;
+  getPostCommentById(id: number): Promise<PostComment | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -386,10 +387,10 @@ export class MemStorage implements IStorage {
     return post;
   }
 
-  async updatePostInteraction(id: number, type: 'likes' | 'comments' | 'shares'): Promise<void> {
+  async updatePostInteraction(id: number, type: 'likes' | 'comments' | 'shares', delta: number = 1): Promise<void> {
     const post = this.posts.get(id);
     if (post && post[type] !== null) {
-      post[type] = (post[type] || 0) + 1;
+      post[type] = Math.max(0, (post[type] || 0) + delta);
       this.posts.set(id, post);
     }
   }
@@ -677,6 +678,10 @@ export class MemStorage implements IStorage {
 
   async deletePostComment(id: number): Promise<void> {
     this.postComments.delete(id);
+  }
+
+  async getPostCommentById(id: number): Promise<PostComment | undefined> {
+    return this.postComments.get(id);
   }
 }
 

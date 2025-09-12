@@ -371,13 +371,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "User not authenticated" });
       }
 
-      const commentData = insertPostCommentSchema.parse({
-        ...req.body,
+      // Only accept content from client, userId comes from current user
+      const { content } = req.body;
+      if (!content?.trim()) {
+        return res.status(400).json({ error: "Comment content is required" });
+      }
+
+      const commentData = {
+        content: content.trim(),
         postId,
         userId: currentUser.id
-      });
+      };
 
       const comment = await storage.createPostComment(commentData);
+      
+      // Increment post comment count
+      await storage.updatePostInteraction(postId, 'comments');
       
       // Return comment with user info
       const commentWithUser = {
@@ -403,7 +412,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid comment ID" });
       }
 
+      // Get current user (for demo, use user ID 1)
+      const currentUser = await storage.getUser(1);
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      // Check if comment exists and get its postId for decrementing count
+      const comment = await storage.getPostCommentById(commentId);
+      if (!comment) {
+        return res.status(404).json({ error: "Comment not found" });
+      }
+
+      // Check ownership (for demo, allow deletion - in real app, enforce ownership)
+      // if (comment.userId !== currentUser.id) {
+      //   return res.status(403).json({ error: "Not authorized to delete this comment" });
+      // }
+
       await storage.deletePostComment(commentId);
+      
+      // Decrement post comment count
+      await storage.updatePostInteraction(comment.postId, 'comments', -1);
+      
       res.status(204).send();
     } catch (error) {
       console.error('Delete post comment error:', error);

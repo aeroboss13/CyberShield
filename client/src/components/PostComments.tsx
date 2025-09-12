@@ -39,6 +39,7 @@ export default function PostComments({ postId, shouldFocus = false }: PostCommen
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/posts/${postId}/comments`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setNewComment("");
     }
   });
@@ -49,6 +50,7 @@ export default function PostComments({ postId, shouldFocus = false }: PostCommen
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/posts/${postId}/comments`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     }
   });
 
