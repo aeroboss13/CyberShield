@@ -69,12 +69,26 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
     if (navigator.share) {
       navigator.share({
         title: article.title,
-        text: article.summary,
-        url: window.location.href
-      });
+        text: `Check out this security news: ${article.title}`,
+        url: article.link || window.location.href
+      }).catch(err => console.log('Error sharing:', err));
     } else {
-      navigator.clipboard.writeText(`${article.title}\n\n${article.summary}\n\nSource: ${article.source}`);
+      // Fallback to copying to clipboard
+      const shareText = `${article.title}\n\n${article.link || window.location.href}`;
+      navigator.clipboard.writeText(shareText)
+        .then(() => alert('Article link copied to clipboard!'))
+        .catch(() => alert('Unable to copy link'));
     }
+  };
+
+  const handleDiscuss = () => {
+    // Create a discussion post about this article
+    const discussionContent = `📰 **Security News Discussion**\n\n**${article.title}**\n\n${(article.content || article.summary).substring(0, 200)}...\n\nRead more: ${article.link}\n\n#${article.tags.join(' #')}`;
+    
+    // For now, copy the discussion template to clipboard
+    navigator.clipboard.writeText(discussionContent)
+      .then(() => alert('Discussion template copied to clipboard! You can now paste it as a new post.'))
+      .catch(() => alert('Unable to copy discussion template'));
   };
 
   return (
@@ -244,6 +258,7 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
                 size="sm"
                 className="cyber-text-muted hover:cyber-text-blue"
                 onClick={handleShare}
+                data-testid="button-share-article"
               >
                 <Share className="w-4 h-4 mr-1" />
                 Share
@@ -252,6 +267,8 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
                 variant="ghost"
                 size="sm"
                 className="cyber-text-muted hover:cyber-text-blue"
+                onClick={handleDiscuss}
+                data-testid="button-discuss-article"
               >
                 <MessageSquare className="w-4 h-4 mr-1" />
                 Discuss
