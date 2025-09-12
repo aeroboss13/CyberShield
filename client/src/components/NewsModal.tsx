@@ -66,29 +66,69 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
   };
 
   const handleShare = () => {
+    console.log('Share button clicked!', article.title);
+    
+    const shareText = `${article.title}\n\n${article.link || window.location.href}`;
+    
     if (navigator.share) {
       navigator.share({
         title: article.title,
         text: `Check out this security news: ${article.title}`,
         url: article.link || window.location.href
-      }).catch(err => console.log('Error sharing:', err));
+      }).catch(err => {
+        console.log('Error sharing:', err);
+        // Fallback to text selection
+        copyToClipboardFallback(shareText);
+      });
     } else {
-      // Fallback to copying to clipboard
-      const shareText = `${article.title}\n\n${article.link || window.location.href}`;
-      navigator.clipboard.writeText(shareText)
-        .then(() => alert('Article link copied to clipboard!'))
-        .catch(() => alert('Unable to copy link'));
+      copyToClipboardFallback(shareText);
+    }
+  };
+  
+  const copyToClipboardFallback = (text: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text)
+        .then(() => alert('✅ Article link copied to clipboard!'))
+        .catch(() => copyTextManually(text));
+    } else {
+      copyTextManually(text);
+    }
+  };
+  
+  const copyTextManually = (text: string) => {
+    // Create temporary textarea for manual copy
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        alert('✅ Article link copied to clipboard!');
+      } else {
+        prompt('Copy this text manually:', text);
+      }
+    } catch (err) {
+      console.log('Manual copy failed', err);
+      prompt('Copy this text manually:', text);
+    } finally {
+      document.body.removeChild(textArea);
     }
   };
 
   const handleDiscuss = () => {
+    console.log('Discuss button clicked!', article.title);
+    
     // Create a discussion post about this article
     const discussionContent = `📰 **Security News Discussion**\n\n**${article.title}**\n\n${(article.content || article.summary).substring(0, 200)}...\n\nRead more: ${article.link}\n\n#${article.tags.join(' #')}`;
     
-    // For now, copy the discussion template to clipboard
-    navigator.clipboard.writeText(discussionContent)
-      .then(() => alert('Discussion template copied to clipboard! You can now paste it as a new post.'))
-      .catch(() => alert('Unable to copy discussion template'));
+    copyToClipboardFallback(discussionContent);
+    alert('💬 Discussion template ready! You can now paste it as a new post in the social feed.');
   };
 
   return (
