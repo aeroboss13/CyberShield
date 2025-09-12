@@ -40,14 +40,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/posts", async (req, res) => {
     try {
-      const postData = insertPostSchema.parse(req.body);
+      console.log('POST /api/posts - Request body:', req.body);
+      
+      const currentUser = await storage.getCurrentUser(req);
+      console.log('Current user:', currentUser);
+      
+      if (!currentUser) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const postInputData = insertPostSchema.omit({ userId: true }).parse(req.body);
+      console.log('Parsed post data:', postInputData);
+      
+      const postData = { ...postInputData, userId: currentUser.id };
+      console.log('Final post data:', postData);
+      
       const post = await storage.createPost(postData);
+      console.log('Created post:', post);
+      
       res.status(201).json(post);
     } catch (error) {
+      console.error('Post creation error:', error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid post data", details: error.errors });
       } else {
-        res.status(500).json({ error: "Failed to create post" });
+        res.status(500).json({ error: "Failed to create post", details: error instanceof Error ? error.message : String(error) });
       }
     }
   });

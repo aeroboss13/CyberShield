@@ -12,6 +12,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getCurrentUser(req: any): Promise<User | undefined>;
   
   // Posts
   getAllPosts(): Promise<(Post & { user: User })[]>;
@@ -379,6 +380,12 @@ export class MemStorage implements IStorage {
 
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
+  }
+
+  async getCurrentUser(req: any): Promise<User | undefined> {
+    // For demo purposes, always return user ID 1
+    // In production, this would check session/cookies
+    return this.users.get(1);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {

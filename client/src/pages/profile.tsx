@@ -40,12 +40,12 @@ export default function ProfilePage() {
   });
 
   const { data: userStats, isLoading: statsLoading } = useQuery<UserStats>({
-    queryKey: ['/api/users', currentUser?.id, 'stats'],
+    queryKey: [`/api/users/${currentUser?.id}/stats`],
     enabled: !!currentUser?.id
   });
 
   const { data: userSubmissions = [], isLoading: submissionsLoading } = useQuery<UserSubmission[]>({
-    queryKey: ['/api/users', currentUser?.id, 'submissions'],
+    queryKey: [`/api/users/${currentUser?.id}/submissions`],
     enabled: !!currentUser?.id
   });
 
