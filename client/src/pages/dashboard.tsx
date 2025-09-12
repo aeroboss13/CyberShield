@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import SocialFeed from "@/components/SocialFeed";
 import MitreMatrix from "@/components/MitreMatrix";
 import CVEDatabase from "@/components/CVEDatabase";
+import UserReports from "@/components/UserReports";
 import SecurityNews from "@/components/SecurityNews";
 import type { TabType } from "@/lib/types";
 
@@ -25,6 +26,7 @@ export default function Dashboard() {
     { id: 'feed' as const, label: 'Social Feed' },
     { id: 'mitre' as const, label: 'MITRE ATT&CK' },
     { id: 'cve' as const, label: 'CVE Database' },
+    { id: 'user-reports' as const, label: 'User Reports' },
     { id: 'news' as const, label: 'Security News' },
   ];
 
@@ -36,6 +38,8 @@ export default function Dashboard() {
         return <MitreMatrix />;
       case 'cve':
         return <CVEDatabase />;
+      case 'user-reports':
+        return <UserReports />;
       case 'news':
         return <SecurityNews />;
       default:
