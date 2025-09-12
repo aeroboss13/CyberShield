@@ -123,7 +123,7 @@ export default function NewsModal({ article, isOpen, onClose }: NewsModalProps) 
             
             <div className="mb-6">
               {/* Show loading state while fetching full content */}
-              {(isLoadingFullContent && shouldFetchFullContent) ? (
+              {(isLoadingFullContent && shouldAutoFetch) ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader className="w-6 h-6 animate-spin text-blue-500 mr-2" />
                   <span className="text-slate-600 dark:text-slate-400">Loading full article...</span>
