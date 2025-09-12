@@ -8,7 +8,7 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
-  role: text("role").notNull(),
+  role: text("role").notNull().default("user"), // 'user' or 'admin'
   avatar: text("avatar"),
   bio: text("bio"),
   location: text("location"),
@@ -210,6 +210,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
   cveSubmissions: true,
   exploitSubmissions: true,
   verifiedSubmissions: true
+}).extend({
+  role: z.enum(['user', 'admin']).default('user')
 });
 
 export const updateUserSchema = insertUserSchema.pick({
@@ -219,6 +221,8 @@ export const updateUserSchema = insertUserSchema.pick({
   location: true,
   website: true,
   avatar: true
+}).extend({
+  role: z.enum(['user', 'admin']).default('user')
 });
 
 export const insertPostSchema = createInsertSchema(posts).omit({

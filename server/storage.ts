@@ -69,6 +69,13 @@ export interface IStorage {
   // User Statistics
   updateUserStats(userId: number, field: string, delta: number): Promise<void>;
   getUserStats(userId: number): Promise<User>;
+  
+  // Admin Operations
+  isAdmin(userId: number): Promise<boolean>;
+  getAllSubmissionsForAdmin(): Promise<(UserSubmission & { user: User })[]>;
+  approveSubmission(id: number, adminId: number, reviewNotes?: string): Promise<void>;
+  rejectSubmission(id: number, adminId: number, reviewNotes?: string): Promise<void>;
+  getPendingSubmissions(): Promise<(UserSubmission & { user: User })[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -116,7 +123,7 @@ export class MemStorage implements IStorage {
         username: "john_smith",
         email: "john@example.com",
         name: "John Smith",
-        role: "Senior Security Analyst",
+        role: "admin",
         avatar: null,
         bio: null,
         location: null,
@@ -135,7 +142,7 @@ export class MemStorage implements IStorage {
         username: "threat_hunter",
         email: "mike@example.com",
         name: "Mike Anderson",
-        role: "Threat Hunter",
+        role: "user",
         avatar: null,
         bio: null,
         location: null,
@@ -154,7 +161,7 @@ export class MemStorage implements IStorage {
         username: "incident_resp",
         email: "sarah@example.com",
         name: "Sarah Kim",
-        role: "Incident Response Specialist",
+        role: "user",
         avatar: null,
         bio: null,
         location: null,
@@ -859,6 +866,62 @@ export class MemStorage implements IStorage {
       throw new Error(`User with id ${userId} not found`);
     }
     return user;
+  }
+
+  // Admin Operations
+  async isAdmin(userId: number): Promise<boolean> {
+    const user = this.users.get(userId);
+    return user?.role === 'admin' || false;
+  }
+
+  async getAllSubmissionsForAdmin(): Promise<(UserSubmission & { user: User })[]> {
+    return Array.from(this.userSubmissions.values()).map(submission => {
+      const user = this.users.get(submission.userId);
+      if (!user) throw new Error('User not found');
+      return { ...submission, user };
+    });
+  }
+
+  async approveSubmission(id: number, adminId: number, reviewNotes?: string): Promise<void> {
+    const submission = this.userSubmissions.get(id);
+    if (!submission) {
+      throw new Error('Submission not found');
+    }
+
+    this.userSubmissions.set(id, {
+      ...submission,
+      status: 'approved',
+      verified: true,
+      reviewNotes: reviewNotes || null,
+      reviewedBy: adminId,
+      reviewedAt: new Date()
+    });
+  }
+
+  async rejectSubmission(id: number, adminId: number, reviewNotes?: string): Promise<void> {
+    const submission = this.userSubmissions.get(id);
+    if (!submission) {
+      throw new Error('Submission not found');
+    }
+
+    this.userSubmissions.set(id, {
+      ...submission,
+      status: 'rejected',
+      verified: false,
+      reviewNotes: reviewNotes || null,
+      reviewedBy: adminId,
+      reviewedAt: new Date()
+    });
+  }
+
+  async getPendingSubmissions(): Promise<(UserSubmission & { user: User })[]> {
+    return Array.from(this.userSubmissions.values())
+      .filter(submission => submission.status === 'pending')
+      .map(submission => {
+        const user = this.users.get(submission.userId);
+        if (!user) throw new Error('User not found');
+        return { ...submission, user };
+      });
   }
 }
 
