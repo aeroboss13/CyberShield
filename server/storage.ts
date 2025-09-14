@@ -11,7 +11,8 @@ export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser, passwordHash: string): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
   getCurrentUser(req: any): Promise<User | undefined>;
   
@@ -123,6 +124,7 @@ export class MemStorage implements IStorage {
         username: "john_smith",
         email: "john@example.com",
         name: "John Smith",
+        passwordHash: "scrypt:a1b2c3d4e5f60123456789abcdef0123:f0e1d2c3b4a5968778899aabbccddeeff0011223344556677889900aabbccddee", // demo password: 'password123'
         role: "admin",
         avatar: null,
         bio: null,
@@ -142,6 +144,7 @@ export class MemStorage implements IStorage {
         username: "threat_hunter",
         email: "mike@example.com",
         name: "Mike Anderson",
+        passwordHash: "scrypt:b2c3d4e5f6a10123456789abcdef0123:e1f2d3c4b5a6978889900aabccddeeff0011223344556677889900aabbccddee", // demo password: 'password123'
         role: "user",
         avatar: null,
         bio: null,
@@ -161,6 +164,7 @@ export class MemStorage implements IStorage {
         username: "incident_resp",
         email: "sarah@example.com",
         name: "Sarah Kim",
+        passwordHash: "scrypt:c3d4e5f6a1b20123456789abcdef0123:f2e3d4c5b6a7988990011aabccddeeff0011223344556677889900aabbccddee", // demo password: 'password123'
         role: "user",
         avatar: null,
         bio: null,
@@ -391,9 +395,12 @@ export class MemStorage implements IStorage {
   }
 
   async getCurrentUser(req: any): Promise<User | undefined> {
-    // For demo purposes, always return user ID 1
-    // In production, this would check session/cookies
-    return this.users.get(1);
+    // Check if user ID is set by auth middleware
+    const sessionUserId = (req as any).sessionUserId;
+    if (sessionUserId) {
+      return this.users.get(sessionUserId);
+    }
+    return undefined;
   }
 
   async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
@@ -414,11 +421,17 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.username === username);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
+  async createUser(insertUser: InsertUser, passwordHash: string): Promise<User> {
     const id = this.currentUserId++;
     const user: User = { 
       ...insertUser, 
-      id, 
+      id,
+      passwordHash,
+      role: 'user', // Always set role to 'user' for new registrations
       bio: insertUser.bio ?? null,
       location: insertUser.location ?? null,
       website: insertUser.website ?? null,
