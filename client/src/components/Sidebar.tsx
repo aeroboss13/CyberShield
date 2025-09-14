@@ -12,70 +12,113 @@ import {
   Users,
   Activity,
   Award,
-  Plus
+  Plus,
+  UserX
 } from "lucide-react";
+import { Link } from "wouter";
+import { PublicUser } from "@shared/schema";
 
 export default function Sidebar() {
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, error } = useQuery<PublicUser>({
     queryKey: ["/api/users/current"],
+    retry: false,
+    throwOnError: false
   });
+
+  // Check if user is authenticated
+  const isAuthenticated = !error && currentUser;
 
   return (
     <div className="space-y-6">
       {/* User Profile Card */}
       <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-        <div className="flex items-center space-x-4 mb-6">
-          <div className="relative">
-            <div className="w-16 h-16 cyber-gradient rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">
-                {currentUser?.name?.split(' ').map((n: string) => n[0]).join('') || 'JS'}
-              </span>
-            </div>
-            <div className="absolute -bottom-1 -right-1">
-              <Badge className="cyber-bg-green text-white text-xs px-2 py-1">
-                <Activity className="w-3 h-3 mr-1" />
-                Online
-              </Badge>
-            </div>
-          </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-white text-lg">{currentUser?.name || 'John Smith'}</h3>
-            <p className="cyber-text-muted text-sm">{currentUser?.role || 'Senior Security Analyst'}</p>
-            <div className="flex items-center space-x-1 mt-1">
-              <Award className="w-3 h-3 cyber-text-amber" />
-              <span className="cyber-text-amber text-xs font-medium">Level 7 Analyst</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="cyber-text-muted">Reputation Progress</span>
-              <span className="cyber-text-blue font-semibold">
-                {currentUser?.reputation ? `${(currentUser.reputation / 1000).toFixed(1)}k` : '12.5k'} / 15k
-              </span>
-            </div>
-            <Progress value={85} className="h-2 cyber-bg-dark" />
-          </div>
-          
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
-              <div className="cyber-text-green font-bold text-xl">
-                {currentUser?.postCount || 847}
+        {isAuthenticated ? (
+          <>
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="relative">
+                <div className="w-16 h-16 cyber-gradient rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-lg">
+                    {currentUser.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+                  </span>
+                </div>
+                <div className="absolute -bottom-1 -right-1">
+                  <Badge className="cyber-bg-green text-white text-xs px-2 py-1">
+                    <Activity className="w-3 h-3 mr-1" />
+                    Online
+                  </Badge>
+                </div>
               </div>
-              <div className="cyber-text-dim text-xs">Posts</div>
+              <div className="flex-1">
+                <h3 className="font-bold text-white text-lg">{currentUser.name}</h3>
+                <p className="cyber-text-muted text-sm">{currentUser.role || 'Security Professional'}</p>
+                <div className="flex items-center space-x-1 mt-1">
+                  <Award className="w-3 h-3 cyber-text-amber" />
+                  <span className="cyber-text-amber text-xs font-medium">
+                    {currentUser.role === 'admin' ? 'Administrator' : 'Member'}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
-              <div className="cyber-text-blue font-bold text-xl">156</div>
-              <div className="cyber-text-dim text-xs">Likes</div>
+            
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="cyber-text-muted">Reputation Progress</span>
+                  <span className="cyber-text-blue font-semibold">
+                    {currentUser.reputation ? `${(currentUser.reputation / 1000).toFixed(1)}k` : '0'} / 15k
+                  </span>
+                </div>
+                <Progress 
+                  value={currentUser.reputation ? Math.min(100, (currentUser.reputation / 15000) * 100) : 0} 
+                  className="h-2 cyber-bg-dark" 
+                />
+              </div>
+              
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
+                  <div className="cyber-text-green font-bold text-xl">
+                    {currentUser.postCount || 0}
+                  </div>
+                  <div className="cyber-text-dim text-xs">Posts</div>
+                </div>
+                <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
+                  <div className="cyber-text-blue font-bold text-xl">
+                    {currentUser.likesReceived || 0}
+                  </div>
+                  <div className="cyber-text-dim text-xs">Likes</div>
+                </div>
+                <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
+                  <div className="cyber-text-amber font-bold text-xl">
+                    {currentUser.cveSubmissions || 0}
+                  </div>
+                  <div className="cyber-text-dim text-xs">CVEs</div>
+                </div>
+              </div>
             </div>
-            <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
-              <div className="cyber-text-amber font-bold text-xl">23</div>
-              <div className="cyber-text-dim text-xs">CVEs</div>
+          </>
+        ) : (
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 cyber-bg-surface-light rounded-xl flex items-center justify-center mx-auto">
+              <UserX className="w-8 h-8 cyber-text-muted" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white text-lg">Not Signed In</h3>
+              <p className="cyber-text-muted text-sm">Sign in to access your profile</p>
+            </div>
+            <div className="space-y-2">
+              <Link href="/login">
+                <Button className="w-full cyber-button-primary">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="outline" className="w-full cyber-button-secondary">
+                  Create Account
+                </Button>
+              </Link>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Quick Actions */}
