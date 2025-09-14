@@ -105,7 +105,7 @@ export default function Header() {
               </button>
             </form>
             
-            {isAuthenticated ? (
+            {isAuthenticated && (
               // Authenticated user UI
               <div className="flex items-center space-x-2">
                 <PostModal 
@@ -159,23 +159,9 @@ export default function Header() {
                   <Settings className="w-5 h-5 cyber-text-muted" />
                 </Button>
               </div>
-            ) : (
-              // Unauthenticated user UI
-              <div className="flex items-center space-x-2">
-                <Link href="/login">
-                  <Button variant="ghost" className="cyber-text-white hover:cyber-text-blue">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button className="cyber-button-primary">
-                    Sign Up
-                  </Button>
-                </Link>
-              </div>
             )}
             
-            {isAuthenticated ? (
+            {isAuthenticated && (
               <div className="flex items-center space-x-2 pl-4 border-l cyber-border">
                 <Link href="/profile">
                   <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer"
@@ -204,7 +190,7 @@ export default function Header() {
                   <LogOut className="w-4 h-4 cyber-text-muted" />
                 </Button>
               </div>
-            ) : null}
+            )}
           </div>
         </div>
       </div>
