@@ -653,18 +653,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin endpoints
-  app.get("/api/admin/submissions", async (req, res) => {
+  app.get("/api/admin/submissions", requireAuth, loadCurrentUser(storage), requireAdmin, async (req, res) => {
     try {
-      // Get current user (for demo, use user ID 1 who is admin)
-      const currentUser = await storage.getUser(1);
+      const currentUser = (req as any).user;
       if (!currentUser) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-
-      // Check admin privileges
-      const isAdminUser = await storage.isAdmin(currentUser.id);
-      if (!isAdminUser) {
-        return res.status(403).json({ error: "Admin access required" });
+        return res.status(404).json({ error: "User not found" });
       }
 
       const submissions = await storage.getAllSubmissionsForAdmin();
@@ -681,18 +674,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/submissions/pending", async (req, res) => {
+  app.get("/api/admin/submissions/pending", requireAuth, loadCurrentUser(storage), requireAdmin, async (req, res) => {
     try {
-      // Get current user (for demo, use user ID 1 who is admin)
-      const currentUser = await storage.getUser(1);
+      const currentUser = (req as any).user;
       if (!currentUser) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-
-      // Check admin privileges
-      const isAdminUser = await storage.isAdmin(currentUser.id);
-      if (!isAdminUser) {
-        return res.status(403).json({ error: "Admin access required" });
+        return res.status(404).json({ error: "User not found" });
       }
 
       const submissions = await storage.getPendingSubmissions();
@@ -709,23 +695,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/submissions/:id/approve", async (req, res) => {
+  app.post("/api/admin/submissions/:id/approve", requireAuth, loadCurrentUser(storage), requireAdmin, async (req, res) => {
     try {
       const submissionId = parseInt(req.params.id);
       if (isNaN(submissionId)) {
         return res.status(400).json({ error: "Invalid submission ID" });
       }
 
-      // Get current user (for demo, use user ID 1 who is admin)
-      const currentUser = await storage.getUser(1);
+      const currentUser = (req as any).user;
       if (!currentUser) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-
-      // Check admin privileges
-      const isAdminUser = await storage.isAdmin(currentUser.id);
-      if (!isAdminUser) {
-        return res.status(403).json({ error: "Admin access required" });
+        return res.status(404).json({ error: "User not found" });
       }
 
       const { reviewNotes } = req.body;
@@ -739,23 +718,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/submissions/:id/reject", async (req, res) => {
+  app.post("/api/admin/submissions/:id/reject", requireAuth, loadCurrentUser(storage), requireAdmin, async (req, res) => {
     try {
       const submissionId = parseInt(req.params.id);
       if (isNaN(submissionId)) {
         return res.status(400).json({ error: "Invalid submission ID" });
       }
 
-      // Get current user (for demo, use user ID 1 who is admin)
-      const currentUser = await storage.getUser(1);
+      const currentUser = (req as any).user;
       if (!currentUser) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-
-      // Check admin privileges
-      const isAdminUser = await storage.isAdmin(currentUser.id);
-      if (!isAdminUser) {
-        return res.status(403).json({ error: "Admin access required" });
+        return res.status(404).json({ error: "User not found" });
       }
 
       const { reviewNotes } = req.body;
