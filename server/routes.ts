@@ -421,15 +421,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/news/:id/comments", async (req, res) => {
+  app.post("/api/news/:id/comments", requireAuth, loadCurrentUser(storage), async (req, res) => {
     try {
       const articleId = parseInt(req.params.id);
       if (isNaN(articleId)) {
         return res.status(400).json({ error: "Invalid article ID" });
       }
 
-      // Get current user (for demo, use user ID 1)
-      const currentUser = await storage.getUser(1);
+      // Get current user from authentication middleware
+      const currentUser = (req as any).user;
       if (!currentUser) {
         return res.status(401).json({ error: "User not authenticated" });
       }
@@ -494,15 +494,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/posts/:id/comments", async (req, res) => {
+  app.post("/api/posts/:id/comments", requireAuth, loadCurrentUser(storage), async (req, res) => {
     try {
       const postId = parseInt(req.params.id);
       if (isNaN(postId)) {
         return res.status(400).json({ error: "Invalid post ID" });
       }
 
-      // Get current user (for demo, use user ID 1)
-      const currentUser = await storage.getUser(1);
+      // Get current user from authentication middleware
+      const currentUser = (req as any).user;
       if (!currentUser) {
         return res.status(401).json({ error: "User not authenticated" });
       }
@@ -541,15 +541,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/posts/comments/:commentId", async (req, res) => {
+  app.delete("/api/posts/comments/:commentId", requireAuth, loadCurrentUser(storage), async (req, res) => {
     try {
       const commentId = parseInt(req.params.commentId);
       if (isNaN(commentId)) {
         return res.status(400).json({ error: "Invalid comment ID" });
       }
 
-      // Get current user (for demo, use user ID 1)
-      const currentUser = await storage.getUser(1);
+      // Get current user from authentication middleware
+      const currentUser = (req as any).user;
       if (!currentUser) {
         return res.status(401).json({ error: "User not authenticated" });
       }
@@ -595,10 +595,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User Submissions endpoints
-  app.post("/api/submissions", async (req, res) => {
+  app.post("/api/submissions", requireAuth, loadCurrentUser(storage), async (req, res) => {
     try {
-      // Get current user (for demo, use user ID 1)
-      const currentUser = await storage.getUser(1);
+      // Get current user from authentication middleware
+      const currentUser = (req as any).user;
       if (!currentUser) {
         return res.status(401).json({ error: "User not authenticated" });
       }

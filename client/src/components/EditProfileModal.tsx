@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -105,16 +106,17 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
 
             <div>
               <Label htmlFor="role" className="text-white text-sm font-medium">
-                Role
+                Account Level
               </Label>
-              <Input
-                id="role"
-                value={formData.role}
-                onChange={(e) => handleInputChange("role", e.target.value)}
-                className="cyber-input mt-2"
-                placeholder="e.g., Security Analyst, Penetration Tester"
-                data-testid="input-role"
-              />
+              <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
+                <SelectTrigger className="cyber-input mt-2" data-testid="select-role">
+                  <SelectValue placeholder="Select account level" />
+                </SelectTrigger>
+                <SelectContent className="cyber-bg-dark border-cyber-blue">
+                  <SelectItem value="user" className="text-white hover:cyber-bg-surface">User</SelectItem>
+                  <SelectItem value="admin" className="text-white hover:cyber-bg-surface">Admin</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>

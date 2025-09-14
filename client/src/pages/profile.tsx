@@ -141,11 +141,6 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-
-            <Button variant="outline" size="sm" data-testid="button-edit-profile">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Profile
-            </Button>
           </div>
         </CardContent>
       </Card>
