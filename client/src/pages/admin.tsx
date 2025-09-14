@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface UserSubmission {
   id: number;
-  type: "cve" | "exploit";
+  type: "vulnerability" | "exploit";
   title: string;
   description: string;
   severity?: string;
@@ -222,12 +222,7 @@ export default function AdminPage() {
   // Approve submission mutation
   const approveMutation = useMutation({
     mutationFn: async ({ id, reviewNotes }: { id: number; reviewNotes?: string }) => {
-      const response = await fetch(`/api/admin/submissions/${id}/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reviewNotes }),
-      });
-      if (!response.ok) throw new Error("Failed to approve submission");
+      const response = await apiRequest("POST", `/api/admin/submissions/${id}/approve`, { reviewNotes });
       return response.json();
     },
     onSuccess: () => {
@@ -250,12 +245,7 @@ export default function AdminPage() {
   // Reject submission mutation
   const rejectMutation = useMutation({
     mutationFn: async ({ id, reviewNotes }: { id: number; reviewNotes?: string }) => {
-      const response = await fetch(`/api/admin/submissions/${id}/reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reviewNotes }),
-      });
-      if (!response.ok) throw new Error("Failed to reject submission");
+      const response = await apiRequest("POST", `/api/admin/submissions/${id}/reject`, { reviewNotes });
       return response.json();
     },
     onSuccess: () => {
