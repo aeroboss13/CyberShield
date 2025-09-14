@@ -1,18 +1,65 @@
-import { Search, Shield, Bell, Settings, Activity, Plus, UserCog } from "lucide-react";
+import { Search, Shield, Bell, Settings, Activity, Plus, UserCog, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link, useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import PostModal from "./PostModal";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  // Get current user to check admin privileges
-  const { data: currentUser } = useQuery({
+  // Get current user to check admin privileges - handle auth errors gracefully
+  const { data: currentUser, error } = useQuery({
     queryKey: ["/api/users/current"],
+    retry: false, // Don't retry on auth failures
+    refetchOnWindowFocus: false,
+    throwOnError: false // Don't throw on 401 errors
   });
+
+  // Check if user is authenticated (no error and has user data)
+  const isAuthenticated = !error && currentUser && typeof currentUser === 'object' && 'id' in currentUser;
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Logout failed");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      // Clear all queries and redirect to login
+      queryClient.clear();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out."
+      });
+      setLocation("/login");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Logout failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,74 +105,106 @@ export default function Header() {
               </button>
             </form>
             
-            <div className="flex items-center space-x-2">
-              <PostModal 
-                trigger={
-                  <Button className="cyber-button-primary">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Post
-                  </Button>
-                }
-              />
+            {isAuthenticated ? (
+              // Authenticated user UI
+              <div className="flex items-center space-x-2">
+                <PostModal 
+                  trigger={
+                    <Button className="cyber-button-primary">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Post
+                    </Button>
+                  }
+                />
 
-              {/* Admin Panel Link - Only show for administrators */}
-              {currentUser?.role === "admin" && (
-                <Link href="/admin">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
-                    data-testid="button-admin-panel"
-                  >
-                    <UserCog className="w-5 h-5 cyber-text-orange" />
+                {/* Admin Panel Link - Only show for administrators */}
+                {isAuthenticated && (currentUser as any)?.role === "admin" && (
+                  <Link href="/admin">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                      data-testid="button-admin-panel"
+                    >
+                      <UserCog className="w-5 h-5 cyber-text-orange" />
+                    </Button>
+                  </Link>
+                )}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="relative cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                  onClick={() => alert('Security alerts and notifications')}
+                >
+                  <Bell className="w-5 h-5 cyber-text-muted" />
+                  <span className="absolute -top-1 -right-1 w-2 h-2 cyber-bg-red rounded-full"></span>
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                  onClick={() => alert('System activity and live monitoring')}
+                >
+                  <Activity className="w-5 h-5 cyber-text-green" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                  onClick={() => alert('Settings and preferences')}
+                >
+                  <Settings className="w-5 h-5 cyber-text-muted" />
+                </Button>
+              </div>
+            ) : (
+              // Unauthenticated user UI
+              <div className="flex items-center space-x-2">
+                <Link href="/login">
+                  <Button variant="ghost" className="cyber-text-white hover:cyber-text-blue">
+                    Sign In
                   </Button>
                 </Link>
-              )}
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="relative cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
-                onClick={() => alert('Security alerts and notifications')}
-              >
-                <Bell className="w-5 h-5 cyber-text-muted" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 cyber-bg-red rounded-full"></span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
-                onClick={() => alert('System activity and live monitoring')}
-              >
-                <Activity className="w-5 h-5 cyber-text-green" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
-                onClick={() => alert('Settings and preferences')}
-              >
-                <Settings className="w-5 h-5 cyber-text-muted" />
-              </Button>
-            </div>
+                <Link href="/register">
+                  <Button className="cyber-button-primary">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
             
-            <div className="flex items-center space-x-2 pl-4 border-l cyber-border">
-              <a 
-                href="/profile" 
-                data-testid="link-profile"
-                className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
-              >
-                <div className="w-9 h-9 cyber-gradient rounded-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform shadow-lg">
-                  <span className="text-white font-semibold text-sm">JS</span>
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-white">John Smith</p>
-                  <p className="text-xs cyber-text-dim">Security Analyst</p>
-                </div>
-              </a>
-            </div>
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-2 pl-4 border-l cyber-border">
+                <Link href="/profile">
+                  <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer"
+                       data-testid="link-profile"
+                  >
+                    <div className="w-9 h-9 cyber-gradient rounded-lg flex items-center justify-center hover:scale-105 transition-transform shadow-lg">
+                      <span className="text-white font-semibold text-sm">
+                        {(currentUser as any)?.name?.charAt(0) || "U"}
+                      </span>
+                    </div>
+                    <div className="hidden sm:block">
+                      <p className="text-sm font-medium text-white">{(currentUser as any)?.name || "User"}</p>
+                      <p className="text-xs cyber-text-dim">Security Professional</p>
+                    </div>
+                  </div>
+                </Link>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                  onClick={handleLogout}
+                  disabled={logoutMutation.isPending}
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4 cyber-text-muted" />
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
