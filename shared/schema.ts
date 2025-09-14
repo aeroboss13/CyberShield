@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("user"), // 'user' or 'admin'
   avatar: text("avatar"),
   bio: text("bio"),
@@ -203,6 +204,7 @@ export const userSubmissionRelations = relations(userSubmissions, ({ one }) => (
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  passwordHash: true,
   reputation: true,
   postCount: true,
   likesReceived: true,
@@ -216,13 +218,15 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const updateUserSchema = insertUserSchema.pick({
   name: true,
-  role: true,
   bio: true,
   location: true,
   website: true,
   avatar: true
-}).extend({
-  role: z.enum(['user', 'admin']).default('user')
+});
+
+// Admin-only schema for role updates (separate endpoint)
+export const updateUserRoleSchema = z.object({
+  role: z.enum(['user', 'admin'])
 });
 
 export const insertPostSchema = createInsertSchema(posts).omit({
@@ -300,9 +304,27 @@ export type UserSubmission = typeof userSubmissions.$inferSelect;
 
 // Public user type without sensitive information
 export const publicUserSchema = createSelectSchema(users).omit({
-  email: true
+  email: true,
+  passwordHash: true
 });
 
 export type PublicUser = z.infer<typeof publicUserSchema>;
+
+// Authentication schemas
+export const registerSchema = insertUserSchema.omit({ 
+  role: true 
+}).extend({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: z.string().email("Invalid email format").toLowerCase()
+});
+
+export const loginSchema = z.object({
+  identifier: z.string().min(1, "Username or email is required"), // Can be username or email
+  password: z.string().min(1, "Password is required")
+});
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>;
 
 export type NewsArticle = typeof newsArticles.$inferSelect;
