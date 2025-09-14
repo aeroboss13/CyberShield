@@ -1,11 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema, insertUserSubmissionSchema, publicUserSchema, updateUserSchema } from "@shared/schema";
+import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema, insertUserSubmissionSchema, publicUserSchema, updateUserSchema, registerSchema, loginSchema } from "@shared/schema";
 
 // Helper to sanitize user data (remove email)
 const toPublicUser = (u: any) => (u ? publicUserSchema.parse(u) : undefined);
 import { z } from "zod";
+import { hashPassword, verifyPassword, createSession, deleteSession, setSessionCookie, clearSessionCookie, requireAuth, loadCurrentUser, requireAdmin, extractSessionToken } from "./auth";
 import { MitreService } from "./services/mitre-service";
 import { CVEService } from "./services/cve-service";
 import { ExploitService } from "./services/exploit-service";
@@ -19,6 +20,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const cveService = CVEService.getInstance(storage);
   const exploitService = ExploitService.getInstance();
   const newsService = NewsService.getInstance();
+
+  // Authentication endpoints
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const registerData = registerSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUserByUsername = await storage.getUserByUsername(registerData.username);
+      if (existingUserByUsername) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+      
+      const existingUserByEmail = await storage.getUserByEmail(registerData.email);
+      if (existingUserByEmail) {
+        return res.status(400).json({ error: "Email already exists" });
+      }
+      
+      // Hash password and create user
+      const passwordHash = await hashPassword(registerData.password);
+      const { password, ...userDataWithoutPassword } = registerData;
+      // Add default role since it's excluded from registerSchema for security
+      const userData = { ...userDataWithoutPassword, role: 'user' as const };
+      const newUser = await storage.createUser(userData, passwordHash);
+      
+      // Create session and set cookie
+      const sessionToken = createSession(newUser.id);
+      setSessionCookie(res, sessionToken);
+      
+      res.status(201).json(toPublicUser(newUser));
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid registration data", details: error.errors });
+      } else {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: "Failed to register user" });
+      }
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const loginData = loginSchema.parse(req.body);
+      
+      // Find user by username or email
+      let user = await storage.getUserByUsername(loginData.identifier);
+      if (!user) {
+        user = await storage.getUserByEmail(loginData.identifier);
+      }
+      
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      // Verify password
+      const isValidPassword = await verifyPassword(loginData.password, user.passwordHash);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      // Create session and set cookie
+      const sessionToken = createSession(user.id);
+      setSessionCookie(res, sessionToken);
+      
+      res.json(toPublicUser(user));
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid login data", details: error.errors });
+      } else {
+        console.error('Login error:', error);
+        res.status(500).json({ error: "Failed to login" });
+      }
+    }
+  });
+
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      // Extract session token and delete server-side session
+      const token = extractSessionToken(req);
+      if (token) {
+        deleteSession(token);
+      }
+      
+      // Clear session cookie
+      clearSessionCookie(res);
+      res.json({ message: "Logged out successfully" });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ error: "Failed to logout" });
+    }
+  });
 
   // News routes with content extraction
   app.use("/api/news", newsRouter);
@@ -274,10 +365,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User endpoints
-  app.get("/api/users/current", async (req, res) => {
+  app.get("/api/users/current", requireAuth, loadCurrentUser(storage), async (req, res) => {
     try {
-      // For demo purposes, return the first user
-      const user = await storage.getUser(1);
+      const user = (req as any).user;
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
