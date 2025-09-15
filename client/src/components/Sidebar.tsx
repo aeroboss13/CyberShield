@@ -16,6 +16,7 @@ import {
   UserX
 } from "lucide-react";
 import { Link } from "wouter";
+import { useLanguage } from "../contexts/LanguageContext";
 import { PublicUser, ThreatOverview } from "@shared/schema";
 
 interface UserActivityStats {
@@ -28,6 +29,8 @@ interface UserActivityStats {
 }
 
 export default function Sidebar() {
+  const { t } = useLanguage();
+  
   const { data: currentUser, error } = useQuery<PublicUser>({
     queryKey: ["/api/users/current"],
     retry: false,
@@ -39,7 +42,7 @@ export default function Sidebar() {
 
   // Get user activity stats for authenticated users
   const { data: activityStats } = useQuery<UserActivityStats>({
-    queryKey: [`/api/users/${currentUser?.id}/activity`],
+    queryKey: ["/api/users", currentUser?.id, "activity"],
     enabled: isAuthenticated && !!currentUser?.id,
     retry: false,
     throwOnError: false
@@ -69,7 +72,7 @@ export default function Sidebar() {
                 <div className="absolute -bottom-1 -right-1">
                   <Badge className="cyber-bg-green text-white text-xs px-2 py-1">
                     <Activity className="w-3 h-3 mr-1" />
-                    Online
+{t('sidebar.online')}
                   </Badge>
                 </div>
               </div>
@@ -215,7 +218,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 cyber-text-green" />
-                <span className="text-white text-sm">Posts</span>
+                <span className="text-white text-sm">{t('sidebar.posts')}</span>
               </div>
               <span className="cyber-text-green font-semibold">
                 {activityStats?.postsThisWeek || 0}
@@ -224,7 +227,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 cyber-text-blue" />
-                <span className="text-white text-sm">Likes</span>
+                <span className="text-white text-sm">{t('sidebar.likes')}</span>
               </div>
               <span className="cyber-text-blue font-semibold">
                 {activityStats?.likesThisWeek || 0}
@@ -233,7 +236,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 cyber-text-amber" />
-                <span className="text-white text-sm">Comments</span>
+                <span className="text-white text-sm">{t('sidebar.comments')}</span>
               </div>
               <span className="cyber-text-amber font-semibold">
                 {activityStats?.commentsThisWeek || 0}
@@ -246,7 +249,7 @@ export default function Sidebar() {
       {/* Global Threat Level Analytics */}
       <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-white text-sm">Global Threat Level</h3>
+          <h3 className="font-bold text-white text-sm">{t('sidebar.threat.level')}</h3>
           {threatLoading ? (
             <div className="w-20 h-6 bg-gray-600 animate-pulse rounded"></div>
           ) : (
@@ -270,7 +273,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="w-4 h-4 cyber-text-red" />
-                <span className="text-white text-xs">CVEs Today</span>
+                <span className="text-white text-xs">{t('sidebar.cves.today')}</span>
               </div>
               <span className="cyber-text-red font-semibold text-sm" data-testid="metric-cves-today">
                 {threatOverview.metrics.cvesToday}
@@ -279,7 +282,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Shield className="w-4 h-4 cyber-text-amber" />
-                <span className="text-white text-xs">Critical/High</span>
+                <span className="text-white text-xs">{t('sidebar.critical.high')}</span>
               </div>
               <span className="cyber-text-amber font-semibold text-sm" data-testid="metric-critical-high">
                 {threatOverview.metrics.criticalHighToday}
@@ -288,7 +291,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Database className="w-4 h-4 cyber-text-green" />
-                <span className="text-white text-xs">KEV Added</span>
+                <span className="text-white text-xs">{t('sidebar.kev.added')}</span>
               </div>
               <span className="cyber-text-green font-semibold text-sm">
                 {threatOverview.metrics.kevAddedToday}
@@ -300,7 +303,7 @@ export default function Sidebar() {
         {/* Today's Top Headlines */}
         {threatOverview?.headlines && threatOverview.headlines.length > 0 && (
           <div className="space-y-2 mb-4">
-            <h4 className="text-white text-xs font-semibold mb-2">Today's Security Headlines</h4>
+            <h4 className="text-white text-xs font-semibold mb-2">{t('sidebar.headlines')}</h4>
             <div className="space-y-1">
               {threatOverview.headlines.slice(0, 3).map((headline, index) => (
                 <div key={index} className="text-xs">
@@ -352,7 +355,7 @@ export default function Sidebar() {
           <div className="mt-3 pt-3 border-t border-gray-600">
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="w-3 h-3 cyber-text-blue" />
-              <span className="text-white text-xs font-semibold">7-Day Trend</span>
+              <span className="text-white text-xs font-semibold">{t('sidebar.trend')}</span>
             </div>
             <div className="text-xs text-gray-300">
               Avg: {threatOverview.trend7Day.cvesAvg} CVEs/day, {threatOverview.trend7Day.newsAvg} news/day

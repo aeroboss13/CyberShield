@@ -5,13 +5,17 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "../contexts/LanguageContext";
 import PostModal from "./PostModal";
+import ThemeToggle from "./ThemeToggle";
+import LanguageToggle from "./LanguageToggle";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   
   // Get current user to check admin privileges - handle auth errors gracefully
   const { data: currentUser, error } = useQuery({
@@ -92,7 +96,7 @@ export default function Header() {
             <form onSubmit={handleSearch} className="relative group">
               <Input
                 type="text"
-                placeholder="Search CVEs, threats, techniques..."
+                placeholder={t('header.search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="cyber-input w-80 pl-10 pr-4 h-10 rounded-lg transition-all duration-300 focus:w-96"
@@ -105,6 +109,12 @@ export default function Header() {
               </button>
             </form>
             
+            {/* Theme and Language Toggle Buttons - Available to all users */}
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              <LanguageToggle />
+            </div>
+
             {isAuthenticated && (
               // Authenticated user UI
               <div className="flex items-center space-x-2">
@@ -112,7 +122,7 @@ export default function Header() {
                   trigger={
                     <Button className="cyber-button-primary">
                       <Plus className="w-4 h-4 mr-2" />
-                      Post
+                      {t('header.post')}
                     </Button>
                   }
                 />

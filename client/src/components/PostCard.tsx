@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Heart, Share2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLanguage } from "../contexts/LanguageContext";
 import type { PostWithUser } from "@/lib/types";
+import type { PublicUser } from "@shared/schema";
 import PostComments from "./PostComments";
 
 interface PostCardProps {
@@ -13,6 +15,15 @@ interface PostCardProps {
 
 export default function PostCard({ post }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
+  const { t } = useLanguage();
+
+  // Check if user is authenticated
+  const { data: currentUser, error } = useQuery<PublicUser>({
+    queryKey: ["/api/users/current"],
+    retry: false,
+    throwOnError: false
+  });
+  const isAuthenticated = !error && currentUser;
 
   const likeMutation = useMutation({
     mutationFn: async () => {
@@ -22,6 +33,9 @@ export default function PostCard({ post }: PostCardProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     },
+    onError: (error) => {
+      console.error('Like failed:', error);
+    }
   });
 
   const getInitials = (name: string) => {
@@ -111,10 +125,15 @@ export default function PostCard({ post }: PostCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => likeMutation.mutate()}
-                disabled={likeMutation.isPending}
-                className="flex items-center space-x-2 hover:text-red-400 transition-colors p-0 h-auto"
+                onClick={() => isAuthenticated ? likeMutation.mutate() : null}
+                disabled={likeMutation.isPending || !isAuthenticated}
+                className={`flex items-center space-x-2 transition-colors p-0 h-auto ${
+                  isAuthenticated 
+                    ? 'hover:text-red-400 cursor-pointer' 
+                    : 'cursor-not-allowed opacity-60'
+                }`}
                 data-testid={`button-like-${post.id}`}
+                title={!isAuthenticated ? t('posts.like.tooltip') : ""}
               >
                 <Heart className="w-5 h-5" />
                 <span>{post.likes}</span>
