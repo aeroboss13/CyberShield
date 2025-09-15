@@ -111,6 +111,22 @@ export const postComments = pgTable("post_comments", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Likes for posts
+export const postLikes = pgTable("post_likes", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Likes for news articles
+export const newsLikes = pgTable("news_likes", {
+  id: serial("id").primaryKey(),
+  articleId: integer("article_id").notNull().references(() => newsArticles.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
 // User-submitted vulnerabilities and exploits
 export const userSubmissions = pgTable("user_submissions", {
   id: serial("id").primaryKey(),
@@ -148,7 +164,8 @@ export const userSubmissions = pgTable("user_submissions", {
 
 // Relations
 export const newsArticleRelations = relations(newsArticles, ({ many }) => ({
-  comments: many(newsComments)
+  comments: many(newsComments),
+  likes: many(newsLikes)
 }));
 
 export const newsCommentRelations = relations(newsComments, ({ one }) => ({
@@ -165,8 +182,31 @@ export const newsCommentRelations = relations(newsComments, ({ one }) => ({
 // Post relations
 export const postRelations = relations(posts, ({ many, one }) => ({
   comments: many(postComments),
+  likes: many(postLikes),
   user: one(users, {
     fields: [posts.userId],
+    references: [users.id]
+  })
+}));
+
+export const postLikeRelations = relations(postLikes, ({ one }) => ({
+  post: one(posts, {
+    fields: [postLikes.postId],
+    references: [posts.id]
+  }),
+  user: one(users, {
+    fields: [postLikes.userId],
+    references: [users.id]
+  })
+}));
+
+export const newsLikeRelations = relations(newsLikes, ({ one }) => ({
+  article: one(newsArticles, {
+    fields: [newsLikes.articleId],
+    references: [newsArticles.id]
+  }),
+  user: one(users, {
+    fields: [newsLikes.userId],
     references: [users.id]
   })
 }));
@@ -186,6 +226,8 @@ export const userRelations = relations(users, ({ many }) => ({
   newsComments: many(newsComments),
   postComments: many(postComments),
   posts: many(posts),
+  postLikes: many(postLikes),
+  newsLikes: many(newsLikes),
   submissions: many(userSubmissions),
   reviewedSubmissions: many(userSubmissions) // As a reviewer
 }));
@@ -268,6 +310,16 @@ export const insertPostCommentSchema = createInsertSchema(postComments).omit({
   updatedAt: true
 });
 
+export const insertPostLikeSchema = createInsertSchema(postLikes).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertNewsLikeSchema = createInsertSchema(newsLikes).omit({
+  id: true,
+  createdAt: true
+});
+
 export const insertUserSubmissionSchema = createInsertSchema(userSubmissions).omit({
   id: true,
   createdAt: true,
@@ -299,6 +351,10 @@ export type InsertNewsComment = z.infer<typeof insertNewsCommentSchema>;
 export type NewsComment = typeof newsComments.$inferSelect;
 export type InsertPostComment = z.infer<typeof insertPostCommentSchema>;
 export type PostComment = typeof postComments.$inferSelect;
+export type InsertPostLike = z.infer<typeof insertPostLikeSchema>;
+export type PostLike = typeof postLikes.$inferSelect;
+export type InsertNewsLike = z.infer<typeof insertNewsLikeSchema>;
+export type NewsLike = typeof newsLikes.$inferSelect;
 export type InsertUserSubmission = z.infer<typeof insertUserSubmissionSchema>;
 export type UserSubmission = typeof userSubmissions.$inferSelect;
 

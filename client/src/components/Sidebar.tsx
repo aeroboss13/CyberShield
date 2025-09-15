@@ -18,6 +18,15 @@ import {
 import { Link } from "wouter";
 import { PublicUser } from "@shared/schema";
 
+interface UserActivityStats {
+  postsThisWeek: number;
+  likesThisWeek: number;
+  commentsThisWeek: number;
+  threatsAnalyzed: number;
+  communityRank: number;
+  weeklyPoints: number;
+}
+
 export default function Sidebar() {
   const { data: currentUser, error } = useQuery<PublicUser>({
     queryKey: ["/api/users/current"],
@@ -27,6 +36,14 @@ export default function Sidebar() {
 
   // Check if user is authenticated
   const isAuthenticated = !error && currentUser;
+
+  // Get user activity stats for authenticated users
+  const { data: activityStats } = useQuery<UserActivityStats>({
+    queryKey: [`/api/users/${currentUser?.id}/activity`],
+    enabled: isAuthenticated && !!currentUser?.id,
+    retry: false,
+    throwOnError: false
+  });
 
   return (
     <div className="space-y-6">
@@ -153,35 +170,70 @@ export default function Sidebar() {
       </div>
 
       {/* Activity Stats */}
-      <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-        <h3 className="font-bold text-white mb-4 flex items-center space-x-2">
-          <TrendingUp className="w-5 h-5 cyber-text-green" />
-          <span>Activity</span>
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Shield className="w-4 h-4 cyber-text-blue" />
-              <span className="text-white text-sm">Threats Analyzed</span>
+      {isAuthenticated && (
+        <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
+          <h3 className="font-bold text-white mb-4 flex items-center space-x-2">
+            <TrendingUp className="w-5 h-5 cyber-text-green" />
+            <span>Activity</span>
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Shield className="w-4 h-4 cyber-text-blue" />
+                <span className="text-white text-sm">Threats Analyzed</span>
+              </div>
+              <span className="cyber-text-blue font-semibold">
+                {activityStats?.threatsAnalyzed || 0}
+              </span>
             </div>
-            <span className="cyber-text-blue font-semibold">127</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Users className="w-4 h-4 cyber-text-green" />
-              <span className="text-white text-sm">Community Rank</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Users className="w-4 h-4 cyber-text-green" />
+                <span className="text-white text-sm">Community Rank</span>
+              </div>
+              <span className="cyber-text-green font-semibold">
+                #{activityStats?.communityRank || 0}
+              </span>
             </div>
-            <span className="cyber-text-green font-semibold">#42</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Activity className="w-4 h-4 cyber-text-amber" />
-              <span className="text-white text-sm">This Week</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Activity className="w-4 h-4 cyber-text-amber" />
+                <span className="text-white text-sm">This Week</span>
+              </div>
+              <span className="cyber-text-amber font-semibold">
+                +{activityStats?.weeklyPoints || 0} pts
+              </span>
             </div>
-            <span className="cyber-text-amber font-semibold">+15 pts</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Activity className="w-4 h-4 cyber-text-green" />
+                <span className="text-white text-sm">Posts</span>
+              </div>
+              <span className="cyber-text-green font-semibold">
+                {activityStats?.postsThisWeek || 0}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Activity className="w-4 h-4 cyber-text-blue" />
+                <span className="text-white text-sm">Likes</span>
+              </div>
+              <span className="cyber-text-blue font-semibold">
+                {activityStats?.likesThisWeek || 0}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Activity className="w-4 h-4 cyber-text-amber" />
+                <span className="text-white text-sm">Comments</span>
+              </div>
+              <span className="cyber-text-amber font-semibold">
+                {activityStats?.commentsThisWeek || 0}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Threat Level Indicator */}
       <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">

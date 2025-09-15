@@ -1,4 +1,4 @@
-import { users, posts, cveEntries, exploits, mitreAttack, newsArticles, newsComments, postComments, userSubmissions, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type Exploit, type InsertExploit, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews, type NewsComment, type InsertNewsComment, type PostComment, type InsertPostComment, type UserSubmission, type InsertUserSubmission } from "@shared/schema";
+import { users, posts, cveEntries, exploits, mitreAttack, newsArticles, newsComments, postComments, postLikes, newsLikes, userSubmissions, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type Exploit, type InsertExploit, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews, type NewsComment, type InsertNewsComment, type PostComment, type InsertPostComment, type PostLike, type InsertPostLike, type NewsLike, type InsertNewsLike, type UserSubmission, type InsertUserSubmission } from "@shared/schema";
 
 interface CVESearchParams {
   search?: string;
@@ -67,9 +67,23 @@ export interface IStorage {
   getAllSubmissions(): Promise<(UserSubmission & { user: User })[]>;
   updateSubmissionStatus(id: number, status: string, reviewNotes?: string, reviewerId?: number): Promise<void>;
   
+  // Likes
+  togglePostLike(postId: number, userId: number): Promise<{ liked: boolean; likeCount: number }>;
+  getPostLikeStatus(postId: number, userId: number): Promise<boolean>;
+  toggleNewsLike(articleId: number, userId: number): Promise<{ liked: boolean; likeCount: number }>;
+  getNewsLikeStatus(articleId: number, userId: number): Promise<boolean>;
+  
   // User Statistics
   updateUserStats(userId: number, field: string, delta: number): Promise<void>;
   getUserStats(userId: number): Promise<User>;
+  getUserActivityStats(userId: number): Promise<{
+    postsThisWeek: number;
+    likesThisWeek: number;
+    commentsThisWeek: number;
+    threatsAnalyzed: number;
+    communityRank: number;
+    weeklyPoints: number;
+  }>;
   
   // Admin Operations
   isAdmin(userId: number): Promise<boolean>;
@@ -88,6 +102,8 @@ export class MemStorage implements IStorage {
   private news: Map<number, NewsArticle>;
   private newsComments: Map<number, NewsComment>;
   private postComments: Map<number, PostComment>;
+  private postLikes: Map<number, PostLike>;
+  private newsLikes: Map<number, NewsLike>;
   private userSubmissions: Map<number, UserSubmission>;
   private currentUserId: number;
   private currentSubmissionId: number;
@@ -95,6 +111,7 @@ export class MemStorage implements IStorage {
   private currentExploitId: number;
   private currentNewsId: number;
   private currentCommentId: number;
+  private currentLikeId: number;
 
   constructor() {
     this.users = new Map();
@@ -105,6 +122,8 @@ export class MemStorage implements IStorage {
     this.news = new Map();
     this.newsComments = new Map();
     this.postComments = new Map();
+    this.postLikes = new Map();
+    this.newsLikes = new Map();
     this.userSubmissions = new Map();
     this.currentUserId = 1;
     this.currentSubmissionId = 1;
@@ -112,6 +131,7 @@ export class MemStorage implements IStorage {
     this.currentExploitId = 1;
     this.currentNewsId = 1;
     this.currentCommentId = 1;
+    this.currentLikeId = 1;
     
     this.seedData();
   }
@@ -935,6 +955,169 @@ export class MemStorage implements IStorage {
         if (!user) throw new Error('User not found');
         return { ...submission, user };
       });
+  }
+
+  // Likes functionality
+  async togglePostLike(postId: number, userId: number): Promise<{ liked: boolean; likeCount: number }> {
+    const existingLike = Array.from(this.postLikes.values()).find(
+      like => like.postId === postId && like.userId === userId
+    );
+
+    if (existingLike) {
+      // Remove like
+      this.postLikes.delete(existingLike.id);
+      
+      // Update post like count
+      const post = this.posts.get(postId);
+      if (post && post.likes > 0) {
+        post.likes--;
+        this.posts.set(postId, post);
+      }
+
+      // Update user likes received count
+      if (post) {
+        const postAuthor = this.users.get(post.userId);
+        if (postAuthor && postAuthor.likesReceived && postAuthor.likesReceived > 0) {
+          postAuthor.likesReceived--;
+          this.users.set(postAuthor.id, postAuthor);
+        }
+      }
+
+      return { liked: false, likeCount: post?.likes || 0 };
+    } else {
+      // Add like
+      const likeId = this.currentLikeId++;
+      const newLike: PostLike = {
+        id: likeId,
+        postId,
+        userId,
+        createdAt: new Date()
+      };
+      this.postLikes.set(likeId, newLike);
+
+      // Update post like count
+      const post = this.posts.get(postId);
+      if (post) {
+        post.likes = (post.likes || 0) + 1;
+        this.posts.set(postId, post);
+
+        // Update user likes received count
+        const postAuthor = this.users.get(post.userId);
+        if (postAuthor) {
+          postAuthor.likesReceived = (postAuthor.likesReceived || 0) + 1;
+          this.users.set(postAuthor.id, postAuthor);
+        }
+      }
+
+      return { liked: true, likeCount: post?.likes || 1 };
+    }
+  }
+
+  async getPostLikeStatus(postId: number, userId: number): Promise<boolean> {
+    return Array.from(this.postLikes.values()).some(
+      like => like.postId === postId && like.userId === userId
+    );
+  }
+
+  async toggleNewsLike(articleId: number, userId: number): Promise<{ liked: boolean; likeCount: number }> {
+    const existingLike = Array.from(this.newsLikes.values()).find(
+      like => like.articleId === articleId && like.userId === userId
+    );
+
+    const likesForArticle = Array.from(this.newsLikes.values()).filter(
+      like => like.articleId === articleId
+    );
+
+    if (existingLike) {
+      // Remove like
+      this.newsLikes.delete(existingLike.id);
+      return { liked: false, likeCount: likesForArticle.length - 1 };
+    } else {
+      // Add like
+      const likeId = this.currentLikeId++;
+      const newLike: NewsLike = {
+        id: likeId,
+        articleId,
+        userId,
+        createdAt: new Date()
+      };
+      this.newsLikes.set(likeId, newLike);
+      return { liked: true, likeCount: likesForArticle.length + 1 };
+    }
+  }
+
+  async getNewsLikeStatus(articleId: number, userId: number): Promise<boolean> {
+    return Array.from(this.newsLikes.values()).some(
+      like => like.articleId === articleId && like.userId === userId
+    );
+  }
+
+  async getUserActivityStats(userId: number): Promise<{
+    postsThisWeek: number;
+    likesThisWeek: number;
+    commentsThisWeek: number;
+    threatsAnalyzed: number;
+    communityRank: number;
+    weeklyPoints: number;
+  }> {
+    const user = this.users.get(userId);
+    if (!user) {
+      return {
+        postsThisWeek: 0,
+        likesThisWeek: 0,
+        commentsThisWeek: 0,
+        threatsAnalyzed: 0,
+        communityRank: 0,
+        weeklyPoints: 0
+      };
+    }
+
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // Calculate posts this week
+    const postsThisWeek = Array.from(this.posts.values()).filter(
+      post => post.userId === userId && 
+      post.createdAt && 
+      post.createdAt > oneWeekAgo
+    ).length;
+
+    // Calculate likes received this week
+    const likesThisWeek = Array.from(this.postLikes.values()).filter(like => {
+      const post = this.posts.get(like.postId);
+      return post?.userId === userId && 
+             like.createdAt && 
+             like.createdAt > oneWeekAgo;
+    }).length;
+
+    // Calculate comments this week
+    const commentsThisWeek = Array.from(this.postComments.values()).filter(
+      comment => comment.userId === userId && 
+      comment.createdAt && 
+      comment.createdAt > oneWeekAgo
+    ).length + Array.from(this.newsComments.values()).filter(
+      comment => comment.userId === userId && 
+      comment.createdAt && 
+      comment.createdAt > oneWeekAgo
+    ).length;
+
+    // Calculate threats analyzed (submissions)
+    const threatsAnalyzed = user.cveSubmissions + user.exploitSubmissions;
+
+    // Calculate community rank (based on reputation)
+    const allUsers = Array.from(this.users.values()).sort((a, b) => (b.reputation || 0) - (a.reputation || 0));
+    const userRank = allUsers.findIndex(u => u.id === userId) + 1;
+
+    // Calculate weekly points (simplified calculation)
+    const weeklyPoints = postsThisWeek * 5 + likesThisWeek * 2 + commentsThisWeek * 1;
+
+    return {
+      postsThisWeek,
+      likesThisWeek,
+      commentsThisWeek,
+      threatsAnalyzed,
+      communityRank: userRank,
+      weeklyPoints
+    };
   }
 }
 

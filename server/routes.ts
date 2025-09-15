@@ -149,15 +149,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/posts/:id/like", async (req, res) => {
-    try {
-      const postId = parseInt(req.params.id);
-      await storage.updatePostInteraction(postId, 'likes');
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to like post" });
-    }
-  });
 
   // CVE endpoints - with server-side pagination
   app.get("/api/cves", async (req, res) => {
@@ -591,6 +582,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Get user stats error:', error);
       res.status(500).json({ error: "Failed to fetch user statistics" });
+    }
+  });
+
+  // User Activity Analytics endpoint
+  app.get("/api/users/:id/activity", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      const activityStats = await storage.getUserActivityStats(userId);
+      res.json(activityStats);
+    } catch (error) {
+      console.error('Get user activity error:', error);
+      res.status(500).json({ error: "Failed to fetch user activity statistics" });
+    }
+  });
+
+  // Post Likes endpoints
+  app.post("/api/posts/:id/like", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ error: "Invalid post ID" });
+      }
+
+      const result = await storage.togglePostLike(postId, currentUser.id);
+      res.json(result);
+    } catch (error) {
+      console.error('Toggle post like error:', error);
+      res.status(500).json({ error: "Failed to toggle post like" });
+    }
+  });
+
+  app.get("/api/posts/:id/like-status", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ error: "Invalid post ID" });
+      }
+
+      const isLiked = await storage.getPostLikeStatus(postId, currentUser.id);
+      res.json({ isLiked });
+    } catch (error) {
+      console.error('Get post like status error:', error);
+      res.status(500).json({ error: "Failed to get post like status" });
+    }
+  });
+
+  // News Likes endpoints
+  app.post("/api/news/:id/like", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const articleId = parseInt(req.params.id);
+      if (isNaN(articleId)) {
+        return res.status(400).json({ error: "Invalid article ID" });
+      }
+
+      const result = await storage.toggleNewsLike(articleId, currentUser.id);
+      res.json(result);
+    } catch (error) {
+      console.error('Toggle news like error:', error);
+      res.status(500).json({ error: "Failed to toggle news like" });
+    }
+  });
+
+  app.get("/api/news/:id/like-status", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const articleId = parseInt(req.params.id);
+      if (isNaN(articleId)) {
+        return res.status(400).json({ error: "Invalid article ID" });
+      }
+
+      const isLiked = await storage.getNewsLikeStatus(articleId, currentUser.id);
+      res.json({ isLiked });
+    } catch (error) {
+      console.error('Get news like status error:', error);
+      res.status(500).json({ error: "Failed to get news like status" });
     }
   });
 
