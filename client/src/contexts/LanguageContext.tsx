@@ -131,7 +131,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations['en']] || key;
+    return (translations[language] as any)[key] || key;
   };
 
   return (
@@ -144,12 +144,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (context === undefined) {
-    // Provide fallback values if context is not available
-    return {
-      language: 'en' as const,
-      toggleLanguage: () => {},
-      t: (key: string) => key
-    };
+    throw new Error('useLanguage must be used within LanguageProvider');
   }
   return context;
 }
