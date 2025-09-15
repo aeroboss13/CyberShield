@@ -34,7 +34,8 @@ export default function Header() {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
-        }
+        },
+        credentials: "include"
       });
 
       if (!response.ok) {
@@ -115,8 +116,7 @@ export default function Header() {
               <LanguageToggle />
             </div>
 
-            {isAuthenticated && (
-              // Authenticated user UI
+            {isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 <PostModal 
                   trigger={
@@ -169,9 +169,9 @@ export default function Header() {
                   <Settings className="w-5 h-5 cyber-text-muted" />
                 </Button>
               </div>
-            )}
+            ) : null}
             
-            {isAuthenticated && (
+            {isAuthenticated ? (
               <div className="flex items-center space-x-2 pl-4 border-l cyber-border">
                 <Link href="/profile">
                   <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer"
@@ -200,7 +200,7 @@ export default function Header() {
                   <LogOut className="w-4 h-4 cyber-text-muted" />
                 </Button>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
