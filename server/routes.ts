@@ -11,6 +11,7 @@ import { MitreService } from "./services/mitre-service";
 import { CVEService } from "./services/cve-service";
 import { ExploitService } from "./services/exploit-service";
 import { NewsService } from "./services/news-service";
+import { ThreatOverviewService } from "./services/threat-overview-service";
 import { newsRouter } from "./routes/news.js";
 import { ingestionPipeline } from "./services/ingestion-pipeline";
 
@@ -20,6 +21,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const cveService = CVEService.getInstance(storage);
   const exploitService = ExploitService.getInstance();
   const newsService = NewsService.getInstance();
+  const threatOverviewService = ThreatOverviewService.getInstance(cveService, newsService);
 
   // Authentication endpoints
   app.post("/api/auth/register", async (req, res) => {
@@ -113,6 +115,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // News routes with content extraction
   app.use("/api/news", newsRouter);
+
+  // Threat Overview endpoint for Global Threat Level analytics
+  app.get("/api/threat/overview", async (req, res) => {
+    try {
+      const overview = await threatOverviewService.getThreatOverview();
+      res.json(overview);
+    } catch (error) {
+      console.error('Threat overview error:', error);
+      res.status(500).json({ error: "Failed to fetch threat overview" });
+    }
+  });
 
   // Posts endpoints
   app.get("/api/posts", async (req, res) => {

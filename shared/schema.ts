@@ -384,3 +384,27 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>;
 
 export type NewsArticle = typeof newsArticles.$inferSelect;
+
+// Threat Overview Schema for Global Threat Level analytics
+export const threatOverviewSchema = z.object({
+  date: z.string(), // YYYY-MM-DD
+  level: z.enum(['LOW', 'MODERATE', 'HIGH', 'CRITICAL']),
+  metrics: z.object({
+    cvesToday: z.number(),
+    criticalHighToday: z.number(),
+    kevAddedToday: z.number(),
+    topicCounts: z.record(z.string(), z.number()),
+  }),
+  headlines: z.array(z.object({
+    title: z.string(),
+    source: z.string(),
+    link: z.string().optional()
+  })),
+  trend7Day: z.object({
+    cvesAvg: z.number(),
+    newsAvg: z.number()
+  }).nullable(),
+  rationale: z.string()
+});
+
+export type ThreatOverview = z.infer<typeof threatOverviewSchema>;
