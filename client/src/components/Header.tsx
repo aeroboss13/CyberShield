@@ -184,7 +184,9 @@ export default function Header() {
                     </div>
                     <div className="hidden sm:block">
                       <p className="text-sm font-medium text-white">{(currentUser as any)?.name || "User"}</p>
-                      <p className="text-xs cyber-text-dim">Security Professional</p>
+                      <p className="text-xs cyber-text-dim" data-testid="text-user-job-title">
+                        {(currentUser as any)?.jobTitle || "Security Professional"}
+                      </p>
                     </div>
                   </div>
                 </Link>
