@@ -420,20 +420,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { adminCode } = req.body;
       const ADMIN_CODE = process.env.ADMIN_CODE || "SECHUB_ADMIN_2025"; // Default code for demo
       
+      console.log('Admin promotion - user:', user.username, 'role:', user.role);
+      console.log('Admin promotion - provided code:', adminCode);
+      console.log('Admin promotion - expected code:', ADMIN_CODE);
+      
       if (!ADMIN_CODE) {
         return res.status(500).json({ error: "Admin code not configured" });
       }
 
       if (adminCode !== ADMIN_CODE) {
+        console.log('Admin promotion - code mismatch');
         return res.status(400).json({ error: "Invalid admin code" });
       }
+      
+      console.log('Admin promotion - code valid, updating user');
 
       // Update user role to admin
       const updatedUser = await storage.updateUser(user.id, { role: 'admin' });
       if (!updatedUser) {
+        console.log('Admin promotion - failed to update user');
         return res.status(404).json({ error: "User not found" });
       }
 
+      console.log('Admin promotion - success, updated user role to:', updatedUser.role);
       res.json(toPublicUser(updatedUser));
     } catch (error) {
       console.error('Admin promotion error:', error);
