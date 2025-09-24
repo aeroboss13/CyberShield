@@ -381,15 +381,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/users/current", async (req, res) => {
+  app.put("/api/users/current", requireAuth, loadCurrentUser(storage), async (req, res) => {
     try {
-      const currentUser = await storage.getCurrentUser(req);
-      if (!currentUser) {
+      const user = (req as any).user;
+      if (!user) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
       const updateData = updateUserSchema.parse(req.body);
-      const updatedUser = await storage.updateUser(currentUser.id, updateData);
+      const updatedUser = await storage.updateUser(user.id, updateData);
       
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
