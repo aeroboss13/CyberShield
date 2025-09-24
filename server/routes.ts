@@ -407,13 +407,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin role promotion endpoint
   app.post("/api/auth/promote-admin", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    console.log('=== ADMIN PROMOTION REQUEST START ===');
     try {
       const user = (req as any).user;
+      console.log('Admin promotion - user object:', user);
       if (!user) {
+        console.log('Admin promotion - no user found');
         return res.status(401).json({ error: "Authentication required" });
       }
 
       if (user.role === 'admin') {
+        console.log('Admin promotion - user already admin');
         return res.status(400).json({ error: "User is already an administrator" });
       }
 
