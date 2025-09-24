@@ -3,13 +3,24 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Paperclip, Hash } from "lucide-react";
+import { Paperclip, Hash, UserPlus, LogIn } from "lucide-react";
 import PostCard from "@/components/PostCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PostWithUser } from "@/lib/types";
+import type { PublicUser } from "@shared/schema";
 
 export default function SocialFeed() {
   const [newPostContent, setNewPostContent] = useState("");
+  const { t } = useLanguage();
+
+  // Check if user is authenticated
+  const { data: currentUser, error } = useQuery<PublicUser>({
+    queryKey: ["/api/users/current"],
+    retry: false,
+    throwOnError: false
+  });
+  const isAuthenticated = !error && currentUser;
 
   const { data: posts, isLoading } = useQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
@@ -66,36 +77,64 @@ export default function SocialFeed() {
   return (
     <div className="space-y-6">
       {/* Create Post */}
-      <Card className="cyber-bg-slate border-slate-700">
+      <Card className="cyber-bg-surface border cyber-border">
         <CardContent className="pt-6">
-          <form onSubmit={handleSubmit}>
-            <div className="flex space-x-4">
-              <div className="w-10 h-10 cyber-bg-blue rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-medium">JS</span>
-              </div>
-              <div className="flex-1">
-                <Textarea
-                  placeholder="Share your security insights..."
-                  value={newPostContent}
-                  onChange={(e) => setNewPostContent(e.target.value)}
-                  className="cyber-bg-gray text-white placeholder-slate-400 border-slate-600 resize-none min-h-24 focus:ring-cyber-blue focus:border-cyber-blue"
-                />
-                <div className="flex justify-between items-center mt-4">
-                  <div className="flex space-x-4 text-slate-400">
-                    <Paperclip className="w-5 h-5 cursor-pointer hover:text-cyber-blue transition-colors" />
-                    <Hash className="w-5 h-5 cursor-pointer hover:text-cyber-blue transition-colors" />
+          {isAuthenticated ? (
+            <form onSubmit={handleSubmit}>
+              <div className="flex space-x-4">
+                <div className="w-10 h-10 cyber-bg-blue rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="cyber-text font-medium">
+                    {currentUser?.name ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <Textarea
+                    placeholder="Share your security insights..."
+                    value={newPostContent}
+                    onChange={(e) => setNewPostContent(e.target.value)}
+                    className="cyber-bg-surface-light cyber-text placeholder-gray-400 border cyber-border resize-none min-h-24 focus:ring-cyber-blue focus:border-cyber-blue"
+                  />
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="flex space-x-4 cyber-text-muted">
+                      <Paperclip className="w-5 h-5 cursor-pointer hover:text-cyber-blue transition-colors" />
+                      <Hash className="w-5 h-5 cursor-pointer hover:text-cyber-blue transition-colors" />
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={!newPostContent.trim() || createPostMutation.isPending}
+                      className="cyber-button-primary"
+                    >
+                      {createPostMutation.isPending ? "Posting..." : t('post')}
+                    </Button>
                   </div>
-                  <Button
-                    type="submit"
-                    disabled={!newPostContent.trim() || createPostMutation.isPending}
-                    className="cyber-bg-blue hover:bg-blue-700 text-white"
-                  >
-                    {createPostMutation.isPending ? "Posting..." : "Post"}
-                  </Button>
                 </div>
               </div>
+            </form>
+          ) : (
+            <div className="text-center py-8 space-y-4">
+              <div className="w-16 h-16 cyber-bg-surface-light rounded-full flex items-center justify-center mx-auto">
+                <UserPlus className="w-8 h-8 cyber-text-muted" />
+              </div>
+              <div>
+                <h3 className="font-bold cyber-text text-lg mb-2">
+                  {t('sign.in.to.access')}
+                </h3>
+                <p className="cyber-text-muted text-sm">
+                  {t('login')} или {t('register')} чтобы делиться информацией о безопасности с сообществом
+                </p>
+              </div>
+              <div className="flex justify-center space-x-4">
+                <Button className="cyber-button-primary" onClick={() => window.location.href = '/login'}>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  {t('sign.in')}
+                </Button>
+                <Button variant="outline" className="cyber-button-secondary" onClick={() => window.location.href = '/register'}>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  {t('create.account')}
+                </Button>
+              </div>
             </div>
-          </form>
+          )}
         </CardContent>
       </Card>
 
