@@ -178,6 +178,10 @@
     color: var(--cyber-amber);
   }
   
+  .cyber-text {
+    color: var(--cyber-text);
+  }
+  
   .cyber-text-muted {
     color: var(--cyber-text-muted);
   }

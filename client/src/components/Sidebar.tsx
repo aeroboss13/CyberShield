@@ -65,19 +65,19 @@ export default function Sidebar() {
             <div className="flex items-center space-x-4 mb-6">
               <div className="relative">
                 <div className="w-16 h-16 cyber-gradient rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-lg">
+                  <span className="cyber-text font-bold text-lg">
                     {currentUser.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                   </span>
                 </div>
                 <div className="absolute -bottom-1 -right-1">
-                  <Badge className="cyber-bg-green text-white text-xs px-2 py-1">
+                  <Badge className="cyber-bg-green cyber-text text-xs px-2 py-1">
                     <Activity className="w-3 h-3 mr-1" />
 {t('sidebar.online')}
                   </Badge>
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-white text-lg">{currentUser.name}</h3>
+                <h3 className="font-bold cyber-text text-lg">{currentUser.name}</h3>
                 <p className="cyber-text-muted text-sm">{currentUser.role || 'Security Professional'}</p>
                 <div className="flex items-center space-x-1 mt-1">
                   <Award className="w-3 h-3 cyber-text-amber" />
@@ -130,7 +130,7 @@ export default function Sidebar() {
               <UserX className="w-8 h-8 cyber-text-muted" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-lg">Not Signed In</h3>
+              <h3 className="font-bold cyber-text text-lg">Not Signed In</h3>
               <p className="cyber-text-muted text-sm">Sign in to access your profile</p>
             </div>
             <div className="space-y-2">
@@ -151,7 +151,7 @@ export default function Sidebar() {
 
       {/* Quick Actions */}
       <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-        <h3 className="font-bold text-white mb-4 flex items-center space-x-2">
+        <h3 className="font-bold cyber-text mb-4 flex items-center space-x-2">
           <Plus className="w-5 h-5 cyber-text-blue" />
           <span>Quick Actions</span>
         </h3>
@@ -183,7 +183,7 @@ export default function Sidebar() {
       {/* Activity Stats */}
       {isAuthenticated && (
         <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-          <h3 className="font-bold text-white mb-4 flex items-center space-x-2">
+          <h3 className="font-bold cyber-text mb-4 flex items-center space-x-2">
             <TrendingUp className="w-5 h-5 cyber-text-green" />
             <span>Activity</span>
           </h3>
@@ -191,7 +191,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Shield className="w-4 h-4 cyber-text-blue" />
-                <span className="text-white text-sm">Threats Analyzed</span>
+                <span className="cyber-text text-sm">Threats Analyzed</span>
               </div>
               <span className="cyber-text-blue font-semibold">
                 {activityStats?.threatsAnalyzed || 0}
@@ -200,7 +200,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Users className="w-4 h-4 cyber-text-green" />
-                <span className="text-white text-sm">Community Rank</span>
+                <span className="cyber-text text-sm">Community Rank</span>
               </div>
               <span className="cyber-text-green font-semibold">
                 #{activityStats?.communityRank || 0}
@@ -209,7 +209,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 cyber-text-amber" />
-                <span className="text-white text-sm">This Week</span>
+                <span className="cyber-text text-sm">This Week</span>
               </div>
               <span className="cyber-text-amber font-semibold">
                 +{activityStats?.weeklyPoints || 0} pts
@@ -218,7 +218,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 cyber-text-green" />
-                <span className="text-white text-sm">{t('sidebar.posts')}</span>
+                <span className="cyber-text text-sm">{t('sidebar.posts')}</span>
               </div>
               <span className="cyber-text-green font-semibold">
                 {activityStats?.postsThisWeek || 0}
@@ -227,7 +227,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 cyber-text-blue" />
-                <span className="text-white text-sm">{t('sidebar.likes')}</span>
+                <span className="cyber-text text-sm">{t('sidebar.likes')}</span>
               </div>
               <span className="cyber-text-blue font-semibold">
                 {activityStats?.likesThisWeek || 0}
@@ -236,7 +236,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 cyber-text-amber" />
-                <span className="text-white text-sm">{t('sidebar.comments')}</span>
+                <span className="cyber-text text-sm">{t('sidebar.comments')}</span>
               </div>
               <span className="cyber-text-amber font-semibold">
                 {activityStats?.commentsThisWeek || 0}
@@ -249,7 +249,7 @@ export default function Sidebar() {
       {/* Global Threat Level Analytics */}
       <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-white text-sm">{t('sidebar.threat.level')}</h3>
+          <h3 className="font-bold cyber-text text-sm">{t('sidebar.threat.level')}</h3>
           {threatLoading ? (
             <div className="w-20 h-6 bg-gray-600 animate-pulse rounded"></div>
           ) : (
@@ -273,7 +273,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="w-4 h-4 cyber-text-red" />
-                <span className="text-white text-xs">{t('sidebar.cves.today')}</span>
+                <span className="cyber-text text-xs">{t('sidebar.cves.today')}</span>
               </div>
               <span className="cyber-text-red font-semibold text-sm" data-testid="metric-cves-today">
                 {threatOverview.metrics.cvesToday}
@@ -282,7 +282,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Shield className="w-4 h-4 cyber-text-amber" />
-                <span className="text-white text-xs">{t('sidebar.critical.high')}</span>
+                <span className="cyber-text text-xs">{t('sidebar.critical.high')}</span>
               </div>
               <span className="cyber-text-amber font-semibold text-sm" data-testid="metric-critical-high">
                 {threatOverview.metrics.criticalHighToday}
@@ -291,7 +291,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Database className="w-4 h-4 cyber-text-green" />
-                <span className="text-white text-xs">{t('sidebar.kev.added')}</span>
+                <span className="cyber-text text-xs">{t('sidebar.kev.added')}</span>
               </div>
               <span className="cyber-text-green font-semibold text-sm">
                 {threatOverview.metrics.kevAddedToday}
@@ -303,7 +303,7 @@ export default function Sidebar() {
         {/* Today's Top Headlines */}
         {threatOverview?.headlines && threatOverview.headlines.length > 0 && (
           <div className="space-y-2 mb-4">
-            <h4 className="text-white text-xs font-semibold mb-2">{t('sidebar.headlines')}</h4>
+            <h4 className="cyber-text text-xs font-semibold mb-2">{t('sidebar.headlines')}</h4>
             <div className="space-y-1">
               {threatOverview.headlines.slice(0, 3).map((headline, index) => (
                 <div key={index} className="text-xs">
@@ -355,7 +355,7 @@ export default function Sidebar() {
           <div className="mt-3 pt-3 border-t border-gray-600">
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="w-3 h-3 cyber-text-blue" />
-              <span className="text-white text-xs font-semibold">{t('sidebar.trend')}</span>
+              <span className="cyber-text text-xs font-semibold">{t('sidebar.trend')}</span>
             </div>
             <div className="text-xs text-gray-300">
               Avg: {threatOverview.trend7Day.cvesAvg} CVEs/day, {threatOverview.trend7Day.newsAvg} news/day

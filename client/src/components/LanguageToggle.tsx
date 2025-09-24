@@ -15,7 +15,7 @@ export default function LanguageToggle() {
       title={t('language.switch')}
     >
       <Globe className="w-5 h-5 cyber-text-green mr-1" />
-      <span className="text-xs font-medium text-white">{language.toUpperCase()}</span>
+      <span className="text-xs font-medium cyber-text">{language.toUpperCase()}</span>
       <span className="sr-only">{t('language.switch')}</span>
     </Button>
   );
