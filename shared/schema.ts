@@ -265,7 +265,8 @@ export const updateUserSchema = insertUserSchema.pick({
   bio: true,
   location: true,
   website: true,
-  avatar: true
+  avatar: true,
+  role: true
 });
 
 // Admin-only schema for role updates (separate endpoint)
