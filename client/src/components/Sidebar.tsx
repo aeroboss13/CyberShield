@@ -107,19 +107,19 @@ export default function Sidebar() {
                   <div className="cyber-text-green font-bold text-xl">
                     {currentUser.postCount || 0}
                   </div>
-                  <div className="cyber-text-dim text-xs">Posts</div>
+                  <div className="cyber-text-dim text-xs">{t('sidebar.posts')}</div>
                 </div>
                 <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
                   <div className="cyber-text-blue font-bold text-xl">
                     {currentUser.likesReceived || 0}
                   </div>
-                  <div className="cyber-text-dim text-xs">Likes</div>
+                  <div className="cyber-text-dim text-xs">{t('sidebar.likes')}</div>
                 </div>
                 <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
                   <div className="cyber-text-amber font-bold text-xl">
                     {currentUser.cveSubmissions || 0}
                   </div>
-                  <div className="cyber-text-dim text-xs">CVEs</div>
+                  <div className="cyber-text-dim text-xs">{t('cves')}</div>
                 </div>
               </div>
             </div>
@@ -130,18 +130,18 @@ export default function Sidebar() {
               <UserX className="w-8 h-8 cyber-text-muted" />
             </div>
             <div>
-              <h3 className="font-bold cyber-text text-lg">Not Signed In</h3>
-              <p className="cyber-text-muted text-sm">Sign in to access your profile</p>
+              <h3 className="font-bold cyber-text text-lg">{t('not.signed.in')}</h3>
+              <p className="cyber-text-muted text-sm">{t('sign.in.to.access')}</p>
             </div>
             <div className="space-y-2">
               <Link href="/login">
                 <Button className="w-full cyber-button-primary">
-                  Sign In
+                  {t('sign.in')}
                 </Button>
               </Link>
               <Link href="/register">
                 <Button variant="outline" className="w-full cyber-button-secondary">
-                  Create Account
+                  {t('create.account')}
                 </Button>
               </Link>
             </div>
@@ -153,7 +153,7 @@ export default function Sidebar() {
       <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
         <h3 className="font-bold cyber-text mb-4 flex items-center space-x-2">
           <Plus className="w-5 h-5 cyber-text-blue" />
-          <span>Quick Actions</span>
+          <span>{t('quick.actions')}</span>
         </h3>
         <div className="space-y-3">
           <Button 
@@ -161,14 +161,14 @@ export default function Sidebar() {
             onClick={() => window.open('https://www.cisa.gov/report-incident', '_blank')}
           >
             <AlertTriangle className="w-4 h-4 mr-3" />
-            Report Security Incident
+            {t('report.security.incident')}
           </Button>
           <Button 
             className="w-full cyber-button-secondary justify-start"
             onClick={() => window.open('https://cveform.mitre.org/', '_blank')}
           >
             <Database className="w-4 h-4 mr-3" />
-            Submit CVE Analysis
+            {t('submit.cve.analysis')}
           </Button>
           <Button 
             className="w-full cyber-button-secondary justify-start"
