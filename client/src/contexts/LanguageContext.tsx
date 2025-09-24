@@ -254,7 +254,7 @@ const translations = {
     
     // Quick Actions
     'quick.actions': 'Быстрые действия',
-    'report.security.incident': 'Сообщить об инциденте безопасности',
+    'report.security.incident': 'Заявить инцидент ИБ',
     'submit.cve.analysis': 'Отправить анализ CVE',
     'share.threat.intel': 'Поделиться данными угроз',
     
