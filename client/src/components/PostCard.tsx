@@ -77,21 +77,21 @@ export default function PostCard({ post }: PostCardProps) {
   };
 
   return (
-    <Card className="social-card cyber-bg-slate border-slate-700">
+    <Card className="social-card cyber-bg-surface border cyber-border">
       <CardContent className="pt-6">
         <div className="flex space-x-4">
           <div className={`w-12 h-12 ${getAvatarColor(post.user.username)} rounded-full flex items-center justify-center flex-shrink-0`}>
-            <span className="text-white font-medium">{getInitials(post.user.name)}</span>
+            <span className="cyber-text font-medium">{getInitials(post.user.name)}</span>
           </div>
           
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
-              <span className="font-semibold text-white">{post.user.name}</span>
-              <span className="text-slate-400 text-sm">@{post.user.username}</span>
-              <span className="text-slate-500 text-sm">• {formatTimestamp(post.createdAt)}</span>
+              <span className="font-semibold cyber-text">{post.user.name}</span>
+              <span className="cyber-text-muted text-sm">@{post.user.username}</span>
+              <span className="cyber-text-dim text-sm">• {formatTimestamp(post.createdAt)}</span>
             </div>
             
-            <p className="text-slate-200 mb-4 whitespace-pre-wrap">{post.content}</p>
+            <p className="cyber-text mb-4 whitespace-pre-wrap">{post.content}</p>
             
             {post.tags && post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
@@ -106,7 +106,7 @@ export default function PostCard({ post }: PostCardProps) {
               </div>
             )}
             
-            <div className="flex items-center space-x-6 text-slate-400">
+            <div className="flex items-center space-x-6 cyber-text-muted">
               <Button
                 variant="ghost"
                 size="sm"
@@ -151,7 +151,7 @@ export default function PostCard({ post }: PostCardProps) {
             
             {/* Comments Section */}
             {showComments && (
-              <div className="mt-6 pt-4 border-t border-slate-700">
+              <div className="mt-6 pt-4 border-t cyber-border">
                 <PostComments postId={post.id} />
               </div>
             )}
