@@ -1,4 +1,4 @@
-import { Search, Shield, Bell, Settings, Activity, Plus, UserCog, LogOut } from "lucide-react";
+import { Search, Shield, Bell, Settings, Activity, Plus, UserCog, LogOut, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import LanguageToggle from "./LanguageToggle";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -78,29 +79,29 @@ export default function Header() {
     <header className="cyber-bg-surface border-b cyber-border sticky top-0 z-50 backdrop-blur-lg bg-opacity-95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div className="w-10 h-10 cyber-gradient rounded-xl flex items-center justify-center shadow-lg cyber-glow">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 cyber-bg-green rounded-full pulse-red"></div>
+          {/* Logo - Always visible */}
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="w-10 h-10 cyber-gradient rounded-xl flex items-center justify-center shadow-lg cyber-glow">
+                <Shield className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold cyber-text-red">SecHub</h1>
-                <p className="text-xs cyber-text-dim">Cybersecurity Platform</p>
-              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 cyber-bg-green rounded-full pulse-red"></div>
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold cyber-text-red">SecHub</h1>
+              <p className="text-xs cyber-text-dim">Cybersecurity Platform</p>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center space-x-4">
             <form onSubmit={handleSearch} className="relative group">
               <Input
                 type="text"
                 placeholder={t('header.search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="cyber-input w-80 pl-10 pr-4 h-10 rounded-lg transition-all duration-300 focus:w-96"
+                className="cyber-input w-64 xl:w-80 pl-10 pr-4 h-10 rounded-lg transition-all duration-300 xl:focus:w-96"
               />
               <button
                 type="submit"
@@ -110,7 +111,7 @@ export default function Header() {
               </button>
             </form>
             
-            {/* Theme and Language Toggle Buttons - Available to all users */}
+            {/* Theme and Language Toggle Buttons */}
             <div className="flex items-center space-x-2">
               <ThemeToggle />
               <LanguageToggle />
@@ -204,7 +205,162 @@ export default function Header() {
               </div>
             ) : null}
           </div>
+
+          {/* Mobile Menu Button and Essential Actions */}
+          <div className="flex lg:hidden items-center space-x-2">
+            {/* Essential mobile buttons */}
+            <ThemeToggle />
+            
+            {isAuthenticated && (
+              <div className="flex items-center space-x-2">
+                {/* Quick search button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                  onClick={() => {
+                    const query = prompt('Search CVE/MITRE:');
+                    if (query) {
+                      window.open(`https://www.google.com/search?q=site:nvd.nist.gov+${encodeURIComponent(query)}+OR+site:attack.mitre.org+${encodeURIComponent(query)}`, '_blank');
+                    }
+                  }}
+                >
+                  <Search className="w-5 h-5 cyber-text-dim" />
+                </Button>
+                
+                {/* Mobile menu button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  {mobileMenuOpen ? (
+                    <X className="w-5 h-5 cyber-text-muted" />
+                  ) : (
+                    <Menu className="w-5 h-5 cyber-text-muted" />
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && isAuthenticated && (
+          <div className="lg:hidden border-t cyber-border cyber-bg-surface-light">
+            <div className="px-4 py-4 space-y-3">
+              {/* User Info */}
+              <div className="flex items-center space-x-3 py-2">
+                <div className="w-8 h-8 cyber-gradient rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                  {(currentUser as any)?.name?.slice(0, 2) || 'U'}
+                </div>
+                <div>
+                  <p className="cyber-text font-medium">{(currentUser as any)?.name || 'User'}</p>
+                  <p className="cyber-text-dim text-sm">
+                    {(currentUser as any)?.jobTitle || 'Security Professional'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Mobile Search */}
+              <form onSubmit={handleSearch} className="relative">
+                <Input
+                  type="text"
+                  placeholder={t('header.search.placeholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="cyber-input w-full pl-10 pr-4 h-10 rounded-lg"
+                />
+                <button
+                  type="submit"
+                  className="absolute left-3 top-2.5 hover:cyber-text-blue transition-colors"
+                >
+                  <Search className="w-5 h-5 cyber-text-dim" />
+                </button>
+              </form>
+
+              {/* Mobile Actions */}
+              <div className="space-y-2">
+                <PostModal 
+                  trigger={
+                    <Button className="cyber-button-primary w-full justify-center">
+                      <Plus className="w-4 h-4 mr-2" />
+                      {t('header.post')}
+                    </Button>
+                  }
+                />
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border"
+                    onClick={() => alert('Security alerts and notifications')}
+                  >
+                    <Bell className="w-4 h-4 mr-2" />
+                    Alerts
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border"
+                    onClick={() => alert('System activity and live monitoring')}
+                  >
+                    <Activity className="w-4 h-4 mr-2" />
+                    Activity
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {(currentUser as any)?.role === "admin" && (
+                    <Link href="/admin">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border w-full"
+                        data-testid="button-admin-panel-mobile"
+                      >
+                        <UserCog className="w-4 h-4 mr-2" />
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
+                  
+                  <Link href="/profile">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border w-full"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Profile
+                    </Button>
+                  </Link>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border w-full text-red-400"
+                  onClick={handleLogout}
+                  disabled={logoutMutation.isPending}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+
+              {/* Language Toggle */}
+              <div className="pt-2 border-t cyber-border">
+                <div className="flex justify-center">
+                  <LanguageToggle />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
