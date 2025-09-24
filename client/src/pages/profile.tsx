@@ -5,12 +5,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Trophy, Target, Shield, Users, MessageCircle, Heart, Calendar, MapPin, Link as LinkIcon, Edit, ArrowLeft } from 'lucide-react';
+import { Trophy, Target, Shield, Users, MessageCircle, Heart, Calendar, MapPin, Link as LinkIcon, Edit, ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react';
 import EditProfileModal from '@/components/EditProfileModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicUser } from '@shared/schema';
 import { useState } from 'react';
 import { Link } from 'wouter';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface UserStats {
   id: number;
@@ -38,6 +41,8 @@ interface UserSubmission {
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: currentUser, isLoading: userLoading } = useQuery<PublicUser>({
     queryKey: ['/api/users/current']
@@ -51,6 +56,56 @@ export default function ProfilePage() {
   const { data: userSubmissions = [], isLoading: submissionsLoading } = useQuery<UserSubmission[]>({
     queryKey: [`/api/users/${currentUser?.id}/submissions`],
     enabled: !!currentUser?.id
+  });
+
+  // Admin-only query for pending submissions
+  const { data: pendingSubmissions = [], isLoading: pendingLoading } = useQuery<(UserSubmission & { user: PublicUser })[]>({
+    queryKey: ['/api/admin/submissions/pending'],
+    enabled: currentUser?.role === 'admin'
+  });
+
+  // Admin moderation mutations
+  const approveMutation = useMutation({
+    mutationFn: async ({ id, reviewNotes }: { id: number; reviewNotes?: string }) => {
+      const response = await apiRequest("POST", `/api/admin/submissions/${id}/approve`, { reviewNotes });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/submissions/pending'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/submissions'] });
+      toast({
+        title: "Submission Approved",
+        description: "The submission has been approved and published.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to approve submission. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async ({ id, reviewNotes }: { id: number; reviewNotes?: string }) => {
+      const response = await apiRequest("POST", `/api/admin/submissions/${id}/reject`, { reviewNotes });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/submissions/pending'] });
+      toast({
+        title: "Submission Rejected",
+        description: "The submission has been rejected.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reject submission. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   if (userLoading || statsLoading) {
@@ -201,12 +256,17 @@ export default function ProfilePage() {
 
       {/* Detailed Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="tabs-profile">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${currentUser.role === 'admin' ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
           <TabsTrigger value="submissions" data-testid="tab-submissions">
             Submissions ({userStats.cveSubmissions + userStats.exploitSubmissions})
           </TabsTrigger>
           <TabsTrigger value="activity" data-testid="tab-activity">Activity</TabsTrigger>
+          {currentUser.role === 'admin' && (
+            <TabsTrigger value="moderation" data-testid="tab-moderation" className="text-red-400">
+              Moderation ({pendingSubmissions.length})
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -349,6 +409,104 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Admin Moderation Panel */}
+        {currentUser.role === 'admin' && (
+          <TabsContent value="moderation" className="space-y-4">
+            <div className="bg-red-950/10 border border-red-900/30 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="w-5 h-5 text-red-400" />
+                <h3 className="font-semibold text-red-300">Administrator Moderation Panel</h3>
+              </div>
+              <p className="text-sm text-red-200/80">
+                Review and moderate user submissions. Approved submissions will be published to the public feed.
+              </p>
+            </div>
+
+            {pendingLoading ? (
+              <div className="text-center py-8">
+                <Clock className="w-8 h-8 animate-spin mx-auto mb-4" />
+                <p>Loading pending submissions...</p>
+              </div>
+            ) : pendingSubmissions.length > 0 ? (
+              <div className="space-y-4">
+                {pendingSubmissions.map((submission) => (
+                  <Card key={submission.id} className="border-yellow-900/30 bg-yellow-950/10" data-testid={`moderation-card-${submission.id}`}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg text-yellow-200" data-testid={`moderation-title-${submission.id}`}>
+                            {submission.title}
+                          </CardTitle>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="outline" className="text-yellow-400 border-yellow-400">
+                              {submission.type}
+                            </Badge>
+                            {submission.severity && (
+                              <Badge variant="outline" className="text-orange-400 border-orange-400">
+                                {submission.severity}
+                              </Badge>
+                            )}
+                            <span className="text-sm text-muted-foreground">
+                              by @{submission.user?.username}
+                            </span>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="bg-yellow-600/20 text-yellow-300">
+                          <Clock className="w-3 h-3 mr-1" />
+                          Pending Review
+                        </Badge>
+                      </div>
+                      <CardDescription className="text-yellow-100/80" data-testid={`moderation-description-${submission.id}`}>
+                        {submission.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">
+                          Submitted {new Date(submission.createdAt).toLocaleDateString()}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-400 border-red-400 hover:bg-red-950"
+                            onClick={() => rejectMutation.mutate({ id: submission.id, reviewNotes: "Rejected by moderator" })}
+                            disabled={rejectMutation.isPending || approveMutation.isPending}
+                            data-testid={`button-reject-${submission.id}`}
+                          >
+                            <XCircle className="w-4 h-4 mr-2" />
+                            {rejectMutation.isPending ? "Rejecting..." : "Reject"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => approveMutation.mutate({ id: submission.id, reviewNotes: "Approved by moderator" })}
+                            disabled={rejectMutation.isPending || approveMutation.isPending}
+                            data-testid={`button-approve-${submission.id}`}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            {approveMutation.isPending ? "Approving..." : "Approve"}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
+                  <h3 className="text-lg font-semibold mb-2">All Clear!</h3>
+                  <p className="text-muted-foreground">
+                    No submissions pending moderation at this time.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

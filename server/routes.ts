@@ -405,6 +405,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin role promotion endpoint
+  app.post("/api/auth/promote-admin", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      if (user.role === 'admin') {
+        return res.status(400).json({ error: "User is already an administrator" });
+      }
+
+      const { adminCode } = req.body;
+      const ADMIN_CODE = process.env.ADMIN_CODE || "SECHUB_ADMIN_2025"; // Default code for demo
+
+      if (adminCode !== ADMIN_CODE) {
+        return res.status(400).json({ error: "Invalid admin code" });
+      }
+
+      // Update user role to admin
+      const updatedUser = await storage.updateUser(user.id, { role: 'admin' });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json(toPublicUser(updatedUser));
+    } catch (error) {
+      console.error('Admin promotion error:', error);
+      res.status(500).json({ error: "Failed to promote user to admin" });
+    }
+  });
+
   // News Comments endpoints
   app.get("/api/news/:id/comments", async (req, res) => {
     try {

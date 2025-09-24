@@ -32,6 +32,9 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
     website: user.website || "",
   });
   
+  const [showAdminForm, setShowAdminForm] = useState(false);
+  const [adminCode, setAdminCode] = useState("");
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -58,9 +61,39 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
     },
   });
 
+  const promoteToAdminMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const response = await apiRequest("POST", "/api/auth/promote-admin", { adminCode: code });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/current"] });
+      setShowAdminForm(false);
+      setAdminCode("");
+      toast({
+        title: "Role Updated",
+        description: "You have been promoted to administrator.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Invalid admin code. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfileMutation.mutate(formData);
+  };
+
+  const handleAdminPromote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminCode.trim()) {
+      promoteToAdminMutation.mutate(adminCode.trim());
+    }
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
@@ -163,6 +196,60 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
                 data-testid="input-website"
               />
             </div>
+          </div>
+
+          {/* Role Management Section */}
+          <div className="border-t cyber-border pt-4 mt-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <Label className="cyber-text-primary font-medium">Role</Label>
+                <p className="text-xs cyber-text-dim mt-1">
+                  Current: {user.role === 'admin' ? 'Administrator' : 'User'}
+                </p>
+              </div>
+              {user.role !== 'admin' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAdminForm(!showAdminForm)}
+                  className="cyber-button-secondary text-xs"
+                  data-testid="button-toggle-admin-form"
+                >
+                  Become Admin
+                </Button>
+              )}
+            </div>
+
+            {showAdminForm && (
+              <form onSubmit={handleAdminPromote} className="bg-gray-900/50 rounded-lg p-4 border cyber-border">
+                <Label htmlFor="adminCode" className="cyber-text-primary text-sm">
+                  Admin Access Code
+                </Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    id="adminCode"
+                    type="password"
+                    value={adminCode}
+                    onChange={(e) => setAdminCode(e.target.value)}
+                    placeholder="Enter admin code"
+                    className="cyber-input flex-1"
+                    data-testid="input-admin-code"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={promoteToAdminMutation.isPending || !adminCode.trim()}
+                    className="cyber-button-primary px-6"
+                    data-testid="button-submit-admin-code"
+                  >
+                    {promoteToAdminMutation.isPending ? "Verifying..." : "Verify"}
+                  </Button>
+                </div>
+                <p className="text-xs cyber-text-dim mt-2">
+                  Enter the administrator access code to gain moderation privileges.
+                </p>
+              </form>
+            )}
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
