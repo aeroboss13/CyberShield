@@ -89,8 +89,7 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
     updateProfileMutation.mutate(formData);
   };
 
-  const handleAdminPromote = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAdminPromote = () => {
     if (adminCode.trim()) {
       promoteToAdminMutation.mutate(adminCode.trim());
     }
@@ -222,7 +221,7 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
             </div>
 
             {showAdminForm && (
-              <form onSubmit={handleAdminPromote} className="bg-gray-900/50 rounded-lg p-4 border cyber-border">
+              <div className="bg-gray-900/50 rounded-lg p-4 border cyber-border">
                 <Label htmlFor="adminCode" className="cyber-text-primary text-sm">
                   Admin Access Code
                 </Label>
@@ -235,9 +234,16 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
                     placeholder="Enter admin code"
                     className="cyber-input flex-1"
                     data-testid="input-admin-code"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && adminCode.trim()) {
+                        e.preventDefault();
+                        handleAdminPromote();
+                      }
+                    }}
                   />
                   <Button
-                    type="submit"
+                    type="button"
+                    onClick={handleAdminPromote}
                     disabled={promoteToAdminMutation.isPending || !adminCode.trim()}
                     className="cyber-button-primary px-6"
                     data-testid="button-submit-admin-code"
@@ -248,7 +254,7 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
                 <p className="text-xs cyber-text-dim mt-2">
                   Enter the administrator access code to gain moderation privileges.
                 </p>
-              </form>
+              </div>
             )}
           </div>
 
