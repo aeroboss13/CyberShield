@@ -141,7 +141,7 @@ export default function ProfilePage() {
   const reputationLevel = getReputationLevel(userStats.reputation);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6" data-testid="profile-page">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6" data-testid="profile-page">
       {/* Back Button */}
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
@@ -153,42 +153,45 @@ export default function ProfilePage() {
       </div>
       {/* Profile Header */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-6">
-            <Avatar className="h-24 w-24" data-testid="avatar-profile">
+        <CardContent className="p-4 sm:p-6">
+          {/* Mobile: Stack vertically */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+            <Avatar className="h-20 w-20 sm:h-24 sm:w-24" data-testid="avatar-profile">
               <AvatarImage src={currentUser.avatar || undefined} alt={currentUser.name} />
-              <AvatarFallback className="text-2xl">
+              <AvatarFallback className="text-xl sm:text-2xl">
                 {currentUser.name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div>
-                    <h1 className="text-3xl font-bold" data-testid="text-name">{currentUser.name}</h1>
-                    <p className="text-xl text-muted-foreground" data-testid="text-username">@{currentUser.username}</p>
+            <div className="flex-1 space-y-3 sm:space-y-4 text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  <div className="space-y-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold" data-testid="text-name">{currentUser.name}</h1>
+                    <p className="text-lg sm:text-xl text-muted-foreground" data-testid="text-username">@{currentUser.username}</p>
                     {currentUser.jobTitle && (
                       <p className="text-sm text-muted-foreground" data-testid="text-job-title">{currentUser.jobTitle}</p>
                     )}
                   </div>
-                  <Badge variant="outline" className={`${reputationLevel.color} text-white`} data-testid="badge-reputation-level">
+                  <Badge variant="outline" className={`${reputationLevel.color} text-white self-center sm:self-start`} data-testid="badge-reputation-level">
                     <Trophy className="w-3 h-3 mr-1" />
                     {reputationLevel.level}
                   </Badge>
                 </div>
-                <EditProfileModal user={currentUser} />
+                <div className="flex justify-center sm:justify-end">
+                  <EditProfileModal user={currentUser} />
+                </div>
               </div>
 
               {currentUser.bio && (
                 <p className="text-muted-foreground" data-testid="text-bio">{currentUser.bio}</p>
               )}
 
-              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4 text-sm text-muted-foreground">
                 {currentUser.location && (
                   <div className="flex items-center gap-1" data-testid="text-location">
                     <MapPin className="w-4 h-4" />
-                    {currentUser.location}
+                    <span className="break-all">{currentUser.location}</span>
                   </div>
                 )}
                 {currentUser.website && (
@@ -198,7 +201,7 @@ export default function ProfilePage() {
                       href={currentUser.website} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
+                      className="text-blue-500 hover:underline break-all"
                       data-testid="link-website"
                     >
                       Website
@@ -216,47 +219,70 @@ export default function ProfilePage() {
       </Card>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card data-testid="card-reputation">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-500" data-testid="text-reputation-value">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-purple-500" data-testid="text-reputation-value">
               {userStats.reputation.toLocaleString()}
             </div>
-            <p className="text-sm text-muted-foreground">Reputation</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Reputation</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-posts">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-500" data-testid="text-posts-value">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-blue-500" data-testid="text-posts-value">
               {userStats.postCount}
             </div>
-            <p className="text-sm text-muted-foreground">Posts</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Posts</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-likes">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-500" data-testid="text-likes-value">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-red-500" data-testid="text-likes-value">
               {userStats.likesReceived}
             </div>
-            <p className="text-sm text-muted-foreground">Likes Received</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Likes</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-comments">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-500" data-testid="text-comments-value">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-green-500" data-testid="text-comments-value">
               {userStats.commentsCount}
             </div>
-            <p className="text-sm text-muted-foreground">Comments</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Comments</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Detailed Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="tabs-profile">
-        <TabsList className={`grid w-full ${currentUser.role === 'admin' ? 'grid-cols-4' : 'grid-cols-3'}`}>
+        {/* Mobile: Horizontal scroll tabs */}
+        <div className="sm:hidden">
+          <TabsList className="h-auto p-1">
+            <div className="flex space-x-1 overflow-x-auto pb-1 scrollbar-hide">
+              <TabsTrigger value="overview" data-testid="tab-overview" className="flex-shrink-0 text-sm px-3 py-2">
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="submissions" data-testid="tab-submissions" className="flex-shrink-0 text-sm px-3 py-2 whitespace-nowrap">
+                Submissions ({userStats.cveSubmissions + userStats.exploitSubmissions})
+              </TabsTrigger>
+              <TabsTrigger value="activity" data-testid="tab-activity" className="flex-shrink-0 text-sm px-3 py-2">
+                Activity
+              </TabsTrigger>
+              {currentUser.role === 'admin' && (
+                <TabsTrigger value="moderation" data-testid="tab-moderation" className="flex-shrink-0 text-sm px-3 py-2 text-red-400 whitespace-nowrap">
+                  Moderation ({pendingSubmissions.length})
+                </TabsTrigger>
+              )}
+            </div>
+          </TabsList>
+        </div>
+        
+        {/* Desktop: Full width tabs */}
+        <TabsList className={`hidden sm:grid w-full ${currentUser.role === 'admin' ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
           <TabsTrigger value="submissions" data-testid="tab-submissions">
             Submissions ({userStats.cveSubmissions + userStats.exploitSubmissions})

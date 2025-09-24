@@ -87,7 +87,7 @@ export default function TechniqueModal({ techniqueId, isOpen, onClose }: Techniq
           </div>
 
           {/* Detection & Mitigation */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <h3 className="text-lg font-semibold text-white mb-3 flex items-center space-x-2">
                 <AlertTriangle className="w-5 h-5 cyber-text-amber" />

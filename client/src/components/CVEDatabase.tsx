@@ -126,29 +126,32 @@ export default function CVEDatabase() {
   return (
     <div className="space-y-6">
       {/* Header with Stats */}
-      <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-        <div className="flex items-center justify-between mb-6">
+      <div className="cyber-bg-surface rounded-xl p-4 sm:p-6 border cyber-border">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
-              <AlertTriangle className="w-8 h-8 cyber-text-red" />
+            <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center space-x-3">
+              <AlertTriangle className="w-6 sm:w-8 h-6 sm:h-8 cyber-text-red" />
               <span>CVE Database</span>
             </h2>
             <p className="cyber-text-muted mt-1">Real-time vulnerability intelligence from NVD</p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold cyber-text-red">{pagination?.total.toLocaleString() || 0}</div>
-              <div className="text-xs cyber-text-dim">Total CVEs</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold cyber-text-amber">
-                {cves?.filter(cve => cve.activelyExploited).length || 0}
+          {/* Mobile: Stack stats vertically */}
+          <div className="flex justify-center sm:justify-end">
+            <div className="grid grid-cols-3 gap-3 sm:flex sm:items-center sm:space-x-4">
+              <div className="text-center">
+                <div className="text-lg sm:text-2xl font-bold cyber-text-red">{pagination?.total.toLocaleString() || 0}</div>
+                <div className="text-xs cyber-text-dim">Total CVEs</div>
               </div>
-              <div className="text-xs cyber-text-dim">On This Page</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold cyber-text-blue">{pagination?.currentPage || 1}</div>
-              <div className="text-xs cyber-text-dim">Current Page</div>
+              <div className="text-center">
+                <div className="text-lg sm:text-2xl font-bold cyber-text-amber">
+                  {cves?.filter(cve => cve.activelyExploited).length || 0}
+                </div>
+                <div className="text-xs cyber-text-dim">Exploited</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg sm:text-2xl font-bold cyber-text-blue">{pagination?.currentPage || 1}</div>
+                <div className="text-xs cyber-text-dim">Page</div>
+              </div>
             </div>
           </div>
         </div>

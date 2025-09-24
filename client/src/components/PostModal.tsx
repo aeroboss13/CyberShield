@@ -82,14 +82,14 @@ export default function PostModal({ trigger }: PostModalProps) {
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="cyber-bg-surface border cyber-border max-w-2xl">
+      <DialogContent className="cyber-bg-surface border cyber-border max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white text-xl font-bold">
             Share Security Intelligence
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div>
             <label className="block text-white text-sm font-medium mb-2">
               What's happening in cybersecurity?
@@ -112,7 +112,7 @@ export default function PostModal({ trigger }: PostModalProps) {
             <label className="block text-white text-sm font-medium mb-2">
               Tags (Optional)
             </label>
-            <div className="flex space-x-2 mb-3">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-3">
               <Input
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
@@ -123,7 +123,7 @@ export default function PostModal({ trigger }: PostModalProps) {
                   }
                 }}
                 placeholder="Add tags like malware, phishing, incident-response..."
-                className="cyber-input flex-1"
+                className="cyber-input flex-1 w-full sm:w-auto"
                 maxLength={20}
               />
               <Button
@@ -157,7 +157,7 @@ export default function PostModal({ trigger }: PostModalProps) {
             )}
           </div>
 
-          <div className="flex justify-end space-x-3">
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
             <Button
               type="button"
               variant="outline"

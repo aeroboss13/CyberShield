@@ -23,11 +23,11 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabType>(getInitialTab());
 
   const tabs = [
-    { id: 'feed' as const, label: 'Social Feed' },
-    { id: 'mitre' as const, label: 'MITRE ATT&CK' },
-    { id: 'cve' as const, label: 'CVE Database' },
-    { id: 'user-reports' as const, label: 'User Reports' },
-    { id: 'news' as const, label: 'Security News' },
+    { id: 'feed' as const, label: 'Social Feed', shortLabel: 'Feed' },
+    { id: 'mitre' as const, label: 'MITRE ATT&CK', shortLabel: 'MITRE' },
+    { id: 'cve' as const, label: 'CVE Database', shortLabel: 'CVE' },
+    { id: 'user-reports' as const, label: 'User Reports', shortLabel: 'Reports' },
+    { id: 'news' as const, label: 'Security News', shortLabel: 'News' },
   ];
 
   const renderTabContent = () => {
@@ -51,17 +51,39 @@ export default function Dashboard() {
     <div className="min-h-screen cyber-bg-dark text-white">
       <Header />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <aside className="lg:col-span-1 fade-in">
-            <Sidebar />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-8">
+          <aside className="lg:col-span-1 fade-in order-2 lg:order-1">
+            <div className="hidden lg:block">
+              <Sidebar />
+            </div>
           </aside>
           
-          <main className="lg:col-span-3 slide-in-left">
-            {/* Tab Navigation */}
-            <div className="mb-8">
+          <main className="lg:col-span-3 slide-in-left order-1 lg:order-2">
+            {/* Mobile-Optimized Tab Navigation */}
+            <div className="mb-4 lg:mb-8">
               <div className="cyber-bg-surface rounded-xl p-1 border cyber-border">
-                <nav className="flex space-x-1">
+                {/* Mobile: Horizontal scroll tabs */}
+                <nav className="md:hidden">
+                  <div className="flex space-x-1 overflow-x-auto pb-1 scrollbar-hide">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex-shrink-0 py-3 px-3 font-medium text-sm rounded-lg transition-all duration-300 whitespace-nowrap ${
+                          activeTab === tab.id
+                            ? 'cyber-gradient text-white shadow-lg cyber-glow-blue'
+                            : 'text-gray-400 hover:text-white hover:cyber-bg-surface-light'
+                        }`}
+                      >
+                        {tab.shortLabel}
+                      </button>
+                    ))}
+                  </div>
+                </nav>
+                
+                {/* Desktop: Full width tabs */}
+                <nav className="hidden md:flex space-x-1">
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
@@ -76,6 +98,17 @@ export default function Dashboard() {
                     </button>
                   ))}
                 </nav>
+              </div>
+            </div>
+            
+            {/* Mobile Sidebar Toggle - Show simplified sidebar on mobile */}
+            <div className="lg:hidden mb-4">
+              <div className="cyber-bg-surface rounded-xl p-4 border cyber-border">
+                <div className="flex items-center justify-center">
+                  <p className="cyber-text-dim text-sm text-center">
+                    Switch to desktop view for full navigation and user profile
+                  </p>
+                </div>
               </div>
             </div>
 

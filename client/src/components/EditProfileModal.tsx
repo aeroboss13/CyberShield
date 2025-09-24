@@ -111,7 +111,7 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
       <DialogTrigger asChild data-testid="button-edit-profile">
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="cyber-bg-dark border-cyber-blue max-w-lg">
+      <DialogContent className="cyber-bg-dark border-cyber-blue max-w-lg mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white">Edit Profile</DialogTitle>
           <DialogDescription className="cyber-text-dim">
@@ -119,8 +119,8 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <div className="space-y-3 sm:space-y-4">
             <div>
               <Label htmlFor="name" className="text-white text-sm font-medium">
                 Name

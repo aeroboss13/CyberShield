@@ -48,25 +48,28 @@ export default function MitreMatrix() {
   return (
     <div className="space-y-6">
       {/* Header with Stats */}
-      <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-        <div className="flex items-center justify-between mb-6">
+      <div className="cyber-bg-surface rounded-xl p-4 sm:p-6 border cyber-border">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
-              <Target className="w-8 h-8 cyber-text-blue" />
-              <span>MITRE ATT&CK Framework</span>
+            <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center space-x-3">
+              <Target className="w-6 sm:w-8 h-6 sm:h-8 cyber-text-blue" />
+              <span className="hidden sm:inline">MITRE ATT&CK Framework</span>
+              <span className="sm:hidden">ATT&CK Framework</span>
             </h2>
             <p className="cyber-text-muted mt-1">Live data from MITRE's official GitHub repository</p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold cyber-text-blue">{filteredTactics?.length || 0}</div>
-              <div className="text-xs cyber-text-dim">Tactics</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold cyber-text-green">
-                {filteredTactics?.reduce((acc, tactic) => acc + tactic.techniques.length, 0) || 0}
+          <div className="flex justify-center sm:justify-end">
+            <div className="flex items-center space-x-6">
+              <div className="text-center">
+                <div className="text-lg sm:text-2xl font-bold cyber-text-blue">{filteredTactics?.length || 0}</div>
+                <div className="text-xs cyber-text-dim">Tactics</div>
               </div>
-              <div className="text-xs cyber-text-dim">Techniques</div>
+              <div className="text-center">
+                <div className="text-lg sm:text-2xl font-bold cyber-text-green">
+                  {filteredTactics?.reduce((acc, tactic) => acc + tactic.techniques.length, 0) || 0}
+                </div>
+                <div className="text-xs cyber-text-dim">Techniques</div>
+              </div>
             </div>
           </div>
         </div>
