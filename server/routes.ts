@@ -419,6 +419,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { adminCode } = req.body;
       const ADMIN_CODE = process.env.ADMIN_CODE || "SECHUB_ADMIN_2025"; // Default code for demo
+      
+      if (!ADMIN_CODE) {
+        return res.status(500).json({ error: "Admin code not configured" });
+      }
 
       if (adminCode !== ADMIN_CODE) {
         return res.status(400).json({ error: "Invalid admin code" });
