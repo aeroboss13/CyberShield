@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("user"), // 'user' or 'admin'
+  jobTitle: text("job_title"),
   avatar: text("avatar"),
   bio: text("bio"),
   location: text("location"),
@@ -260,6 +261,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const updateUserSchema = insertUserSchema.pick({
   name: true,
+  jobTitle: true,
   bio: true,
   location: true,
   website: true,

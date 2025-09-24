@@ -5,10 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Trophy, Target, Shield, Users, MessageCircle, Heart, Calendar, MapPin, Link as LinkIcon, Edit } from 'lucide-react';
+import { Trophy, Target, Shield, Users, MessageCircle, Heart, Calendar, MapPin, Link as LinkIcon, Edit, ArrowLeft } from 'lucide-react';
 import EditProfileModal from '@/components/EditProfileModal';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicUser } from '@shared/schema';
 import { useState } from 'react';
+import { Link } from 'wouter';
 
 interface UserStats {
   id: number;
@@ -35,6 +37,7 @@ interface UserSubmission {
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const { t } = useLanguage();
 
   const { data: currentUser, isLoading: userLoading } = useQuery<PublicUser>({
     queryKey: ['/api/users/current']
@@ -84,6 +87,15 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6" data-testid="profile-page">
+      {/* Back Button */}
+      <div className="flex items-center space-x-4">
+        <Link href="/dashboard">
+          <Button variant="outline" className="cyber-button-secondary" data-testid="button-back-profile">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t('back')}
+          </Button>
+        </Link>
+      </div>
       {/* Profile Header */}
       <Card>
         <CardContent className="p-6">
@@ -101,6 +113,9 @@ export default function ProfilePage() {
                   <div>
                     <h1 className="text-3xl font-bold" data-testid="text-name">{currentUser.name}</h1>
                     <p className="text-xl text-muted-foreground" data-testid="text-username">@{currentUser.username}</p>
+                    {currentUser.jobTitle && (
+                      <p className="text-sm text-muted-foreground" data-testid="text-job-title">{currentUser.jobTitle}</p>
+                    )}
                   </div>
                   <Badge variant="outline" className={`${reputationLevel.color} text-white`} data-testid="badge-reputation-level">
                     <Trophy className="w-3 h-3 mr-1" />

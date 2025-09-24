@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +26,7 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: user.name || "",
-    role: user.role || "",
+    jobTitle: user.jobTitle || "",
     bio: user.bio || "",
     location: user.location || "",
     website: user.website || "",
@@ -105,18 +104,17 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
             </div>
 
             <div>
-              <Label htmlFor="role" className="text-white text-sm font-medium">
-                Account Level
+              <Label htmlFor="jobTitle" className="text-white text-sm font-medium">
+                Job Title
               </Label>
-              <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
-                <SelectTrigger className="cyber-input mt-2" data-testid="select-role">
-                  <SelectValue placeholder="Select account level" />
-                </SelectTrigger>
-                <SelectContent className="cyber-bg-dark border-cyber-blue">
-                  <SelectItem value="user" className="text-white hover:cyber-bg-surface">User</SelectItem>
-                  <SelectItem value="admin" className="text-white hover:cyber-bg-surface">Admin</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="jobTitle"
+                value={formData.jobTitle}
+                onChange={(e) => handleInputChange("jobTitle", e.target.value)}
+                className="cyber-input mt-2"
+                placeholder="e.g., Security Analyst, Penetration Tester"
+                data-testid="input-job-title"
+              />
             </div>
 
             <div>

@@ -171,11 +171,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="mt-4 text-center">
-            <p className="text-xs cyber-text-dim">
-              Demo credentials: john_smith / password123
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

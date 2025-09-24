@@ -187,6 +187,7 @@ export class MemStorage implements IStorage {
       id,
       passwordHash,
       role: 'user', // Always set role to 'user' for new registrations
+      jobTitle: insertUser.jobTitle ?? null,
       bio: insertUser.bio ?? null,
       location: insertUser.location ?? null,
       website: insertUser.website ?? null,
