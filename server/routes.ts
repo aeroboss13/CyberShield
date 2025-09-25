@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema, insertUserSubmissionSchema, publicUserSchema, updateUserSchema, registerSchema, loginSchema } from "@shared/schema";
+import { insertPostSchema, insertNewsCommentSchema, insertPostCommentSchema, insertUserSubmissionSchema, insertNotificationSchema, publicUserSchema, updateUserSchema, registerSchema, loginSchema } from "@shared/schema";
 
 // Helper to sanitize user data (remove email)
 const toPublicUser = (u: any) => (u ? publicUserSchema.parse(u) : undefined);
@@ -627,6 +627,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Delete post comment error:', error);
       res.status(500).json({ error: "Failed to delete comment" });
+    }
+  });
+
+  // Notifications endpoints
+  app.get("/api/notifications", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const notifications = await storage.getUserNotifications(currentUser.id);
+      res.json(notifications);
+    } catch (error) {
+      console.error('Get notifications error:', error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/notifications/count", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const count = await storage.getUnreadNotificationCount(currentUser.id);
+      res.json({ count });
+    } catch (error) {
+      console.error('Get notification count error:', error);
+      res.status(500).json({ error: "Failed to fetch notification count" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const notificationId = parseInt(req.params.id);
+      if (isNaN(notificationId)) {
+        return res.status(400).json({ error: "Invalid notification ID" });
+      }
+
+      // Check ownership before allowing modification
+      const userNotifications = await storage.getUserNotifications(currentUser.id);
+      const notification = userNotifications.find(n => n.id === notificationId);
+      if (!notification) {
+        return res.status(404).json({ error: "Notification not found or not accessible" });
+      }
+
+      await storage.markNotificationAsRead(notificationId);
+      res.json({ message: "Notification marked as read" });
+    } catch (error) {
+      console.error('Mark notification as read error:', error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  app.patch("/api/notifications/read-all", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      await storage.markAllNotificationsAsRead(currentUser.id);
+      res.json({ message: "All notifications marked as read" });
+    } catch (error) {
+      console.error('Mark all notifications as read error:', error);
+      res.status(500).json({ error: "Failed to mark all notifications as read" });
+    }
+  });
+
+  app.delete("/api/notifications/:id", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const notificationId = parseInt(req.params.id);
+      if (isNaN(notificationId)) {
+        return res.status(400).json({ error: "Invalid notification ID" });
+      }
+
+      // Check ownership before allowing deletion
+      const userNotifications = await storage.getUserNotifications(currentUser.id);
+      const notification = userNotifications.find(n => n.id === notificationId);
+      if (!notification) {
+        return res.status(404).json({ error: "Notification not found or not accessible" });
+      }
+
+      await storage.deleteNotification(notificationId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Delete notification error:', error);
+      res.status(500).json({ error: "Failed to delete notification" });
     }
   });
 

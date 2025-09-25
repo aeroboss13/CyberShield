@@ -9,6 +9,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import PostModal from "./PostModal";
 import ThemeToggle from "./ThemeToggle";
 import LanguageToggle from "./LanguageToggle";
+import { NotificationPopup } from "./NotificationPopup";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -142,15 +143,7 @@ export default function Header() {
                   </Link>
                 )}
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="relative cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
-                  onClick={() => alert('Security alerts and notifications')}
-                >
-                  <Bell className="w-5 h-5 cyber-text-muted" />
-                  <span className="absolute -top-1 -right-1 w-2 h-2 cyber-bg-red rounded-full"></span>
-                </Button>
+                <NotificationPopup className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg" />
                 
               </div>
             ) : null}

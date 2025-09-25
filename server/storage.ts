@@ -1,4 +1,4 @@
-import { users, posts, cveEntries, exploits, mitreAttack, newsArticles, newsComments, postComments, postLikes, newsLikes, userSubmissions, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type Exploit, type InsertExploit, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews, type NewsComment, type InsertNewsComment, type PostComment, type InsertPostComment, type PostLike, type InsertPostLike, type NewsLike, type InsertNewsLike, type UserSubmission, type InsertUserSubmission } from "@shared/schema";
+import { users, posts, cveEntries, exploits, mitreAttack, newsArticles, newsComments, postComments, postLikes, newsLikes, userSubmissions, notifications, type User, type InsertUser, type Post, type InsertPost, type CVE, type InsertCVE, type Exploit, type InsertExploit, type MitreAttack, type InsertMitre, type NewsArticle, type InsertNews, type NewsComment, type InsertNewsComment, type PostComment, type InsertPostComment, type PostLike, type InsertPostLike, type NewsLike, type InsertNewsLike, type UserSubmission, type InsertUserSubmission, type Notification, type InsertNotification } from "@shared/schema";
 
 interface CVESearchParams {
   search?: string;
@@ -85,6 +85,14 @@ export interface IStorage {
     weeklyPoints: number;
   }>;
   
+  // Notifications
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getUserNotifications(userId: number): Promise<Notification[]>;
+  markNotificationAsRead(id: number): Promise<void>;
+  markAllNotificationsAsRead(userId: number): Promise<void>;
+  getUnreadNotificationCount(userId: number): Promise<number>;
+  deleteNotification(id: number): Promise<void>;
+
   // Admin Operations
   isAdmin(userId: number): Promise<boolean>;
   getAllSubmissionsForAdmin(): Promise<(UserSubmission & { user: User })[]>;
@@ -105,6 +113,7 @@ export class MemStorage implements IStorage {
   private postLikes: Map<number, PostLike>;
   private newsLikes: Map<number, NewsLike>;
   private userSubmissions: Map<number, UserSubmission>;
+  private notifications: Map<number, Notification>;
   private currentUserId: number;
   private currentSubmissionId: number;
   private currentPostId: number;
@@ -112,6 +121,7 @@ export class MemStorage implements IStorage {
   private currentNewsId: number;
   private currentCommentId: number;
   private currentLikeId: number;
+  private currentNotificationId: number;
 
   constructor() {
     this.users = new Map();
@@ -125,6 +135,7 @@ export class MemStorage implements IStorage {
     this.postLikes = new Map();
     this.newsLikes = new Map();
     this.userSubmissions = new Map();
+    this.notifications = new Map();
     this.currentUserId = 1;
     this.currentSubmissionId = 1;
     this.currentPostId = 1;
@@ -132,6 +143,7 @@ export class MemStorage implements IStorage {
     this.currentNewsId = 1;
     this.currentCommentId = 1;
     this.currentLikeId = 1;
+    this.currentNotificationId = 1;
     
     this.seedData();
   }
@@ -540,6 +552,22 @@ export class MemStorage implements IStorage {
       updatedAt: new Date()
     };
     this.postComments.set(newComment.id, newComment);
+
+    // Create notification for post author (but not if they commented on their own post)
+    const post = this.posts.get(comment.postId);
+    if (post && post.userId !== comment.userId) {
+      const commenter = this.users.get(comment.userId);
+      await this.createNotification({
+        userId: post.userId,
+        type: 'comment',
+        title: 'Новый комментарий',
+        message: `${commenter?.name || commenter?.username || 'Пользователь'} прокомментировал ваш пост`,
+        relatedId: comment.postId,
+        relatedType: 'post',
+        fromUserId: comment.userId
+      });
+    }
+
     return newComment;
   }
 
@@ -754,6 +782,20 @@ export class MemStorage implements IStorage {
         if (postAuthor) {
           postAuthor.likesReceived = (postAuthor.likesReceived || 0) + 1;
           this.users.set(postAuthor.id, postAuthor);
+
+          // Create notification for post author (but not if they liked their own post)
+          if (postAuthor.id !== userId) {
+            const liker = this.users.get(userId);
+            await this.createNotification({
+              userId: postAuthor.id,
+              type: 'like',
+              title: 'Новый лайк',
+              message: `${liker?.name || liker?.username || 'Пользователь'} лайкнул ваш пост`,
+              relatedId: postId,
+              relatedType: 'post',
+              fromUserId: userId
+            });
+          }
         }
       }
 
@@ -866,6 +908,65 @@ export class MemStorage implements IStorage {
       communityRank: userRank,
       weeklyPoints
     };
+  }
+
+  // Notification methods
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const newNotification: Notification = {
+      id: this.currentNotificationId++,
+      ...notification,
+      isRead: notification.isRead ?? false,
+      relatedId: notification.relatedId ?? null,
+      relatedType: notification.relatedType ?? null,
+      fromUserId: notification.fromUserId ?? null,
+      createdAt: new Date()
+    };
+    
+    this.notifications.set(newNotification.id, newNotification);
+    return newNotification;
+  }
+
+  async getUserNotifications(userId: number): Promise<Notification[]> {
+    const userNotifications: Notification[] = [];
+    
+    for (const notification of Array.from(this.notifications.values())) {
+      if (notification.userId === userId) {
+        userNotifications.push(notification);
+      }
+    }
+    
+    return userNotifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async markNotificationAsRead(id: number): Promise<void> {
+    const notification = this.notifications.get(id);
+    if (notification) {
+      notification.isRead = true;
+      this.notifications.set(id, notification);
+    }
+  }
+
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    for (const notification of Array.from(this.notifications.values())) {
+      if (notification.userId === userId && !notification.isRead) {
+        notification.isRead = true;
+        this.notifications.set(notification.id, notification);
+      }
+    }
+  }
+
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    let count = 0;
+    for (const notification of Array.from(this.notifications.values())) {
+      if (notification.userId === userId && !notification.isRead) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  async deleteNotification(id: number): Promise<void> {
+    this.notifications.delete(id);
   }
 }
 
