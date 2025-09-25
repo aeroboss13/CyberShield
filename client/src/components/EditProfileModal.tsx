@@ -102,14 +102,8 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
       return { success: true };
     },
     onSuccess: () => {
-      // Invalidate all user-related queries to refresh avatar everywhere
-      queryClient.invalidateQueries({ queryKey: ["/api/users/current"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: [`/api/users/${user.id}/stats`] });
-        queryClient.invalidateQueries({ queryKey: [`/api/users`, user.id, "activity"] });
-      }
+      // Clear all cache and force fresh data fetch
+      queryClient.clear();
       
       toast({
         title: "Avatar Updated", 
@@ -117,8 +111,8 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
       });
       setAvatarPreview(null);
       
-      // Force reload to ensure avatar appears everywhere
-      setTimeout(() => window.location.reload(), 500);
+      // Force reload to ensure avatar appears everywhere immediately
+      window.location.reload();
     },
     onError: (error) => {
       toast({
