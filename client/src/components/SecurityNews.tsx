@@ -227,9 +227,8 @@ export default function SecurityNews() {
                         onClick={() => handleDiscuss(article)}
                         data-testid={`button-discuss-${article.id}`}
                       >
-                        <MessageSquare className="w-4 h-4 mr-1" />
+                        <MessageSquare className="w-4 h-4 sm:mr-1" />
                         <span className="hidden sm:inline">Discuss</span>
-                        <span className="sm:hidden">💬</span>
                       </Button>
                       <Button
                         variant="ghost"
@@ -238,9 +237,8 @@ export default function SecurityNews() {
                         onClick={() => handleShare(article)}
                         data-testid={`button-share-${article.id}`}
                       >
-                        <Share className="w-4 h-4 mr-1" />
+                        <Share className="w-4 h-4 sm:mr-1" />
                         <span className="hidden sm:inline">Share</span>
-                        <span className="sm:hidden">📤</span>
                       </Button>
                     </div>
                     <Button
