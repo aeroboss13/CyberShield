@@ -13,7 +13,10 @@ import {
   Activity,
   Award,
   Plus,
-  UserX
+  UserX,
+  MessageCircle,
+  Heart,
+  MessageSquare
 } from "lucide-react";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -21,12 +24,9 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { PublicUser, ThreatOverview } from "@shared/schema";
 
 interface UserActivityStats {
-  postsThisWeek: number;
-  likesThisWeek: number;
-  commentsThisWeek: number;
-  threatsAnalyzed: number;
-  communityRank: number;
-  weeklyPoints: number;
+  totalPosts: number;
+  totalLikes: number;
+  totalComments: number;
 }
 
 export default function Sidebar() {
@@ -164,56 +164,29 @@ export default function Sidebar() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Shield className="w-4 h-4 cyber-text-blue" />
-                <span className="cyber-text text-sm">Threats Analyzed</span>
-              </div>
-              <span className="cyber-text-blue font-semibold">
-                {activityStats?.threatsAnalyzed || 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 cyber-text-green" />
-                <span className="cyber-text text-sm">Community Rank</span>
-              </div>
-              <span className="cyber-text-green font-semibold">
-                #{activityStats?.communityRank || 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Activity className="w-4 h-4 cyber-text-amber" />
-                <span className="cyber-text text-sm">This Week</span>
-              </div>
-              <span className="cyber-text-amber font-semibold">
-                +{activityStats?.weeklyPoints || 0} pts
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Activity className="w-4 h-4 cyber-text-green" />
+                <MessageCircle className="w-4 h-4 cyber-text-green" />
                 <span className="cyber-text text-sm">{t('sidebar.posts')}</span>
               </div>
               <span className="cyber-text-green font-semibold">
-                {activityStats?.postsThisWeek || 0}
+                {activityStats?.totalPosts || 0}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Activity className="w-4 h-4 cyber-text-blue" />
+                <Heart className="w-4 h-4 cyber-text-blue" />
                 <span className="cyber-text text-sm">{t('sidebar.likes')}</span>
               </div>
               <span className="cyber-text-blue font-semibold">
-                {activityStats?.likesThisWeek || 0}
+                {activityStats?.totalLikes || 0}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Activity className="w-4 h-4 cyber-text-amber" />
+                <MessageSquare className="w-4 h-4 cyber-text-amber" />
                 <span className="cyber-text text-sm">{t('sidebar.comments')}</span>
               </div>
               <span className="cyber-text-amber font-semibold">
-                {activityStats?.commentsThisWeek || 0}
+                {activityStats?.totalComments || 0}
               </span>
             </div>
           </div>

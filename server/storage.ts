@@ -77,12 +77,9 @@ export interface IStorage {
   updateUserStats(userId: number, field: string, delta: number): Promise<void>;
   getUserStats(userId: number): Promise<User>;
   getUserActivityStats(userId: number): Promise<{
-    postsThisWeek: number;
-    likesThisWeek: number;
-    commentsThisWeek: number;
-    threatsAnalyzed: number;
-    communityRank: number;
-    weeklyPoints: number;
+    totalPosts: number;
+    totalLikes: number;
+    totalComments: number;
   }>;
   
   // Notifications
@@ -846,70 +843,41 @@ export class MemStorage implements IStorage {
   }
 
   async getUserActivityStats(userId: number): Promise<{
-    postsThisWeek: number;
-    likesThisWeek: number;
-    commentsThisWeek: number;
-    threatsAnalyzed: number;
-    communityRank: number;
-    weeklyPoints: number;
+    totalPosts: number;
+    totalLikes: number;
+    totalComments: number;
   }> {
     const user = this.users.get(userId);
     if (!user) {
       return {
-        postsThisWeek: 0,
-        likesThisWeek: 0,
-        commentsThisWeek: 0,
-        threatsAnalyzed: 0,
-        communityRank: 0,
-        weeklyPoints: 0
+        totalPosts: 0,
+        totalLikes: 0,
+        totalComments: 0
       };
     }
 
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-    // Calculate posts this week
-    const postsThisWeek = Array.from(this.posts.values()).filter(
-      post => post.userId === userId && 
-      post.createdAt && 
-      post.createdAt > oneWeekAgo
+    // Calculate total posts by user
+    const totalPosts = Array.from(this.posts.values()).filter(
+      post => post.userId === userId
     ).length;
 
-    // Calculate likes received this week
-    const likesThisWeek = Array.from(this.postLikes.values()).filter(like => {
+    // Calculate total likes received by user's posts
+    const totalLikes = Array.from(this.postLikes.values()).filter(like => {
       const post = this.posts.get(like.postId);
-      return post?.userId === userId && 
-             like.createdAt && 
-             like.createdAt > oneWeekAgo;
+      return post?.userId === userId;
     }).length;
 
-    // Calculate comments this week
-    const commentsThisWeek = Array.from(this.postComments.values()).filter(
-      comment => comment.userId === userId && 
-      comment.createdAt && 
-      comment.createdAt > oneWeekAgo
+    // Calculate total comments by user
+    const totalComments = Array.from(this.postComments.values()).filter(
+      comment => comment.userId === userId
     ).length + Array.from(this.newsComments.values()).filter(
-      comment => comment.userId === userId && 
-      comment.createdAt && 
-      comment.createdAt > oneWeekAgo
+      comment => comment.userId === userId
     ).length;
 
-    // Calculate threats analyzed (submissions)
-    const threatsAnalyzed = (user.cveSubmissions || 0) + (user.exploitSubmissions || 0);
-
-    // Calculate community rank (based on reputation)
-    const allUsers = Array.from(this.users.values()).sort((a, b) => (b.reputation || 0) - (a.reputation || 0));
-    const userRank = allUsers.findIndex(u => u.id === userId) + 1;
-
-    // Calculate weekly points (simplified calculation)
-    const weeklyPoints = postsThisWeek * 5 + likesThisWeek * 2 + commentsThisWeek * 1;
-
     return {
-      postsThisWeek,
-      likesThisWeek,
-      commentsThisWeek,
-      threatsAnalyzed,
-      communityRank: userRank,
-      weeklyPoints
+      totalPosts,
+      totalLikes,
+      totalComments
     };
   }
 
