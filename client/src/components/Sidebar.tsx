@@ -14,20 +14,12 @@ import {
   Award,
   Plus,
   UserX,
-  MessageCircle,
-  Heart,
-  MessageSquare
 } from "lucide-react";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PublicUser, ThreatOverview } from "@shared/schema";
 
-interface UserActivityStats {
-  totalPosts: number;
-  totalLikes: number;
-  totalComments: number;
-}
 
 export default function Sidebar() {
   const { t } = useLanguage();
@@ -41,15 +33,6 @@ export default function Sidebar() {
   // Check if user is authenticated
   const isAuthenticated = !error && currentUser;
 
-  // Get user activity stats for authenticated users
-  const { data: activityStats } = useQuery<UserActivityStats>({
-    queryKey: ["/api/users", currentUser?.id, "activity"],
-    enabled: isAuthenticated && !!currentUser?.id,
-    retry: false,
-    throwOnError: false,
-    refetchInterval: 30000, // Refresh every 30 seconds
-    refetchOnWindowFocus: true
-  });
 
   // Get threat overview data for Global Threat Level
   const { data: threatOverview, isLoading: threatLoading } = useQuery<ThreatOverview>({
@@ -154,44 +137,6 @@ export default function Sidebar() {
       </div>
 
 
-      {/* Activity Stats */}
-      {isAuthenticated && (
-        <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-          <h3 className="font-bold cyber-text mb-4 flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 cyber-text-green" />
-            <span>Activity</span>
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <MessageCircle className="w-4 h-4 cyber-text-green" />
-                <span className="cyber-text text-sm">{t('sidebar.posts')}</span>
-              </div>
-              <span className="cyber-text-green font-semibold">
-                {activityStats?.totalPosts || 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Heart className="w-4 h-4 cyber-text-blue" />
-                <span className="cyber-text text-sm">{t('sidebar.likes')}</span>
-              </div>
-              <span className="cyber-text-blue font-semibold">
-                {activityStats?.totalLikes || 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4 cyber-text-amber" />
-                <span className="cyber-text text-sm">{t('sidebar.comments')}</span>
-              </div>
-              <span className="cyber-text-amber font-semibold">
-                {activityStats?.totalComments || 0}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Global Threat Level Analytics */}
       <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
