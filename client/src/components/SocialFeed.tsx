@@ -28,7 +28,7 @@ export default function SocialFeed() {
   });
 
   const createPostMutation = useMutation({
-    mutationFn: async (postData: { content: string; userId: number; tags: string[] }) => {
+    mutationFn: async (postData: { content: string; userId: number; tags: string[]; attachments: string[] }) => {
       const response = await apiRequest("POST", "/api/posts", postData);
       return response.json();
     },
@@ -39,17 +39,31 @@ export default function SocialFeed() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPostContent.trim()) return;
 
     // Extract hashtags from content (support Cyrillic characters)
     const tags = Array.from(newPostContent.matchAll(/#([\w\u0400-\u04FF]+)/g)).map(match => match[1]);
 
+    // Convert files to base64
+    const attachments: string[] = [];
+    for (const file of attachedFiles) {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        attachments.push(base64);
+      }
+    }
+
     createPostMutation.mutate({
       content: newPostContent,
       userId: 1, // Current user ID
       tags,
+      attachments,
     });
   };
 

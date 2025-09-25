@@ -30,6 +30,7 @@ export const posts = pgTable("posts", {
   userId: integer("user_id").notNull(),
   content: text("content").notNull(),
   tags: text("tags").array().default([]),
+  attachments: text("attachments").array().notNull().default([]), // Array of base64 encoded files with metadata
   likes: integer("likes").default(0),
   comments: integer("comments").default(0),
   shares: integer("shares").default(0),

@@ -115,6 +115,32 @@ export default function PostCard({ post }: PostCardProps) {
               {renderPostContent(post.content)}
             </div>
             
+            {/* Show attached images */}
+            {post.attachments && post.attachments.length > 0 && (
+              <div className="grid gap-2 mb-4 max-w-full">
+                {post.attachments.length === 1 ? (
+                  <div className="w-full max-w-md">
+                    <img 
+                      src={post.attachments[0]} 
+                      alt="Attached image" 
+                      className="w-full h-auto rounded-lg border cyber-border object-cover max-h-96"
+                    />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 max-w-md">
+                    {post.attachments.map((attachment, index) => (
+                      <img 
+                        key={index}
+                        src={attachment} 
+                        alt={`Attached image ${index + 1}`} 
+                        className="w-full h-32 rounded-lg border cyber-border object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            
             {post.tags && post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
                 {post.tags.map((tag, index) => (

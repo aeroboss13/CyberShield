@@ -3,6 +3,7 @@ export interface PostWithUser {
   userId: number;
   content: string;
   tags: string[];
+  attachments: string[];
   likes: number;
   comments: number;
   shares: number;

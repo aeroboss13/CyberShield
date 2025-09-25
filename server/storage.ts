@@ -237,7 +237,8 @@ export class MemStorage implements IStorage {
       comments: 0, 
       shares: 0, 
       createdAt: new Date(),
-      tags: insertPost.tags || []
+      tags: insertPost.tags || [],
+      attachments: insertPost.attachments || []
     };
     this.posts.set(id, post);
     
