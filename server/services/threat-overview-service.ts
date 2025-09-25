@@ -256,7 +256,7 @@ export class ThreatOverviewService {
       },
       headlines: [{
         title: 'Сервис временно недоступен',
-        source: 'SecHub',
+        source: 'Pabit',
         link: ''
       }],
       trend7Day: null,

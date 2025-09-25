@@ -118,7 +118,7 @@ export class ContentExtractorService {
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SecHub/1.0; +https://sechub.com)',
+        'User-Agent': 'Mozilla/5.0 (compatible; Pabit/1.0; +https://sechub.com)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
       signal: controller.signal
@@ -157,7 +157,7 @@ export class ContentExtractorService {
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SecHub/1.0; +https://sechub.com)',
+        'User-Agent': 'Mozilla/5.0 (compatible; Pabit/1.0; +https://sechub.com)',
         'Accept': 'text/html,application/xhtml+xml'
       },
       signal: controller.signal

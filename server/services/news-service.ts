@@ -92,7 +92,7 @@ export class NewsService {
       
       const response = await fetch(rss2jsonUrl, {
         headers: {
-          'User-Agent': 'SecHub/1.0 (Security News Aggregator)'
+          'User-Agent': 'Pabit/1.0 (Security News Aggregator)'
         }
       });
 
@@ -138,7 +138,7 @@ export class NewsService {
     try {
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'SecHub/1.0 (Security News Aggregator)'
+          'User-Agent': 'Pabit/1.0 (Security News Aggregator)'
         }
       });
 
@@ -268,7 +268,7 @@ export class NewsService {
             `https://www.reddit.com/r/${subreddit}/hot.json?limit=5`,
             {
               headers: {
-                'User-Agent': 'SecHub/1.0 (Security News Aggregator)'
+                'User-Agent': 'Pabit/1.0 (Security News Aggregator)'
               }
             }
           );

@@ -1,8 +1,8 @@
-# SecHub - Cybersecurity Social Platform
+# Pabit - Cybersecurity Social Platform
 
 ## Overview
 
-SecHub is a comprehensive cybersecurity social platform that combines social networking features with professional security tools. It provides a unified interface for security professionals to share insights, track vulnerabilities, and access security intelligence through a modern web application.
+Pabit is a comprehensive cybersecurity social platform that combines social networking features with professional security tools. It provides a unified interface for security professionals to share insights, track vulnerabilities, and access security intelligence through a modern web application.
 
 ## System Architecture
 

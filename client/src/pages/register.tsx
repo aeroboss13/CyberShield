@@ -60,7 +60,7 @@ export default function RegisterPage() {
       
       toast({
         title: "Registration successful",
-        description: `Welcome to SecHub, ${user.name}!`
+        description: `Welcome to Pabit, ${user.name}!`
       });
       
       // Redirect to dashboard
@@ -88,7 +88,7 @@ export default function RegisterPage() {
               <Shield className="w-8 h-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold cyber-text-red">Join SecHub</CardTitle>
+          <CardTitle className="text-2xl font-bold cyber-text-red">Join Pabit</CardTitle>
           <CardDescription className="cyber-text-dim">
             Create your cybersecurity professional account
           </CardDescription>

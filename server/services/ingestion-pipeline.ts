@@ -418,7 +418,7 @@ export class IngestionPipeline {
 
     const response = await fetch(url.toString(), {
       headers: {
-        'User-Agent': 'SecHub/1.0 CVE Ingestion Pipeline'
+        'User-Agent': 'Pabit/1.0 CVE Ingestion Pipeline'
       }
     });
 

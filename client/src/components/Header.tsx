@@ -88,7 +88,7 @@ export default function Header() {
               <div className="absolute -top-1 -right-1 w-3 h-3 cyber-bg-green rounded-full pulse-red"></div>
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold cyber-text-red">SecHub</h1>
+              <h1 className="text-xl font-bold cyber-text-red">Pabit</h1>
               <p className="text-xs cyber-text-dim">Cybersecurity Platform</p>
             </div>
           </div>

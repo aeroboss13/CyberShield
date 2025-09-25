@@ -88,7 +88,7 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl font-bold cyber-text-red">Welcome Back</CardTitle>
           <CardDescription className="cyber-text-dim">
-            Sign in to your SecHub account
+            Sign in to your Pabit account
           </CardDescription>
         </CardHeader>
         
