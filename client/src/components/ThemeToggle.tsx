@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from "../contexts/LanguageContext";
 
-export default function ThemeToggle() {
+export default function ThemeToggle(): JSX.Element {
   const { theme, toggleTheme } = useTheme();
   const { t } = useLanguage();
 

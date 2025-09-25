@@ -1,7 +1,7 @@
 import { Search, Shield, Bell, Settings, Activity, Plus, UserCog, LogOut, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -113,8 +113,8 @@ export default function Header() {
             
             {/* Theme and Language Toggle Buttons */}
             <div className="flex items-center space-x-2">
-              <ThemeToggle />
-              <LanguageToggle />
+              {React.createElement(ThemeToggle)}
+              {React.createElement(LanguageToggle)}
             </div>
 
             {isAuthenticated ? (
@@ -209,7 +209,7 @@ export default function Header() {
           {/* Mobile Menu Button and Essential Actions */}
           <div className="flex lg:hidden items-center space-x-2">
             {/* Essential mobile buttons */}
-            <ThemeToggle />
+            {React.createElement(ThemeToggle)}
             
             {isAuthenticated && (
               <div className="flex items-center space-x-2">

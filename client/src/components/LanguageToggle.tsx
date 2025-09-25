@@ -2,7 +2,7 @@ import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "../contexts/LanguageContext";
 
-export default function LanguageToggle() {
+export default function LanguageToggle(): JSX.Element {
   const { language, toggleLanguage, t } = useLanguage();
 
   return (

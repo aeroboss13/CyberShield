@@ -155,6 +155,17 @@ export class MemStorage implements IStorage {
     if (sessionUserId) {
       return this.users.get(sessionUserId);
     }
+    
+    // Fallback: extract token directly if no middleware was used
+    const { extractSessionToken, getSession } = await import('./auth');
+    const token = extractSessionToken(req);
+    if (token) {
+      const session = getSession(token);
+      if (session) {
+        return this.users.get(session.userId);
+      }
+    }
+    
     return undefined;
   }
 
