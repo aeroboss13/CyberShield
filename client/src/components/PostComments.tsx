@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MessageSquare, Trash2, Send, LogIn, UserPlus } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { UserAvatar } from "@/components/UserAvatar";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PublicUser } from "@shared/schema";
 
@@ -20,6 +21,7 @@ type PostComment = {
     id: number;
     username: string;
     name: string;
+    avatar?: string;
   };
 };
 
@@ -173,11 +175,12 @@ export default function PostComments({ postId, shouldFocus = false }: PostCommen
             
             {comments.map((comment) => (
               <div key={comment.id} className="flex space-x-3" data-testid={`comment-${comment.id}`}>
-                <Avatar className="w-8 h-8 flex-shrink-0">
-                  <AvatarFallback className="cyber-bg-surface-light cyber-text text-sm">
-                    {getInitials(comment.user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar 
+                  src={comment.user.avatar} 
+                  name={comment.user.name} 
+                  size="sm"
+                  data-testid={`avatar-post-comment-${comment.id}`}
+                />
                 
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center space-x-2">

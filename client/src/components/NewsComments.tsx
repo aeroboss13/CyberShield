@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { MessageSquare, Send, Trash2, Clock } from "lucide-react";
+import { UserAvatar } from "@/components/UserAvatar";
 import { apiRequest } from "@/lib/queryClient";
 
 interface NewsComment {
@@ -160,11 +161,12 @@ export default function NewsComments({ articleId, articleTitle }: NewsCommentsPr
               data-testid={`comment-${comment.id}`}
             >
               <div className="flex items-start space-x-3">
-                <Avatar className="w-10 h-10">
-                  <AvatarFallback className="bg-blue-500 text-white text-sm">
-                    {getUserInitials(comment.user.username)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar 
+                  src={comment.user.avatar} 
+                  name={comment.user.name} 
+                  size="md"
+                  data-testid={`avatar-comment-${comment.id}`}
+                />
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2 mb-2">

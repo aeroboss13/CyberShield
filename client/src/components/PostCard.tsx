@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, Heart } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "../contexts/LanguageContext";
+import { UserAvatar } from "@/components/UserAvatar";
 import type { PostWithUser } from "@/lib/types";
 import type { PublicUser } from "@shared/schema";
 import PostComments from "./PostComments";
@@ -100,9 +101,12 @@ export default function PostCard({ post }: PostCardProps) {
     <Card className="social-card cyber-bg-surface border cyber-border">
       <CardContent className="pt-6">
         <div className="flex space-x-4">
-          <div className={`w-12 h-12 ${getAvatarColor(post.user.username)} rounded-full flex items-center justify-center flex-shrink-0`}>
-            <span className="cyber-text font-medium">{getInitials(post.user.name)}</span>
-          </div>
+          <UserAvatar 
+            src={post.user.avatar} 
+            name={post.user.name} 
+            size="lg"
+            data-testid={`avatar-post-${post.id}`}
+          />
           
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">

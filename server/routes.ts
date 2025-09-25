@@ -763,6 +763,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Avatar upload endpoint
+  app.post("/api/users/avatar", requireAuth, loadCurrentUser(storage), async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const { avatar } = req.body;
+      if (!avatar || typeof avatar !== 'string') {
+        return res.status(400).json({ error: "Avatar data is required" });
+      }
+
+      // Basic validation for base64 image data
+      if (!avatar.startsWith('data:image/')) {
+        return res.status(400).json({ error: "Invalid image format. Only images are allowed." });
+      }
+
+      // Check for SVG (security risk)
+      if (avatar.includes('data:image/svg+xml')) {
+        return res.status(400).json({ error: "SVG images are not allowed for security reasons." });
+      }
+
+      // Server-side size validation (approximate base64 size check)
+      // Base64 is ~33% larger than original, so 2MB limit = ~2.7MB base64
+      if (avatar.length > 2.7 * 1024 * 1024) {
+        return res.status(400).json({ error: "Image size must be less than 2MB" });
+      }
+
+      // Validate MIME type more strictly
+      const allowedTypes = ['data:image/jpeg', 'data:image/jpg', 'data:image/png', 'data:image/webp'];
+      const isValidType = allowedTypes.some(type => avatar.toLowerCase().startsWith(type));
+      if (!isValidType) {
+        return res.status(400).json({ error: "Only JPEG, PNG, and WEBP images are allowed." });
+      }
+
+      await storage.updateUserAvatar(currentUser.id, avatar);
+      res.json({ message: "Avatar updated successfully" });
+    } catch (error) {
+      console.error('Update avatar error:', error);
+      res.status(500).json({ error: "Failed to update avatar" });
+    }
+  });
+
   // Post Likes endpoints
   app.post("/api/posts/:id/like", requireAuth, loadCurrentUser(storage), async (req, res) => {
     try {

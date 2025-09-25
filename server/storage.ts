@@ -93,6 +93,9 @@ export interface IStorage {
   getUnreadNotificationCount(userId: number): Promise<number>;
   deleteNotification(id: number): Promise<void>;
 
+  // Avatar upload
+  updateUserAvatar(userId: number, avatarData: string): Promise<void>;
+
   // Admin Operations
   isAdmin(userId: number): Promise<boolean>;
   getAllSubmissionsForAdmin(): Promise<(UserSubmission & { user: User })[]>;
@@ -967,6 +970,17 @@ export class MemStorage implements IStorage {
 
   async deleteNotification(id: number): Promise<void> {
     this.notifications.delete(id);
+  }
+
+  // Avatar upload
+  async updateUserAvatar(userId: number, avatarData: string): Promise<void> {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error(`User with id ${userId} not found`);
+    }
+
+    user.avatar = avatarData;
+    this.users.set(userId, user);
   }
 }
 

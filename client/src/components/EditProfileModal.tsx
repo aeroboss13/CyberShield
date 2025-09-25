@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +12,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Edit } from "lucide-react";
+import { Edit, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { UserAvatar } from "@/components/UserAvatar";
 import { PublicUser } from "@shared/schema";
 
 interface EditProfileModalProps {
@@ -34,6 +35,8 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
   
   const [showAdminForm, setShowAdminForm] = useState(false);
   const [adminCode, setAdminCode] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -84,6 +87,27 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
     },
   });
 
+  const uploadAvatarMutation = useMutation({
+    mutationFn: async (avatar: string) => {
+      const response = await apiRequest("POST", "/api/users/avatar", { avatar });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/current"] });
+      toast({
+        title: "Avatar Updated",
+        description: "Your profile avatar has been updated.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update avatar. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfileMutation.mutate(formData);
@@ -97,6 +121,51 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "File size must be less than 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error", 
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setAvatarPreview(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarUpload = () => {
+    if (avatarPreview) {
+      uploadAvatarMutation.mutate(avatarPreview);
+    }
+  };
+
+  const handleAvatarRemove = () => {
+    setAvatarPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const defaultTrigger = (
@@ -120,6 +189,69 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          {/* Avatar Upload Section */}
+          <div className="space-y-4">
+            <Label className="text-white text-sm font-medium">Profile Avatar</Label>
+            <div className="flex items-center space-x-4">
+              <UserAvatar 
+                src={avatarPreview || user.avatar} 
+                name={formData.name || user.name} 
+                size="xl"
+                data-testid="avatar-preview"
+              />
+              <div className="flex-1 space-y-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                  data-testid="input-avatar-file"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="cyber-button-secondary"
+                    data-testid="button-select-avatar"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Select Image
+                  </Button>
+                  {avatarPreview && (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleAvatarUpload}
+                        disabled={uploadAvatarMutation.isPending}
+                        className="cyber-button-primary"
+                        data-testid="button-upload-avatar"
+                      >
+                        {uploadAvatarMutation.isPending ? "Uploading..." : "Upload"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAvatarRemove}
+                        className="cyber-button-ghost"
+                        data-testid="button-remove-avatar"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+                <p className="text-xs cyber-text-dim">
+                  Recommended: Square image, max 2MB. Supports JPG, PNG, WEBP.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-3 sm:space-y-4">
             <div>
               <Label htmlFor="name" className="text-white text-sm font-medium">
