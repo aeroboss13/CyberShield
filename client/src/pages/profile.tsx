@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Trophy, Target, Shield, Users, MessageCircle, Heart, Calendar, MapPin, Link as LinkIcon, Edit, ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { UserAvatar } from '@/components/UserAvatar';
 import EditProfileModal from '@/components/EditProfileModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicUser } from '@shared/schema';
@@ -156,12 +157,12 @@ export default function ProfilePage() {
         <CardContent className="p-4 sm:p-6">
           {/* Mobile: Stack vertically */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-            <Avatar className="h-20 w-20 sm:h-24 sm:w-24" data-testid="avatar-profile">
-              <AvatarImage src={currentUser.avatar || undefined} alt={currentUser.name} />
-              <AvatarFallback className="text-xl sm:text-2xl">
-                {currentUser.name.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar 
+              src={currentUser.avatar} 
+              name={currentUser.name} 
+              size="xl"
+              data-testid="avatar-profile"
+            />
             
             <div className="flex-1 space-y-3 sm:space-y-4 text-center sm:text-left">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

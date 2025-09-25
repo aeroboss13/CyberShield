@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { UserAvatar } from "@/components/UserAvatar";
 import { PublicUser, ThreatOverview } from "@shared/schema";
 
 interface UserActivityStats {
@@ -64,11 +65,12 @@ export default function Sidebar() {
           <>
             <div className="flex items-center space-x-4 mb-6">
               <div className="relative">
-                <div className="w-16 h-16 cyber-gradient rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="cyber-text font-bold text-lg">
-                    {currentUser.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
-                  </span>
-                </div>
+                <UserAvatar 
+                  src={currentUser.avatar} 
+                  name={currentUser.name} 
+                  size="xl"
+                  data-testid="avatar-sidebar"
+                />
                 <div className="absolute -bottom-1 -right-1">
                   <Badge className="cyber-bg-green cyber-text text-xs px-2 py-1">
                     <Activity className="w-3 h-3 mr-1" />
