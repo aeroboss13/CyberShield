@@ -96,8 +96,32 @@ export default function SocialFeed() {
                   />
                   <div className="flex justify-between items-center mt-4">
                     <div className="flex space-x-4 cyber-text-muted">
-                      <Paperclip className="w-5 h-5 cursor-pointer hover:text-cyber-blue transition-colors" />
-                      <Hash className="w-5 h-5 cursor-pointer hover:text-cyber-blue transition-colors" />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-8 w-8"
+                        onClick={() => {
+                          alert('Функция прикрепления файлов будет добавлена в следующих версиях');
+                        }}
+                      >
+                        <Paperclip className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-8 w-8"
+                        onClick={() => {
+                          const hashtag = prompt('Добавить хештег:');
+                          if (hashtag) {
+                            const tag = hashtag.replace('#', '');
+                            setNewPostContent(prev => prev + ` #${tag}`);
+                          }
+                        }}
+                      >
+                        <Hash className="w-4 h-4" />
+                      </Button>
                     </div>
                     <Button
                       type="submit"
