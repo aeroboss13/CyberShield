@@ -46,7 +46,9 @@ export default function Sidebar() {
     queryKey: ["/api/users", currentUser?.id, "activity"],
     enabled: isAuthenticated && !!currentUser?.id,
     retry: false,
-    throwOnError: false
+    throwOnError: false,
+    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchOnWindowFocus: true
   });
 
   // Get threat overview data for Global Threat Level

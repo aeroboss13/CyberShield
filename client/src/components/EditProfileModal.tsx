@@ -90,7 +90,16 @@ export default function EditProfileModal({ user, trigger }: EditProfileModalProp
   const uploadAvatarMutation = useMutation({
     mutationFn: async (avatar: string) => {
       const response = await apiRequest("POST", "/api/users/avatar", { avatar });
-      return response.json();
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Failed to upload avatar");
+      }
+      // API returns success message, parse safely
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        return response.json();
+      }
+      return { success: true };
     },
     onSuccess: () => {
       // Invalidate all user-related queries to refresh avatar everywhere

@@ -29,10 +29,19 @@ export default function PostCard({ post }: PostCardProps) {
   const likeMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", `/api/posts/${post.id}/like`);
-      return response.json();
+      if (!response.ok) {
+        throw new Error("Failed to like post");
+      }
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        return response.json();
+      }
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      // Invalidate activity stats for current user to update sidebar 
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "activity"] });
     },
     onError: (error) => {
       console.error('Like failed:', error);
