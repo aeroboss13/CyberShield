@@ -82,6 +82,12 @@ export interface IStorage {
     totalComments: number;
   }>;
   
+  getProjectStats(): Promise<{
+    totalPosts: number;
+    totalLikes: number;
+    totalComments: number;
+  }>;
+  
   // Notifications
   createNotification(notification: InsertNotification): Promise<Notification>;
   getUserNotifications(userId: number): Promise<Notification[]>;
@@ -873,6 +879,28 @@ export class MemStorage implements IStorage {
     ).length + Array.from(this.newsComments.values()).filter(
       comment => comment.userId === userId
     ).length;
+
+    return {
+      totalPosts,
+      totalLikes,
+      totalComments
+    };
+  }
+
+  async getProjectStats(): Promise<{
+    totalPosts: number;
+    totalLikes: number;
+    totalComments: number;
+  }> {
+    // Calculate total posts in the project
+    const totalPosts = Array.from(this.posts.values()).length;
+
+    // Calculate total likes in the project
+    const totalLikes = Array.from(this.postLikes.values()).length;
+
+    // Calculate total comments in the project
+    const totalComments = Array.from(this.postComments.values()).length + 
+                         Array.from(this.newsComments.values()).length;
 
     return {
       totalPosts,
