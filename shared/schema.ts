@@ -164,6 +164,20 @@ export const userSubmissions = pgTable("user_submissions", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Notifications
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text("type").notNull(), // 'like', 'comment', 'admin_submission', 'system'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  relatedId: integer("related_id"), // ID поста/комментария/заявки
+  relatedType: text("related_type"), // 'post', 'comment', 'submission'
+  fromUserId: integer("from_user_id").references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
 // Relations
 export const newsArticleRelations = relations(newsArticles, ({ many }) => ({
   comments: many(newsComments),
@@ -231,7 +245,9 @@ export const userRelations = relations(users, ({ many }) => ({
   postLikes: many(postLikes),
   newsLikes: many(newsLikes),
   submissions: many(userSubmissions),
-  reviewedSubmissions: many(userSubmissions) // As a reviewer
+  reviewedSubmissions: many(userSubmissions), // As a reviewer
+  notifications: many(notifications),
+  sentNotifications: many(notifications, { relationName: "sentNotifications" })
 }));
 
 export const userSubmissionRelations = relations(userSubmissions, ({ one }) => ({
@@ -242,6 +258,18 @@ export const userSubmissionRelations = relations(userSubmissions, ({ one }) => (
   reviewer: one(users, {
     fields: [userSubmissions.reviewedBy],
     references: [users.id]
+  })
+}));
+
+export const notificationRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id]
+  }),
+  fromUser: one(users, {
+    fields: [notifications.fromUserId],
+    references: [users.id],
+    relationName: "sentNotifications"
   })
 }));
 
@@ -339,6 +367,11 @@ export const insertUserSubmissionSchema = createInsertSchema(userSubmissions).om
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).nullable().optional()
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
@@ -361,6 +394,8 @@ export type InsertNewsLike = z.infer<typeof insertNewsLikeSchema>;
 export type NewsLike = typeof newsLikes.$inferSelect;
 export type InsertUserSubmission = z.infer<typeof insertUserSubmissionSchema>;
 export type UserSubmission = typeof userSubmissions.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
 
 // Public user type without sensitive information
 export const publicUserSchema = createSelectSchema(users).omit({
