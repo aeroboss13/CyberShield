@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Paperclip, Hash, UserPlus, LogIn } from "lucide-react";
+import { Paperclip, UserPlus, LogIn } from "lucide-react";
 import PostCard from "@/components/PostCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -12,6 +12,7 @@ import type { PublicUser } from "@shared/schema";
 
 export default function SocialFeed() {
   const [newPostContent, setNewPostContent] = useState("");
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const { t } = useLanguage();
 
   // Check if user is authenticated
@@ -34,6 +35,7 @@ export default function SocialFeed() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setNewPostContent("");
+      setAttachedFiles([]);
     },
   });
 
@@ -41,8 +43,8 @@ export default function SocialFeed() {
     e.preventDefault();
     if (!newPostContent.trim()) return;
 
-    // Extract hashtags from content
-    const tags = Array.from(newPostContent.matchAll(/#(\w+)/g)).map(match => match[1]);
+    // Extract hashtags from content (support Cyrillic characters)
+    const tags = Array.from(newPostContent.matchAll(/#([\w\u0400-\u04FF]+)/g)).map(match => match[1]);
 
     createPostMutation.mutate({
       content: newPostContent,
@@ -94,33 +96,50 @@ export default function SocialFeed() {
                     onChange={(e) => setNewPostContent(e.target.value)}
                     className="cyber-bg-surface-light cyber-text placeholder-gray-400 border cyber-border resize-none min-h-24 focus:ring-cyber-blue focus:border-cyber-blue"
                   />
+                  {/* Show attached files */}
+                  {attachedFiles.length > 0 && (
+                    <div className="mt-3 p-2 bg-cyber-surface-light rounded-lg border cyber-border">
+                      <p className="text-xs cyber-text-muted mb-2">Прикрепленные файлы:</p>
+                      <div className="space-y-1">
+                        {attachedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between text-xs cyber-text">
+                            <span>{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                            <button 
+                              type="button"
+                              onClick={() => setAttachedFiles(files => files.filter((_, i) => i !== index))}
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between items-center mt-4">
-                    <div className="flex space-x-4 cyber-text-muted">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="p-1 h-8 w-8"
-                        onClick={() => {
-                          alert('Функция прикрепления файлов будет добавлена в следующих версиях');
-                        }}
-                      >
-                        <Paperclip className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="p-1 h-8 w-8"
-                        onClick={() => {
-                          const hashtag = prompt('Добавить хештег:');
-                          if (hashtag) {
-                            const tag = hashtag.replace('#', '');
-                            setNewPostContent(prev => prev + ` #${tag}`);
+                    <div className="flex space-x-2">
+                      <input
+                        type="file"
+                        id="file-upload"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files) {
+                            const newFiles = Array.from(e.target.files);
+                            setAttachedFiles(prev => [...prev, ...newFiles]);
                           }
                         }}
+                        accept="image/*,.pdf,.doc,.docx,.txt"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-8 w-8"
+                        onClick={() => document.getElementById('file-upload')?.click()}
                       >
-                        <Hash className="w-4 h-4" />
+                        <Paperclip className="w-4 h-4" />
                       </Button>
                     </div>
                     <Button

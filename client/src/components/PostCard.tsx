@@ -70,6 +70,26 @@ export default function PostCard({ post }: PostCardProps) {
     }
   };
 
+  // Function to render post content with highlighted hashtags
+  const renderPostContent = (content: string) => {
+    const parts = content.split(/(#[\w\u0400-\u04FF]+)/g);
+    
+    return parts.map((part, index) => {
+      if (part.startsWith('#')) {
+        const hashtag = part.substring(1);
+        return (
+          <span 
+            key={index} 
+            className={`inline-block px-2 py-1 text-xs font-medium rounded-full mr-1 ${getSeverityColor(hashtag)}`}
+          >
+            #{hashtag}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   const getAvatarColor = (username: string) => {
     const colors = ['cyber-bg-red', 'cyber-bg-blue', 'cyber-bg-green'];
     const index = username.length % colors.length;
@@ -91,7 +111,9 @@ export default function PostCard({ post }: PostCardProps) {
               <span className="cyber-text-dim text-sm">• {formatTimestamp(post.createdAt)}</span>
             </div>
             
-            <p className="cyber-text mb-4 whitespace-pre-wrap">{post.content}</p>
+            <div className="cyber-text mb-4 whitespace-pre-wrap">
+              {renderPostContent(post.content)}
+            </div>
             
             {post.tags && post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
