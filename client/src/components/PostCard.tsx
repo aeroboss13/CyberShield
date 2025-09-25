@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Heart, Share2 } from "lucide-react";
+import { MessageCircle, Heart } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "../contexts/LanguageContext";
 import type { PostWithUser } from "@/lib/types";
@@ -187,14 +187,6 @@ export default function PostCard({ post }: PostCardProps) {
                 <span>{post.likes}</span>
               </Button>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center space-x-2 hover:text-cyber-blue transition-colors p-0 h-auto"
-              >
-                <Share2 className="w-5 h-5" />
-                <span>{post.shares}</span>
-              </Button>
             </div>
             
             {/* Comments Section */}
