@@ -922,9 +922,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public endpoint - returns only approved submissions  
   app.get("/api/submissions", async (req, res) => {
     try {
-      const submissions = await storage.getAllSubmissions();
+      const submissions = await storage.getAllSubmissions(); // Only approved submissions
       res.json(submissions);
     } catch (error) {
       console.error('Get submissions error:', error);
@@ -932,6 +933,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's own submissions - shows all statuses for the user
   app.get("/api/users/:id/submissions", async (req, res) => {
     try {
       const userId = parseInt(req.params.id);

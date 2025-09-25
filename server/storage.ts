@@ -633,8 +633,10 @@ export class MemStorage implements IStorage {
     });
   }
 
+  // Get only approved submissions for public access
   async getAllSubmissions(): Promise<(UserSubmission & { user: User })[]> {
     const submissions = Array.from(this.userSubmissions.values())
+      .filter(submission => submission.status === 'approved') // Only approved submissions
       .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
     
     return submissions.map(submission => {
