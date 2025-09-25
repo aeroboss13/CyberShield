@@ -1,4 +1,4 @@
-import { Search, Shield, Bell, Settings, Activity, Plus, UserCog, LogOut, Menu, X } from "lucide-react";
+import { Search, Shield, Bell, Plus, UserCog, LogOut, Menu, X, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
@@ -152,23 +152,6 @@ export default function Header() {
                   <span className="absolute -top-1 -right-1 w-2 h-2 cyber-bg-red rounded-full"></span>
                 </Button>
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
-                  onClick={() => alert('System activity and live monitoring')}
-                >
-                  <Activity className="w-5 h-5 cyber-text-green" />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
-                  onClick={() => alert('Settings and preferences')}
-                >
-                  <Settings className="w-5 h-5 cyber-text-muted" />
-                </Button>
               </div>
             ) : null}
             
@@ -291,27 +274,15 @@ export default function Header() {
                   }
                 />
 
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border"
-                    onClick={() => alert('Security alerts and notifications')}
-                  >
-                    <Bell className="w-4 h-4 mr-2" />
-                    Alerts
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border"
-                    onClick={() => alert('System activity and live monitoring')}
-                  >
-                    <Activity className="w-4 h-4 mr-2" />
-                    Activity
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border w-full"
+                  onClick={() => alert('Security alerts and notifications')}
+                >
+                  <Bell className="w-4 h-4 mr-2" />
+                  Alerts
+                </Button>
 
                 <div className="grid grid-cols-2 gap-2">
                   {(currentUser as any)?.role === "admin" && (
@@ -334,7 +305,7 @@ export default function Header() {
                       size="sm"
                       className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border w-full"
                     >
-                      <Settings className="w-4 h-4 mr-2" />
+                      <User className="w-4 h-4 mr-2" />
                       Profile
                     </Button>
                   </Link>
