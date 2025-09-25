@@ -141,23 +141,25 @@ export default function SecurityNews() {
   return (
     <div className="space-y-6">
       {/* Header with Stats */}
-      <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-        <div className="flex items-center justify-between mb-4">
+      <div className="cyber-bg-surface rounded-xl p-4 sm:p-6 border cyber-border">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
-              <Globe className="w-8 h-8 cyber-text-green" />
+            <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center space-x-3">
+              <Globe className="w-6 sm:w-8 h-6 sm:h-8 cyber-text-green" />
               <span>Security News</span>
             </h2>
             <p className="cyber-text-muted mt-1">Latest cybersecurity news from trusted sources</p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold cyber-text-green">{news?.length || 0}</div>
-              <div className="text-xs cyber-text-dim">Articles</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold cyber-text-blue">Live</div>
-              <div className="text-xs cyber-text-dim">Updates</div>
+          <div className="flex justify-center sm:justify-end">
+            <div className="flex items-center space-x-6">
+              <div className="text-center">
+                <div className="text-lg sm:text-2xl font-bold cyber-text-green">{news?.length || 0}</div>
+                <div className="text-xs cyber-text-dim">Articles</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg sm:text-2xl font-bold cyber-text-blue">Live</div>
+                <div className="text-xs cyber-text-dim">Updates</div>
+              </div>
             </div>
           </div>
         </div>
@@ -166,14 +168,14 @@ export default function SecurityNews() {
       {/* News Feed */}
       <div className="space-y-4">
         {news?.map((article) => (
-          <div key={article.id} className="news-card rounded-xl p-6">
-            <article className="flex items-start space-x-6">
+          <div key={article.id} className="news-card rounded-xl p-4 sm:p-6">
+            <article className="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
               {article.imageUrl && (
                 <div className="flex-shrink-0">
                   <img
                     src={article.imageUrl}
                     alt={article.title}
-                    className="w-32 h-24 rounded-lg object-cover border cyber-border"
+                    className="w-full sm:w-32 h-48 sm:h-24 rounded-lg object-cover border cyber-border"
                   />
                 </div>
               )}
@@ -198,7 +200,7 @@ export default function SecurityNews() {
                 
                 <p className="text-white mb-4 leading-relaxed line-clamp-3">{article.summary}</p>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                   <div className="flex flex-wrap gap-2">
                     {article.tags.slice(0, 4).map((tag, index) => (
                       <span
@@ -215,29 +217,34 @@ export default function SecurityNews() {
                     )}
                   </div>
                   
-                  <div className="flex items-center space-x-3">
+                  {/* Mobile: Stack buttons vertically, Desktop: Horizontal */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                    <div className="flex space-x-2 sm:space-x-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="cyber-text-muted hover:cyber-text-blue flex-1 sm:flex-none"
+                        onClick={() => handleDiscuss(article)}
+                        data-testid={`button-discuss-${article.id}`}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Discuss</span>
+                        <span className="sm:hidden">💬</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="cyber-text-muted hover:cyber-text-blue flex-1 sm:flex-none"
+                        onClick={() => handleShare(article)}
+                        data-testid={`button-share-${article.id}`}
+                      >
+                        <Share className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Share</span>
+                        <span className="sm:hidden">📤</span>
+                      </Button>
+                    </div>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="cyber-text-muted hover:cyber-text-blue"
-                      onClick={() => handleDiscuss(article)}
-                      data-testid={`button-discuss-${article.id}`}
-                    >
-                      <MessageSquare className="w-4 h-4 mr-1" />
-                      Discuss
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="cyber-text-muted hover:cyber-text-blue"
-                      onClick={() => handleShare(article)}
-                      data-testid={`button-share-${article.id}`}
-                    >
-                      <Share className="w-4 h-4 mr-1" />
-                      Share
-                    </Button>
-                    <Button
-                      className="cyber-button-secondary"
+                      className="cyber-button-secondary w-full sm:w-auto"
                       onClick={() => openArticle(article)}
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />
