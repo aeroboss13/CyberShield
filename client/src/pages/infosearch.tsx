@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Search, Loader2, AlertCircle, Database, User } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Search, Loader2, AlertCircle, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,21 +13,10 @@ interface InfoSearchResult {
   [key: string]: string;
 }
 
-interface InfoSearchProfile {
-  name: string;
-  creation_date: string;
-  balance: number;
-}
-
 export default function InfoSearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<InfoSearchResult[]>([]);
   const [searchType, setSearchType] = useState<"basic" | "extended">("basic");
-
-  // Fetch profile information
-  const { data: profile, isLoading: profileLoading } = useQuery<InfoSearchProfile>({
-    queryKey: ["/api/infosearch/profile"],
-  });
 
   // Basic search mutation
   const basicSearchMutation = useMutation({
@@ -79,46 +68,6 @@ export default function InfoSearchPage() {
             Поиск информации в базах данных
           </p>
         </div>
-
-        {/* Profile Card */}
-        {profile && (
-          <Card className="mb-6 border-primary/20" data-testid="card-profile">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <User className="h-5 w-5 text-primary" />
-                Профиль API
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Приложение</p>
-                  <p className="font-medium" data-testid="text-profile-name">{profile.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Баланс</p>
-                  <p className="font-medium text-green-600 dark:text-green-400" data-testid="text-profile-balance">
-                    {profile.balance.toFixed(2)} ₽
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Создано</p>
-                  <p className="font-medium text-sm" data-testid="text-profile-created">
-                    {new Date(profile.creation_date).toLocaleDateString('ru-RU')}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {profileLoading && (
-          <Card className="mb-6">
-            <CardContent className="py-6 flex items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </CardContent>
-          </Card>
-        )}
 
         {/* Search Card */}
         <Card className="mb-6" data-testid="card-search">
