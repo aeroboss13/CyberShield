@@ -300,7 +300,8 @@ export default function NewsModal({ article, isOpen, onClose, shouldFocusComment
                 if (article.link) {
                   window.open(article.link, '_blank', 'noopener,noreferrer');
                 } else {
-                  window.open(`https://www.google.com/search?q=${encodeURIComponent(article.title + ' ' + article.source)}`, '_blank');
+                  // Navigate to internal search
+                  window.location.href = `/search?q=${encodeURIComponent(article.title + ' ' + article.source)}`;
                 }
               }}
               data-testid="button-read-full-article"
@@ -352,7 +353,7 @@ export default function NewsModal({ article, isOpen, onClose, shouldFocusComment
             
             <Button
               className="cyber-button-primary"
-              onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(article.title + ' ' + article.source)}`, '_blank')}
+              onClick={() => window.location.href = `/search?q=${encodeURIComponent(article.title + ' ' + article.source)}`}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               Search Original

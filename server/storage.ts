@@ -308,12 +308,32 @@ export class MemStorage implements IStorage {
     
     // Filter CVEs based on query and severity
     const filteredCVEs = allCVEs.filter(cve => {
-      const matchesQuery = !query || 
-        cve.cveId.toLowerCase().includes(query.toLowerCase()) ||
-        cve.title.toLowerCase().includes(query.toLowerCase()) ||
-        cve.description.toLowerCase().includes(query.toLowerCase()) ||
-        (cve.vendor && cve.vendor.toLowerCase().includes(query.toLowerCase())) ||
-        (cve.tags && cve.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())));
+      if (!query) {
+        const matchesSeverity = !severity || severity === "All Severities" || cve.severity === severity;
+        return matchesSeverity;
+      }
+      
+      const searchTerm = query.toLowerCase().trim();
+      
+      // Create a function to check if a text contains the search term as a whole word
+      const containsWholeWord = (text: string, term: string): boolean => {
+        if (!text) return false;
+        const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        return regex.test(text);
+      };
+      
+      // Create a function to check if a text contains the search term as a substring (for CVE IDs)
+      const containsSubstring = (text: string, term: string): boolean => {
+        if (!text) return false;
+        return text.toLowerCase().includes(term);
+      };
+      
+      const matchesQuery = 
+        containsSubstring(cve.cveId, searchTerm) || // CVE ID should match as substring
+        containsWholeWord(cve.title, searchTerm) ||
+        containsWholeWord(cve.description, searchTerm) ||
+        (cve.vendor && containsWholeWord(cve.vendor, searchTerm)) ||
+        (cve.tags && cve.tags.some(tag => containsWholeWord(tag, searchTerm)));
       
       const matchesSeverity = !severity || severity === "All Severities" || cve.severity === severity;
       

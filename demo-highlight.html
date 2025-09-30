@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highlight Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <h1 class="text-2xl font-bold mb-6">Demo: Подсветка поиска</h1>
+    
+    <div class="mb-6">
+        <label class="block text-sm font-medium mb-2">Поисковый запрос:</label>
+        <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Введите текст для поиска..."
+            class="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white"
+            value="test"
+        >
+    </div>
+    
+    <div class="space-y-4">
+        <div class="p-4 bg-gray-800 rounded">
+            <h3 class="font-semibold mb-2">Заголовок:</h3>
+            <p id="titleResult">CVE-2001-0975 - UNKNOWN Vulnerability</p>
+        </div>
+        
+        <div class="p-4 bg-gray-800 rounded">
+            <h3 class="font-semibold mb-2">Описание:</h3>
+            <p id="descriptionResult">Buffer overflow vulnerabilities in Oracle Internet Directory Server (LDAP) 2.1.1.x and 3.0.1 allow remote attackers to execute arbitrary code, as demonstrated by the PROTOS LDAPv3 test suite.</p>
+        </div>
+        
+        <div class="p-4 bg-gray-800 rounded">
+            <h3 class="font-semibold mb-2">Теги:</h3>
+            <div class="flex gap-2">
+                <span class="px-2 py-1 bg-blue-600 rounded text-sm">unknown</span>
+                <span class="px-2 py-1 bg-blue-600 rounded text-sm">buffer-overflow</span>
+                <span class="px-2 py-1 bg-blue-600 rounded text-sm">test</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function highlightText(text, query) {
+            if (!query || !text) return text;
+            
+            const cleanQuery = query.trim();
+            if (!cleanQuery) return text;
+            
+            const escapedQuery = cleanQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
+            const parts = text.split(regex);
+            
+            return parts.map((part, index) => {
+                const isMatch = part.toLowerCase() === cleanQuery.toLowerCase();
+                return isMatch ? 
+                    `<mark class="bg-yellow-200 text-yellow-900 px-1 rounded font-medium">${part}</mark>` : 
+                    part;
+            }).join('');
+        }
+        
+        function updateHighlight() {
+            const query = document.getElementById('searchInput').value;
+            
+            // Обновляем заголовок
+            const titleElement = document.getElementById('titleResult');
+            const originalTitle = 'CVE-2001-0975 - UNKNOWN Vulnerability';
+            titleElement.innerHTML = highlightText(originalTitle, query);
+            
+            // Обновляем описание
+            const descElement = document.getElementById('descriptionResult');
+            const originalDesc = 'Buffer overflow vulnerabilities in Oracle Internet Directory Server (LDAP) 2.1.1.x and 3.0.1 allow remote attackers to execute arbitrary code, as demonstrated by the PROTOS LDAPv3 test suite.';
+            descElement.innerHTML = highlightText(originalDesc, query);
+            
+            // Обновляем теги
+            const tagsContainer = document.querySelector('.flex.gap-2');
+            const tags = ['unknown', 'buffer-overflow', 'test'];
+            tagsContainer.innerHTML = tags.map(tag => 
+                `<span class="px-2 py-1 bg-blue-600 rounded text-sm">${highlightText(tag, query)}</span>`
+            ).join('');
+        }
+        
+        document.getElementById('searchInput').addEventListener('input', updateHighlight);
+        updateHighlight(); // Инициализация
+    </script>
+</body>
+</html>
+

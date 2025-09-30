@@ -1,5 +1,4 @@
-import { Search, Shield, Bell, Plus, UserCog, LogOut, Menu, X, User } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Shield, Bell, Plus, UserCog, LogOut, Menu, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +11,6 @@ import LanguageToggle from "./LanguageToggle";
 import { NotificationPopup } from "./NotificationPopup";
 
 export default function Header() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -68,13 +66,6 @@ export default function Header() {
     logoutMutation.mutate();
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Open search results in new window/tab or redirect
-      window.open(`https://www.google.com/search?q=site:nvd.nist.gov+${encodeURIComponent(searchQuery)}+OR+site:attack.mitre.org+${encodeURIComponent(searchQuery)}`, '_blank');
-    }
-  };
 
   return (
     <header className="cyber-bg-surface border-b cyber-border sticky top-0 z-50 backdrop-blur-lg bg-opacity-95">
@@ -94,23 +85,8 @@ export default function Header() {
             </div>
           </div>
           
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-4">
-            <form onSubmit={handleSearch} className="relative group">
-              <Input
-                type="text"
-                placeholder={t('header.search.placeholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="cyber-input w-64 xl:w-80 pl-10 pr-4 h-10 rounded-lg transition-all duration-300 xl:focus:w-96"
-              />
-              <button
-                type="submit"
-                className="absolute left-3 top-2.5 hover:cyber-text-blue transition-colors"
-              >
-                <Search className="w-5 h-5 cyber-text-dim group-focus-within:cyber-text-blue" />
-              </button>
-            </form>
+              {/* Desktop Navigation */}
+              <div className="hidden lg:flex items-center space-x-4">
             
             {/* Theme and Language Toggle Buttons */}
             <div className="flex items-center space-x-2">
@@ -189,21 +165,6 @@ export default function Header() {
             
             {isAuthenticated && (
               <div className="flex items-center space-x-2">
-                {/* Quick search button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="cyber-bg-surface-light hover:cyber-bg-surface border cyber-border rounded-lg p-2"
-                  onClick={() => {
-                    const query = prompt('Search CVE/MITRE:');
-                    if (query) {
-                      window.open(`https://www.google.com/search?q=site:nvd.nist.gov+${encodeURIComponent(query)}+OR+site:attack.mitre.org+${encodeURIComponent(query)}`, '_blank');
-                    }
-                  }}
-                >
-                  <Search className="w-5 h-5 cyber-text-dim" />
-                </Button>
-                
                 {/* Mobile menu button */}
                 <Button
                   variant="ghost"
@@ -239,22 +200,6 @@ export default function Header() {
                 </div>
               </div>
 
-              {/* Mobile Search */}
-              <form onSubmit={handleSearch} className="relative">
-                <Input
-                  type="text"
-                  placeholder={t('header.search.placeholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="cyber-input w-full pl-10 pr-4 h-10 rounded-lg"
-                />
-                <button
-                  type="submit"
-                  className="absolute left-3 top-2.5 hover:cyber-text-blue transition-colors"
-                >
-                  <Search className="w-5 h-5 cyber-text-dim" />
-                </button>
-              </form>
 
               {/* Mobile Actions */}
               <div className="space-y-2">

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Search</title>
+</head>
+<body>
+    <h1>Test Search Page</h1>
+    <p>This is a test page to verify search functionality.</p>
+    <p>Search query: <span id="query"></span></p>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        document.getElementById('query').textContent = query || 'No query provided';
+        
+        // Test API calls
+        if (query) {
+            console.log('Testing CVE search...');
+            fetch(`/api/cves?search=${encodeURIComponent(query)}&page=1&limit=5`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('CVE Results:', data);
+                    document.body.innerHTML += '<h2>CVE Results:</h2><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                })
+                .catch(error => {
+                    console.error('CVE Search Error:', error);
+                    document.body.innerHTML += '<h2>CVE Error:</h2><p>' + error.message + '</p>';
+                });
+                
+            console.log('Testing MITRE search...');
+            fetch(`/api/mitre/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('MITRE Results:', data);
+                    document.body.innerHTML += '<h2>MITRE Results:</h2><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                })
+                .catch(error => {
+                    console.error('MITRE Search Error:', error);
+                    document.body.innerHTML += '<h2>MITRE Error:</h2><p>' + error.message + '</p>';
+                });
+        }
+    </script>
+</body>
+</html>
+

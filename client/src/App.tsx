@@ -10,6 +10,7 @@ import ProfilePage from "@/pages/profile";
 import AdminPage from "@/pages/admin";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
+import SearchPage from "@/pages/search";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/cve-database" component={Dashboard} />
       <Route path="/mitre" component={Dashboard} />
       <Route path="/news" component={Dashboard} />
+      <Route path="/search" component={SearchPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/login" component={LoginPage} />

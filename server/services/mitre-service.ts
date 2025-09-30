@@ -125,6 +125,21 @@ export class MitreService {
   async searchTechniques(query: string): Promise<MitreAttack[]> {
     const data = await this.fetchMitreData();
     
+    const searchTerm = query.toLowerCase().trim();
+    
+    // Create a function to check if a text contains the search term as a whole word
+    const containsWholeWord = (text: string, term: string): boolean => {
+      if (!text) return false;
+      const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      return regex.test(text);
+    };
+    
+    // Create a function to check if a text contains the search term as a substring (for technique IDs)
+    const containsSubstring = (text: string, term: string): boolean => {
+      if (!text) return false;
+      return text.toLowerCase().includes(term);
+    };
+    
     const techniques = data.objects
       .filter(obj => obj.type === 'attack-pattern')
       .filter(technique => {
@@ -133,9 +148,9 @@ export class MitreService {
         const externalRef = technique.external_references?.find(ref => ref.source_name === 'mitre-attack');
         const techniqueId = externalRef?.external_id?.toLowerCase() || '';
         
-        return name.includes(query.toLowerCase()) || 
-               description.includes(query.toLowerCase()) || 
-               techniqueId.includes(query.toLowerCase());
+        return containsWholeWord(name, searchTerm) || 
+               containsWholeWord(description, searchTerm) || 
+               containsSubstring(techniqueId, searchTerm);
       })
       .map((technique, index) => {
         const externalRef = technique.external_references?.find(ref => ref.source_name === 'mitre-attack');

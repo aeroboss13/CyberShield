@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Shield background -->
+  <path d="M16 2L4 8v8c0 8 12 14 12 14s12-6 12-14V8L16 2z" fill="url(#shieldGradient)" stroke="#1e3a8a" stroke-width="1"/>
+  
+  <!-- Lock icon inside shield -->
+  <rect x="12" y="14" width="8" height="6" rx="1" fill="#ffffff" stroke="#1e3a8a" stroke-width="0.5"/>
+  <path d="M14 14V10c0-1.1 0.9-2 2-2s2 0.9 2 2v4" fill="none" stroke="#1e3a8a" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Security checkmark -->
+  <path d="M10 18l3 3 6-6" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
