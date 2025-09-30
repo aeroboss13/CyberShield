@@ -122,9 +122,20 @@ Preferred communication style: Simple, everyday language.
 - Tag generation for categorization
 - Fallback content handling for offline scenarios
 
+### InfoSearch Data Lookup ("Пробив")
+- **API Integration**: infosearch54321.xyz for database lookups
+- **Authentication**: Secure API token storage via environment variables (INFOSEARCH_API_TOKEN)
+- **Search Types**: Basic search and extended multi-level search
+- **Profile Management**: API profile info with balance tracking
+- **Security**: Auth-protected endpoints, proper error handling for 401 responses
+- **UI**: Dedicated search page at `/infosearch` with results display
+- **Access**: Quick access button in sidebar for authenticated users
+
 ## Changelog
 
 Recent Changes:
+- September 30, 2025: Added InfoSearch API integration for data lookup functionality
+- September 30, 2025: Created deployment instructions (DEPLOYMENT.md)
 - July 03, 2025: Implemented real-time security news aggregation with RSS feeds
 - July 03, 2025: Added interactive MITRE ATT&CK technique modals
 - July 03, 2025: Integrated CVE exploit database with real code samples

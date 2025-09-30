@@ -14,6 +14,7 @@ import {
   Award,
   Plus,
   UserX,
+  Search,
 } from "lucide-react";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -255,6 +256,25 @@ export default function Sidebar() {
           </div>
         )}
       </div>
+
+      {/* InfoSearch Quick Access */}
+      {isAuthenticated && (
+        <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold cyber-text text-sm">Пробив данных</h3>
+            <Search className="w-4 h-4 cyber-text-blue" />
+          </div>
+          <p className="cyber-text-muted text-xs mb-4">
+            Поиск информации в базах данных
+          </p>
+          <Link href="/infosearch">
+            <Button className="w-full cyber-button-primary" data-testid="button-infosearch">
+              <Search className="mr-2 h-4 w-4" />
+              Открыть пробив
+            </Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

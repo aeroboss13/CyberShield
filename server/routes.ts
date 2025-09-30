@@ -14,6 +14,7 @@ import { NewsService } from "./services/news-service";
 import { ThreatOverviewService } from "./services/threat-overview-service";
 import { newsRouter } from "./routes/news.js";
 import { ingestionPipeline } from "./services/ingestion-pipeline";
+import { infoSearchService } from "./services/infosearch-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize services
@@ -1035,6 +1036,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Reject submission error:', error);
       res.status(500).json({ error: "Failed to reject submission" });
+    }
+  });
+
+  // InfoSearch API endpoints
+  app.get("/api/infosearch/profile", requireAuth, async (req, res) => {
+    try {
+      const profile = await infoSearchService.getProfile();
+      res.json(profile);
+    } catch (error: any) {
+      console.error('InfoSearch profile error:', error);
+      // Forward 401 errors from upstream
+      if (error.message && error.message.includes('Unauthorized')) {
+        return res.status(401).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message || "Failed to fetch profile" });
+    }
+  });
+
+  app.get("/api/infosearch/search", requireAuth, async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query) {
+        return res.status(400).json({ error: "Query parameter 'q' is required" });
+      }
+
+      const results = await infoSearchService.search(query);
+      res.json({ results });
+    } catch (error: any) {
+      console.error('InfoSearch search error:', error);
+      // Forward 401 errors from upstream
+      if (error.message && error.message.includes('Unauthorized')) {
+        return res.status(401).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message || "Failed to perform search" });
+    }
+  });
+
+  app.get("/api/infosearch/extended-search", requireAuth, async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query) {
+        return res.status(400).json({ error: "Query parameter 'q' is required" });
+      }
+
+      const results = await infoSearchService.extendedSearch(query);
+      res.json({ results });
+    } catch (error: any) {
+      console.error('InfoSearch extended search error:', error);
+      // Forward 401 errors from upstream
+      if (error.message && error.message.includes('Unauthorized')) {
+        return res.status(401).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message || "Failed to perform extended search" });
     }
   });
 
