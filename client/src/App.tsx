@@ -11,6 +11,7 @@ import AdminPage from "@/pages/admin";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
 import SearchPage from "@/pages/search";
+import InfoSearchPage from "@/pages/infosearch";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/mitre" component={Dashboard} />
       <Route path="/news" component={Dashboard} />
       <Route path="/search" component={SearchPage} />
+      <Route path="/infosearch" component={InfoSearchPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/login" component={LoginPage} />
