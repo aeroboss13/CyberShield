@@ -4,11 +4,14 @@
  */
 
 const BASE_URL = 'https://infosearch54321.xyz';
-const API_TOKEN = process.env.INFOSEARCH_API_TOKEN;
 
-if (!API_TOKEN) {
-  console.warn('⚠️ INFOSEARCH_API_TOKEN not configured');
-}
+const getApiToken = () => {
+  const token = process.env.INFOSEARCH_API_TOKEN;
+  if (!token) {
+    console.warn('⚠️ INFOSEARCH_API_TOKEN not configured');
+  }
+  return token;
+};
 
 export interface InfoSearchProfile {
   name: string;
@@ -35,6 +38,7 @@ export class InfoSearchService {
    * Get API profile information
    */
   async getProfile(): Promise<InfoSearchProfile> {
+    const API_TOKEN = getApiToken();
     if (!API_TOKEN) {
       throw new Error('API token not configured');
     }
@@ -61,6 +65,7 @@ export class InfoSearchService {
    * Perform basic search
    */
   async search(query: string): Promise<InfoSearchResult[]> {
+    const API_TOKEN = getApiToken();
     if (!API_TOKEN) {
       throw new Error('API token not configured');
     }
@@ -101,6 +106,7 @@ export class InfoSearchService {
    * Perform extended (multi-level) search
    */
   async extendedSearch(query: string): Promise<InfoSearchResult[]> {
+    const API_TOKEN = getApiToken();
     if (!API_TOKEN) {
       throw new Error('API token not configured');
     }

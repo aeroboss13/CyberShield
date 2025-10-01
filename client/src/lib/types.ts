@@ -85,4 +85,4 @@ export interface FullContentResponse {
   error?: string;
 }
 
-export type TabType = 'feed' | 'mitre' | 'cve' | 'user-reports' | 'news';
+export type TabType = 'feed' | 'mitre' | 'cve' | 'user-reports' | 'news' | 'infosearch';

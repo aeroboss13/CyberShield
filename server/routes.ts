@@ -24,6 +24,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const newsService = NewsService.getInstance();
   const threatOverviewService = ThreatOverviewService.getInstance(cveService, newsService);
 
+  // Health check endpoint
+  app.get("/api/health", async (req, res) => {
+    try {
+      const healthStatus = {
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        version: "1.0.0",
+        services: {
+          database: "connected", // Add actual DB check if needed
+          storage: "available"
+        }
+      };
+      
+      res.status(200).json(healthStatus);
+    } catch (error) {
+      res.status(503).json({
+        status: "unhealthy",
+        timestamp: new Date().toISOString(),
+        error: "Health check failed"
+      });
+    }
+  });
+
   // Authentication endpoints
   app.post("/api/auth/register", async (req, res) => {
     try {

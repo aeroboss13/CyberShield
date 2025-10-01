@@ -7,6 +7,7 @@ import MitreMatrix from "@/components/MitreMatrix";
 import CVEDatabase from "@/components/CVEDatabase";
 import UserReports from "@/components/UserReports";
 import SecurityNews from "@/components/SecurityNews";
+import InfoSearchPage from "@/pages/infosearch";
 import type { TabType } from "@/lib/types";
 
 export default function Dashboard() {
@@ -28,6 +29,7 @@ export default function Dashboard() {
     { id: 'cve' as const, label: 'CVE Database', shortLabel: 'CVE' },
     { id: 'user-reports' as const, label: 'User Reports', shortLabel: 'Reports' },
     { id: 'news' as const, label: 'Security News', shortLabel: 'News' },
+    { id: 'infosearch' as const, label: 'OSINT', shortLabel: 'OSINT' },
   ];
 
   const renderTabContent = () => {
@@ -42,6 +44,8 @@ export default function Dashboard() {
         return <UserReports />;
       case 'news':
         return <SecurityNews />;
+      case 'infosearch':
+        return <InfoSearchPage />;
       default:
         return <SocialFeed />;
     }

@@ -4,7 +4,6 @@ import { Search, Loader2, AlertCircle, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
@@ -16,24 +15,11 @@ interface InfoSearchResult {
 export default function InfoSearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<InfoSearchResult[]>([]);
-  const [searchType, setSearchType] = useState<"basic" | "extended">("basic");
 
-  // Basic search mutation
-  const basicSearchMutation = useMutation({
+  // Search mutation
+  const searchMutation = useMutation({
     mutationFn: async (query: string) => {
       const response = await apiRequest("GET", `/api/infosearch/search?q=${encodeURIComponent(query)}`);
-      const data = await response.json();
-      return data;
-    },
-    onSuccess: (data: { results: InfoSearchResult[] }) => {
-      setSearchResults(data.results || []);
-    },
-  });
-
-  // Extended search mutation
-  const extendedSearchMutation = useMutation({
-    mutationFn: async (query: string) => {
-      const response = await apiRequest("GET", `/api/infosearch/extended-search?q=${encodeURIComponent(query)}`);
       const data = await response.json();
       return data;
     },
@@ -46,15 +32,11 @@ export default function InfoSearchPage() {
     if (!searchQuery.trim()) return;
 
     setSearchResults([]);
-    if (searchType === "basic") {
-      basicSearchMutation.mutate(searchQuery);
-    } else {
-      extendedSearchMutation.mutate(searchQuery);
-    }
+    searchMutation.mutate(searchQuery);
   };
 
-  const isSearching = basicSearchMutation.isPending || extendedSearchMutation.isPending;
-  const searchError = basicSearchMutation.error || extendedSearchMutation.error;
+  const isSearching = searchMutation.isPending;
+  const searchError = searchMutation.error;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 dark:from-background dark:to-secondary/10">
@@ -64,9 +46,58 @@ export default function InfoSearchPage() {
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent" data-testid="text-page-title">
             Пробив данных
           </h1>
-          <p className="text-muted-foreground" data-testid="text-page-description">
+          <p className="text-muted-foreground mb-6" data-testid="text-page-description">
             Поиск информации в базах данных
           </p>
+          
+          {/* Description */}
+          <div className="bg-card/50 border rounded-lg p-6 mb-6">
+            <div className="space-y-4 text-sm">
+              <div>
+                <span className="font-semibold text-primary">👤 Поиск по имени/ФИО</span>
+                <div className="ml-4 mt-2 space-y-1 text-muted-foreground">
+                  <div>├ Иван 2000</div>
+                  <div>├ Иван Иванов 01.01</div>
+                  <div>├ Иванов Иван Иванович 01.01.2000</div>
+                  <div>└ Иванов Иван Иванович Москва 2000</div>
+                </div>
+              </div>
+              
+              <div>
+                <span className="font-semibold text-primary">🚗 Поиск по авто</span>
+                <div className="ml-4 mt-2 space-y-1 text-muted-foreground">
+                  <div>├ А001АА77 - поиск по Гос номеру</div>
+                  <div>└ XTA212130T1186583 - поиск по VIN</div>
+                </div>
+              </div>
+              
+              <div>
+                <span className="font-semibold text-primary">🌐 Поиск по контактным данным</span>
+                <div className="ml-4 mt-2 space-y-1 text-muted-foreground">
+                  <div>├ 79221110500 - поиск по Телефону</div>
+                  <div>├ ivanov@mail.ru - поиск по Почте</div>
+                  <div>├ @username - поиск по Телеграм</div>
+                  <div>└ Igrok777 - поиск по Логину</div>
+                </div>
+              </div>
+              
+              <div>
+                <span className="font-semibold text-primary">🏛 Поиск по документам</span>
+                <div className="ml-4 mt-2 space-y-1 text-muted-foreground">
+                  <div>├ 4616233456 / 4616 233456 - поиск по Паспорту</div>
+                  <div>├ 7707083893 - поиск по ИНН (ЮЛ / ФЛ)</div>
+                  <div>├ 00461487830 - поиск по СНИЛС</div>
+                  <div>└ 1027739099772 - поиск по ОГРН</div>
+                </div>
+              </div>
+              
+              <div className="pt-2 border-t">
+                <p className="text-muted-foreground">
+                  <strong>Для запроса просто введите данные, которые у вас есть на человека в формате представленном выше и отправьте их на проверку</strong>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search Card */}
@@ -77,24 +108,13 @@ export default function InfoSearchPage() {
               Поиск
             </CardTitle>
             <CardDescription>
-              Введите запрос для поиска информации
+              Введите данные для поиска в указанном выше формате
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={searchType} onValueChange={(v) => setSearchType(v as "basic" | "extended")} className="mb-4">
-              <TabsList className="grid w-full max-w-md grid-cols-2">
-                <TabsTrigger value="basic" data-testid="tab-basic-search">
-                  Обычный поиск
-                </TabsTrigger>
-                <TabsTrigger value="extended" data-testid="tab-extended-search">
-                  Расширенный поиск
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-
             <div className="flex gap-2">
               <Input
-                placeholder="Например: Иванов Иван, телефон, email..."
+                placeholder="Введите данные для поиска..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -180,7 +200,7 @@ export default function InfoSearchPage() {
         )}
 
         {/* No results message */}
-        {!isSearching && searchResults.length === 0 && (basicSearchMutation.isSuccess || extendedSearchMutation.isSuccess) && (
+        {!isSearching && searchResults.length === 0 && searchMutation.isSuccess && (
           <Card data-testid="card-no-results">
             <CardContent className="py-8 text-center">
               <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
