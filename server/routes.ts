@@ -15,6 +15,7 @@ import { ThreatOverviewService } from "./services/threat-overview-service";
 import { newsRouter } from "./routes/news.js";
 import { ingestionPipeline } from "./services/ingestion-pipeline";
 import { infoSearchService } from "./services/infosearch-service";
+import { monitoringService } from "./services/monitoring-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize services
@@ -71,6 +72,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add default role since it's excluded from registerSchema for security
       const userData = { ...userDataWithoutPassword, role: 'user' as const };
       const newUser = await storage.createUser(userData, passwordHash);
+      
+      // Send email notification about new user
+      try {
+        await monitoringService.sendNewUserNotification(newUser.id, newUser.username, newUser.email);
+      } catch (notificationError) {
+        console.error('Failed to send new user notification:', notificationError);
+        // Don't fail registration if notification fails
+      }
       
       // Create session and set cookie
       const sessionToken = createSession(newUser.id);
@@ -156,7 +165,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Posts endpoints
   app.get("/api/posts", async (req, res) => {
     try {
-      const posts = await storage.getAllPosts();
+      const { type } = req.query;
+      const posts = await storage.getAllPosts(type as string);
       // Sanitize user data to prevent email exposure
       const safePosts = posts.map(post => ({
         ...post,
@@ -165,6 +175,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(safePosts);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch posts" });
+    }
+  });
+
+  // Get posts for specific user
+  app.get("/api/users/:id/posts", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { type } = req.query;
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      const posts = await storage.getUserPosts(userId, type as string);
+      // Sanitize user data to prevent email exposure
+      const safePosts = posts.map(post => ({
+        ...post,
+        user: toPublicUser((post as any).user)
+      }));
+      res.json(safePosts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user posts" });
     }
   });
 
@@ -185,6 +217,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Failed to create post" });
       }
+    }
+  });
+
+  // Admin endpoint to delete posts
+  app.delete("/api/admin/posts/:id", requireAuth, loadCurrentUser(storage), requireAdmin, async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ error: "Invalid post ID" });
+      }
+
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await storage.deletePost(postId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Delete post error:', error);
+      res.status(500).json({ error: "Failed to delete post" });
     }
   });
 
@@ -404,6 +457,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(toPublicUser(user));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch current user" });
+    }
+  });
+
+  // Get user by ID (public endpoint)
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json(toPublicUser(user));
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+      res.status(500).json({ error: "Failed to fetch user" });
     }
   });
 
@@ -765,8 +838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const userStats = await storage.getUserStats(userId);
-      // Sanitize user data to prevent email exposure
-      res.json(toPublicUser(userStats));
+      res.json(userStats);
     } catch (error) {
       console.error('Get user stats error:', error);
       res.status(500).json({ error: "Failed to fetch user statistics" });
@@ -1064,6 +1136,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to delete submissions
+  app.delete("/api/admin/submissions/:id", requireAuth, loadCurrentUser(storage), requireAdmin, async (req, res) => {
+    try {
+      const submissionId = parseInt(req.params.id);
+      if (isNaN(submissionId)) {
+        return res.status(400).json({ error: "Invalid submission ID" });
+      }
+
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await storage.deleteSubmission(submissionId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Delete submission error:', error);
+      res.status(500).json({ error: "Failed to delete submission" });
+    }
+  });
+
   // InfoSearch API endpoints
   app.get("/api/infosearch/profile", requireAuth, async (req, res) => {
     try {
@@ -1116,6 +1209,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message || "Failed to perform extended search" });
     }
   });
+
+  // System monitoring endpoints
+  app.get("/api/system/metrics", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const metrics = await monitoringService.getCurrentSystemMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error('Get system metrics error:', error);
+      res.status(500).json({ error: "Failed to fetch system metrics" });
+    }
+  });
+
+  app.post("/api/system/alert", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { type, severity, message } = req.body;
+      
+      if (!type || !severity || !message) {
+        return res.status(400).json({ error: "Type, severity, and message are required" });
+      }
+
+      await monitoringService.sendAlert(type, severity, message);
+      res.json({ message: "Alert sent successfully" });
+    } catch (error) {
+      console.error('Send alert error:', error);
+      res.status(500).json({ error: "Failed to send alert" });
+    }
+  });
+
+  // Start monitoring service
+  try {
+    await monitoringService.startMonitoring(60000); // Check every minute
+    console.log('✅ Platform monitoring service started');
+  } catch (error) {
+    console.error('❌ Failed to start monitoring service:', error);
+  }
 
   const httpServer = createServer(app);
   return httpServer;

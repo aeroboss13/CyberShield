@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { 
   AlertTriangle, 
@@ -10,30 +8,26 @@ import {
   Shield, 
   TrendingUp,
   Users,
-  Activity,
-  Award,
   Plus,
-  UserX,
   Search,
 } from "lucide-react";
-import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { UserAvatar } from "@/components/UserAvatar";
-import { PublicUser, ThreatOverview } from "@shared/schema";
+import { ThreatOverview } from "@shared/schema";
+import type { PublicUser } from "@shared/schema";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 
 
 export default function Sidebar() {
   const { t } = useLanguage();
-  
+
+  // Check if user is authenticated
   const { data: currentUser, error } = useQuery<PublicUser>({
     queryKey: ["/api/users/current"],
     retry: false,
     throwOnError: false
   });
-
-  // Check if user is authenticated
   const isAuthenticated = !error && currentUser;
-
 
   // Get threat overview data for Global Threat Level
   const { data: threatOverview, isLoading: threatLoading } = useQuery<ThreatOverview>({
@@ -45,97 +39,6 @@ export default function Sidebar() {
 
   return (
     <div className="space-y-6">
-      {/* User Profile Card */}
-      <div className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-        {isAuthenticated ? (
-          <>
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="relative">
-                <UserAvatar 
-                  src={currentUser.avatar} 
-                  name={currentUser.name} 
-                  size="xl"
-                  data-testid="avatar-sidebar"
-                />
-                <div className="absolute -bottom-1 -right-1">
-                  <Badge className="cyber-bg-green cyber-text text-xs px-2 py-1">
-                    <Activity className="w-3 h-3 mr-1" />
-{t('sidebar.online')}
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold cyber-text text-lg">{currentUser.name}</h3>
-                <p className="cyber-text-muted text-sm">{currentUser.role || 'Security Professional'}</p>
-                <div className="flex items-center space-x-1 mt-1">
-                  <Award className="w-3 h-3 cyber-text-amber" />
-                  <span className="cyber-text-amber text-xs font-medium">
-                    {currentUser.role === 'admin' ? 'Administrator' : 'Member'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="cyber-text-muted">Reputation Progress</span>
-                  <span className="cyber-text-blue font-semibold">
-                    {currentUser.reputation ? `${(currentUser.reputation / 1000).toFixed(1)}k` : '0'} / 15k
-                  </span>
-                </div>
-                <Progress 
-                  value={currentUser.reputation ? Math.min(100, (currentUser.reputation / 15000) * 100) : 0} 
-                  className="h-2 cyber-bg-dark" 
-                />
-              </div>
-              
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
-                  <div className="cyber-text-green font-bold text-xl">
-                    {currentUser.postCount || 0}
-                  </div>
-                  <div className="cyber-text-dim text-xs">{t('sidebar.posts')}</div>
-                </div>
-                <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
-                  <div className="cyber-text-blue font-bold text-xl">
-                    {currentUser.likesReceived || 0}
-                  </div>
-                  <div className="cyber-text-dim text-xs">{t('sidebar.likes')}</div>
-                </div>
-                <div className="cyber-bg-surface-light rounded-lg p-3 border cyber-border">
-                  <div className="cyber-text-amber font-bold text-xl">
-                    {currentUser.cveSubmissions || 0}
-                  </div>
-                  <div className="cyber-text-dim text-xs">{t('cves')}</div>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 cyber-bg-surface-light rounded-xl flex items-center justify-center mx-auto">
-              <UserX className="w-8 h-8 cyber-text-muted" />
-            </div>
-            <div>
-              <h3 className="font-bold cyber-text text-lg">{t('not.signed.in')}</h3>
-              <p className="cyber-text-muted text-sm">{t('sign.in.to.access')}</p>
-            </div>
-            <div className="space-y-2">
-              <Link href="/login">
-                <Button className="w-full cyber-button-primary">
-                  {t('sign.in')}
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button variant="outline" className="w-full cyber-button-secondary">
-                  {t('create.account')}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
 
 
 

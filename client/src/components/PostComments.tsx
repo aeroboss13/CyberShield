@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { UserAvatar } from "@/components/UserAvatar";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PublicUser } from "@shared/schema";
+import { Link } from "wouter";
 
 // Define PostComment type based on our schema
 type PostComment = {
@@ -175,21 +176,29 @@ export default function PostComments({ postId, shouldFocus = false }: PostCommen
             
             {comments.map((comment) => (
               <div key={comment.id} className="flex space-x-3" data-testid={`comment-${comment.id}`}>
-                <UserAvatar 
-                  src={comment.user.avatar} 
-                  name={comment.user.name} 
-                  size="sm"
-                  data-testid={`avatar-post-comment-${comment.id}`}
-                />
+                <Link href={`/profile/${comment.user.id}`}>
+                  <div className="cursor-pointer hover:opacity-80 transition-opacity">
+                    <UserAvatar 
+                      src={comment.user.avatar} 
+                      name={comment.user.name} 
+                      size="sm"
+                      data-testid={`avatar-post-comment-${comment.id}`}
+                    />
+                  </div>
+                </Link>
                 
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center space-x-2">
-                    <span className="font-medium cyber-text text-sm">
-                      {comment.user.name}
-                    </span>
-                    <span className="cyber-text-muted text-xs">
-                      @{comment.user.username}
-                    </span>
+                    <Link href={`/profile/${comment.user.id}`}>
+                      <span className="font-medium cyber-text text-sm hover:text-cyber-blue cursor-pointer transition-colors">
+                        {comment.user.name}
+                      </span>
+                    </Link>
+                    <Link href={`/profile/${comment.user.id}`}>
+                      <span className="cyber-text-muted text-xs hover:text-cyber-blue cursor-pointer transition-colors">
+                        @{comment.user.username}
+                      </span>
+                    </Link>
                     <span className="cyber-text-dim text-xs">
                       • {formatTimestamp(comment.createdAt)}
                     </span>

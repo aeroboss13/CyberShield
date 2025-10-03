@@ -24,7 +24,7 @@ export default function SocialFeed() {
   const isAuthenticated = !error && currentUser;
 
   const { data: posts, isLoading } = useQuery<PostWithUser[]>({
-    queryKey: ["/api/posts"],
+    queryKey: ["/api/posts?type=public"],
   });
 
   const createPostMutation = useMutation({
@@ -33,7 +33,7 @@ export default function SocialFeed() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts?type=public"] });
       setNewPostContent("");
       setAttachedFiles([]);
     },
@@ -61,7 +61,8 @@ export default function SocialFeed() {
 
     createPostMutation.mutate({
       content: newPostContent,
-      userId: 1, // Current user ID
+      userId: currentUser?.id || 1, // Current user ID
+      type: "public", // Social feed posts are public
       tags,
       attachments,
     });

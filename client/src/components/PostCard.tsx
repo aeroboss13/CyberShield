@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Heart } from "lucide-react";
+import { MessageCircle, Heart, Trash2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "../contexts/LanguageContext";
 import { UserAvatar } from "@/components/UserAvatar";
 import type { PostWithUser } from "@/lib/types";
 import type { PublicUser } from "@shared/schema";
 import PostComments from "./PostComments";
+import { Link } from "wouter";
 
 interface PostCardProps {
   post: PostWithUser;
@@ -45,6 +46,21 @@ export default function PostCard({ post }: PostCardProps) {
     },
     onError: (error) => {
       console.error('Like failed:', error);
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", `/api/admin/posts/${post.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to delete post");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    },
+    onError: (error) => {
+      console.error('Delete failed:', error);
     }
   });
 
@@ -110,17 +126,25 @@ export default function PostCard({ post }: PostCardProps) {
     <Card className="social-card cyber-bg-surface border cyber-border">
       <CardContent className="pt-6">
         <div className="flex space-x-4">
-          <UserAvatar 
-            src={post.user.avatar} 
-            name={post.user.name} 
-            size="lg"
-            data-testid={`avatar-post-${post.id}`}
-          />
+          <Link href={`/profile/${post.user.id}`}>
+            <div className="cursor-pointer hover:opacity-80 transition-opacity">
+              <UserAvatar 
+                src={post.user.avatar} 
+                name={post.user.name} 
+                size="lg"
+                data-testid={`avatar-post-${post.id}`}
+              />
+            </div>
+          </Link>
           
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
-              <span className="font-semibold cyber-text">{post.user.name}</span>
-              <span className="cyber-text-muted text-sm">@{post.user.username}</span>
+              <Link href={`/profile/${post.user.id}`}>
+                <span className="font-semibold cyber-text hover:text-cyber-blue cursor-pointer transition-colors">{post.user.name}</span>
+              </Link>
+              <Link href={`/profile/${post.user.id}`}>
+                <span className="cyber-text-muted text-sm hover:text-cyber-blue cursor-pointer transition-colors">@{post.user.username}</span>
+              </Link>
               <span className="cyber-text-dim text-sm">• {formatTimestamp(post.createdAt)}</span>
             </div>
             
@@ -199,6 +223,25 @@ export default function PostCard({ post }: PostCardProps) {
                 <Heart className="w-5 h-5" />
                 <span>{post.likes}</span>
               </Button>
+              
+              {/* Admin delete button */}
+              {currentUser?.role === 'admin' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this post?')) {
+                      deleteMutation.mutate();
+                    }
+                  }}
+                  disabled={deleteMutation.isPending}
+                  className="flex items-center space-x-2 transition-colors p-0 h-auto hover:text-red-500 cursor-pointer"
+                  data-testid={`button-delete-${post.id}`}
+                  title="Delete post (Admin only)"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
               
             </div>
             

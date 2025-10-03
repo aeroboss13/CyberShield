@@ -24,7 +24,7 @@ function Router() {
       <Route path="/news" component={Dashboard} />
       <Route path="/search" component={SearchPage} />
       <Route path="/infosearch" component={InfoSearchPage} />
-      <Route path="/profile" component={ProfilePage} />
+      <Route path="/profile/:userId?" component={ProfilePage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />

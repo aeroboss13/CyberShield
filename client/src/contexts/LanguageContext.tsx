@@ -308,7 +308,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (context === undefined) {
-    throw new Error('useLanguage must be used within LanguageProvider');
+    // Provide fallback values if context is not available
+    return {
+      language: 'en' as const,
+      toggleLanguage: () => {},
+      t: (key: string) => key
+    };
   }
   return context;
 }

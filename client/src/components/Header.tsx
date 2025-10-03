@@ -9,6 +9,7 @@ import PostModal from "./PostModal";
 import ThemeToggle from "./ThemeToggle";
 import LanguageToggle from "./LanguageToggle";
 import { NotificationPopup } from "./NotificationPopup";
+import UserStats from "./UserStats";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

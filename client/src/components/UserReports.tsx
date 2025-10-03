@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PublicUser } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +31,8 @@ import {
   User,
   Calendar,
   ExternalLink,
-  Eye
+  Eye,
+  Trash2
 } from "lucide-react";
 import CreateReportModal from "@/components/CreateReportModal";
 
@@ -40,6 +42,7 @@ interface UserSubmission {
   title: string;
   description: string;
   severity?: string | null;
+  exploitCode?: string;
   status: 'pending' | 'approved' | 'rejected';
   verified: boolean;
   createdAt: string;
@@ -56,9 +59,20 @@ export default function UserReports() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedSubmission, setSelectedSubmission] = useState<UserSubmission | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
+  // Get current user to check if they're admin
+  const { data: currentUser } = useQuery<PublicUser>({
+    queryKey: ["/api/users/current"],
+    retry: false,
+    throwOnError: false
+  });
+
+  // Use admin endpoint if user is admin, otherwise use public endpoint
+  const apiEndpoint = currentUser?.role === 'admin' ? "/api/admin/submissions" : "/api/submissions";
+  
   const { data: submissions = [], isLoading } = useQuery<UserSubmission[]>({
-    queryKey: ["/api/submissions"]
+    queryKey: [apiEndpoint]
   });
 
   const filteredSubmissions = submissions.filter(submission => {
@@ -136,19 +150,6 @@ export default function UserReports() {
       <Card className="cyber-bg-card border-cyber-blue">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search reports..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="cyber-input pl-10"
-                  data-testid="input-search-reports"
-                />
-              </div>
-            </div>
-            
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[140px] cyber-input" data-testid="select-status-filter">
                 <SelectValue placeholder="Status" />
@@ -171,6 +172,19 @@ export default function UserReports() {
                 <SelectItem value="exploit">Exploit</SelectItem>
               </SelectContent>
             </Select>
+            
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search reports..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="cyber-input pl-10"
+                  data-testid="input-search-reports"
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -334,6 +348,32 @@ export default function UserReports() {
                 </div>
               </div>
 
+              {/* Exploit Code */}
+              {selectedSubmission.type === 'exploit' && selectedSubmission.exploitCode && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3">Exploit Code</h3>
+                  <div className="cyber-bg-surface p-4 rounded-lg border border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-400">Code Preview</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedSubmission.exploitCode || '');
+                        }}
+                        className="text-blue-400 hover:text-blue-300"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        Copy
+                      </Button>
+                    </div>
+                    <pre className="text-green-400 text-sm overflow-x-auto bg-black p-3 rounded border">
+                      <code>{selectedSubmission.exploitCode}</code>
+                    </pre>
+                  </div>
+                </div>
+              )}
+
               {/* Additional Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -354,6 +394,82 @@ export default function UserReports() {
 
               {/* Action Buttons */}
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
+                {currentUser?.role === 'admin' && (
+                  <>
+                    {selectedSubmission?.status === 'pending' && (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/admin/submissions/${selectedSubmission.id}/approve`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                              });
+                              if (response.ok) {
+                                // Refresh submissions data
+                                queryClient.invalidateQueries({ queryKey: [apiEndpoint] });
+                                setIsDetailModalOpen(false);
+                              }
+                            } catch (error) {
+                              console.error('Failed to approve submission:', error);
+                            }
+                          }}
+                          className="cyber-button-primary bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Approve
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/admin/submissions/${selectedSubmission.id}/reject`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                              });
+                              if (response.ok) {
+                                // Refresh submissions data
+                                queryClient.invalidateQueries({ queryKey: [apiEndpoint] });
+                                setIsDetailModalOpen(false);
+                              }
+                            } catch (error) {
+                              console.error('Failed to reject submission:', error);
+                            }
+                          }}
+                          className="cyber-button-ghost bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        if (confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+                          try {
+                            const response = await fetch(`/api/admin/submissions/${selectedSubmission.id}`, {
+                              method: 'DELETE',
+                              headers: { 'Content-Type': 'application/json' }
+                            });
+                            if (response.ok) {
+                              // Refresh submissions data
+                              queryClient.invalidateQueries({ queryKey: [apiEndpoint] });
+                              setIsDetailModalOpen(false);
+                            }
+                          } catch (error) {
+                            console.error('Failed to delete submission:', error);
+                          }
+                        }
+                      }}
+                      className="cyber-button-ghost bg-gray-600 hover:bg-gray-700 text-white"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => setIsDetailModalOpen(false)}

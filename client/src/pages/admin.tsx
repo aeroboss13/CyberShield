@@ -319,11 +319,10 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="pending" className="w-full" data-testid="tabs-admin">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pending" data-testid="tab-pending">Pending ({pendingSubmissions.length})</TabsTrigger>
           <TabsTrigger value="approved" data-testid="tab-approved">Approved ({approvedSubmissions.length})</TabsTrigger>
           <TabsTrigger value="rejected" data-testid="tab-rejected">Rejected ({rejectedSubmissions.length})</TabsTrigger>
-          <TabsTrigger value="all" data-testid="tab-all">All ({allSubmissions.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending" className="mt-6">
@@ -388,27 +387,6 @@ export default function AdminPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="all" className="mt-6">
-          {allLoading ? (
-            <div className="text-center py-8" data-testid="loading-all">Loading all submissions...</div>
-          ) : allSubmissions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground" data-testid="empty-all">
-              No submissions yet.
-            </div>
-          ) : (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">All Submissions</h2>
-              {allSubmissions.map(submission => (
-                <SubmissionCard
-                  key={submission.id}
-                  submission={submission}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
       </Tabs>
     </div>
   );

@@ -33,7 +33,7 @@ interface CVEDetailModalProps {
 }
 
 export default function CVEDetailModal({ cve, isOpen, onClose }: CVEDetailModalProps) {
-  const [selectedExploit, setSelectedExploit] = useState<number | null>(null);
+  const [selectedExploit, setSelectedExploit] = useState<string | null>(null);
 
   const { data: exploits, isLoading: exploitsLoading } = useQuery({
     queryKey: ["/api/cves", cve?.cveId, "exploits", cve?.edbId],

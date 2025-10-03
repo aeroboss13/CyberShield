@@ -29,6 +29,7 @@ export const posts = pgTable("posts", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   content: text("content").notNull(),
+  type: text("type").notNull().default("public"), // "public" for social feed, "private" for profile posts
   tags: text("tags").array().default([]),
   attachments: text("attachments").array().notNull().default([]), // Array of base64 encoded files with metadata
   likes: integer("likes").default(0),
@@ -309,6 +310,8 @@ export const insertPostSchema = createInsertSchema(posts).omit({
   likes: true,
   comments: true,
   shares: true
+}).extend({
+  type: z.enum(["public", "private"]).default("public")
 });
 
 export const insertCVESchema = createInsertSchema(cveEntries).omit({

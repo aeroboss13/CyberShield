@@ -17,9 +17,11 @@ export interface IStorage {
   getCurrentUser(req: any): Promise<User | undefined>;
   
   // Posts
-  getAllPosts(): Promise<(Post & { user: User })[]>;
+  getAllPosts(type?: string): Promise<(Post & { user: User })[]>;
+  getUserPosts(userId: number, type?: string): Promise<(Post & { user: User })[]>;
   getPost(id: number): Promise<Post | undefined>;
   createPost(post: InsertPost): Promise<Post>;
+  deletePost(id: number): Promise<void>;
   updatePostInteraction(id: number, type: 'likes' | 'comments' | 'shares', delta?: number): Promise<void>;
   
   // CVE
@@ -66,6 +68,7 @@ export interface IStorage {
   getUserSubmissions(userId: number): Promise<(UserSubmission & { user: User })[]>;
   getAllSubmissions(): Promise<(UserSubmission & { user: User })[]>;
   updateSubmissionStatus(id: number, status: string, reviewNotes?: string, reviewerId?: number): Promise<void>;
+  deleteSubmission(id: number): Promise<void>;
   
   // Likes
   togglePostLike(postId: number, userId: number): Promise<{ liked: boolean; likeCount: number }>;
@@ -75,7 +78,27 @@ export interface IStorage {
   
   // User Statistics
   updateUserStats(userId: number, field: string, delta: number): Promise<void>;
-  getUserStats(userId: number): Promise<User>;
+  getUserStats(userId: number): Promise<{
+    id: number;
+    username: string;
+    reputation: number;
+    reputationLevel: string;
+    postCount: number;
+    likesReceived: number;
+    commentsCount: number;
+    cveSubmissions: number;
+    exploitSubmissions: number;
+    verifiedSubmissions: number;
+    totalSubmissions: number;
+    approvedSubmissions: number;
+    rejectedSubmissions: number;
+    pendingSubmissions: number;
+    recentActivity: {
+      lastLogin: string | null;
+      lastSubmission: string | null;
+      lastPost: string | null;
+    };
+  }>;
   getUserActivityStats(userId: number): Promise<{
     totalPosts: number;
     totalLikes: number;
@@ -234,8 +257,28 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async getAllPosts(): Promise<(Post & { user: User })[]> {
-    const postsArray = Array.from(this.posts.values());
+  async getAllPosts(type?: string): Promise<(Post & { user: User })[]> {
+    let postsArray = Array.from(this.posts.values());
+    
+    // Filter by type if specified
+    if (type) {
+      postsArray = postsArray.filter(post => post.type === type);
+    }
+    
+    return postsArray.map(post => ({
+      ...post,
+      user: this.users.get(post.userId)!
+    })).sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async getUserPosts(userId: number, type?: string): Promise<(Post & { user: User })[]> {
+    let postsArray = Array.from(this.posts.values()).filter(post => post.userId === userId);
+    
+    // Filter by type if specified
+    if (type) {
+      postsArray = postsArray.filter(post => post.type === type);
+    }
+    
     return postsArray.map(post => ({
       ...post,
       user: this.users.get(post.userId)!
@@ -268,6 +311,37 @@ export class MemStorage implements IStorage {
     }
     
     return post;
+  }
+
+  async deletePost(id: number): Promise<void> {
+    const post = this.posts.get(id);
+    if (!post) {
+      throw new Error('Post not found');
+    }
+    
+    // Delete the post
+    this.posts.delete(id);
+    
+    // Delete all comments for this post
+    const commentsToDelete = Array.from(this.postComments.values())
+      .filter(comment => comment.postId === id);
+    commentsToDelete.forEach(comment => {
+      this.postComments.delete(comment.id);
+    });
+    
+    // Delete all likes for this post
+    const likesToDelete = Array.from(this.postLikes.values())
+      .filter(like => like.postId === id);
+    likesToDelete.forEach(like => {
+      this.postLikes.delete(like.id);
+    });
+    
+    // Update user post count
+    const user = this.users.get(post.userId);
+    if (user && user.postCount !== null && user.postCount > 0) {
+      user.postCount--;
+      this.users.set(user.id, user);
+    }
   }
 
   async updatePostInteraction(id: number, type: 'likes' | 'comments' | 'shares', delta: number = 1): Promise<void> {
@@ -697,12 +771,110 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getUserStats(userId: number): Promise<User> {
+  async getUserStats(userId: number): Promise<{
+    id: number;
+    username: string;
+    reputation: number;
+    reputationLevel: string;
+    postCount: number;
+    likesReceived: number;
+    commentsCount: number;
+    cveSubmissions: number;
+    exploitSubmissions: number;
+    verifiedSubmissions: number;
+    totalSubmissions: number;
+    approvedSubmissions: number;
+    rejectedSubmissions: number;
+    pendingSubmissions: number;
+    recentActivity: {
+      lastLogin: string | null;
+      lastSubmission: string | null;
+      lastPost: string | null;
+    };
+  }> {
     const user = this.users.get(userId);
     if (!user) {
       throw new Error(`User with id ${userId} not found`);
     }
-    return user;
+
+    // Get submission statistics
+    const allSubmissions = Array.from(this.userSubmissions.values()).filter(s => s.userId === userId);
+    const cveSubmissions = allSubmissions.filter(s => s.type === 'vulnerability').length;
+    const exploitSubmissions = allSubmissions.filter(s => s.type === 'exploit').length;
+    const verifiedSubmissions = allSubmissions.filter(s => s.verified).length;
+    const approvedSubmissions = allSubmissions.filter(s => s.status === 'approved').length;
+    const rejectedSubmissions = allSubmissions.filter(s => s.status === 'rejected').length;
+    const pendingSubmissions = allSubmissions.filter(s => s.status === 'pending').length;
+    const totalSubmissions = allSubmissions.length;
+
+    // Get post statistics
+    const userPosts = Array.from(this.posts.values()).filter(p => p.userId === userId);
+    const postCount = userPosts.length;
+
+    // Get likes received
+    const userLikes = Array.from(this.postLikes.values()).filter(l => l.userId === userId);
+    const likesReceived = userLikes.length;
+
+    // Get comments count
+    const userComments = Array.from(this.postComments.values()).filter(c => c.userId === userId);
+    const commentsCount = userComments.length;
+
+    // Calculate reputation based on real data
+    let reputation = 0;
+    
+    // Base reputation from submissions
+    reputation += approvedSubmissions * 50; // 50 points per approved submission
+    reputation += verifiedSubmissions * 100; // 100 points per verified submission
+    reputation += cveSubmissions * 25; // 25 points per CVE submission
+    reputation += exploitSubmissions * 30; // 30 points per exploit submission
+    
+    // Reputation from community engagement
+    reputation += likesReceived * 2; // 2 points per like received
+    reputation += commentsCount * 1; // 1 point per comment
+    reputation += postCount * 5; // 5 points per post
+    
+    // Bonus for high-quality contributions
+    if (verifiedSubmissions > 0) reputation += 200; // Bonus for having verified submissions
+    if (approvedSubmissions > 10) reputation += 500; // Bonus for many approved submissions
+    if (totalSubmissions > 20) reputation += 300; // Bonus for high activity
+
+    // Determine reputation level
+    let reputationLevel = 'Beginner';
+    if (reputation >= 2000) reputationLevel = 'Expert';
+    else if (reputation >= 1000) reputationLevel = 'Advanced';
+    else if (reputation >= 500) reputationLevel = 'Intermediate';
+    else if (reputation >= 100) reputationLevel = 'Contributor';
+
+    // Get recent activity
+    const lastSubmission = allSubmissions.length > 0 
+      ? allSubmissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].createdAt
+      : null;
+    
+    const lastPost = userPosts.length > 0 
+      ? userPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].createdAt
+      : null;
+
+    return {
+      id: user.id,
+      username: user.username,
+      reputation,
+      reputationLevel,
+      postCount,
+      likesReceived,
+      commentsCount,
+      cveSubmissions,
+      exploitSubmissions,
+      verifiedSubmissions,
+      totalSubmissions,
+      approvedSubmissions,
+      rejectedSubmissions,
+      pendingSubmissions,
+      recentActivity: {
+        lastLogin: user.lastLogin,
+        lastSubmission,
+        lastPost
+      }
+    };
   }
 
   // Admin Operations
@@ -749,6 +921,15 @@ export class MemStorage implements IStorage {
       reviewedBy: adminId,
       reviewedAt: new Date()
     });
+  }
+
+  async deleteSubmission(id: number): Promise<void> {
+    const submission = this.userSubmissions.get(id);
+    if (!submission) {
+      throw new Error('Submission not found');
+    }
+    
+    this.userSubmissions.delete(id);
   }
 
   async getPendingSubmissions(): Promise<(UserSubmission & { user: User })[]> {

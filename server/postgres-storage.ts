@@ -86,12 +86,110 @@ export class PostgresStorage implements IStorage {
     return user?.role === 'admin';
   }
 
-  async getUserStats(userId: number): Promise<User> {
+  async getUserStats(userId: number): Promise<{
+    id: number;
+    username: string;
+    reputation: number;
+    reputationLevel: string;
+    postCount: number;
+    likesReceived: number;
+    commentsCount: number;
+    cveSubmissions: number;
+    exploitSubmissions: number;
+    verifiedSubmissions: number;
+    totalSubmissions: number;
+    approvedSubmissions: number;
+    rejectedSubmissions: number;
+    pendingSubmissions: number;
+    recentActivity: {
+      lastLogin: string | null;
+      lastSubmission: string | null;
+      lastPost: string | null;
+    };
+  }> {
     const user = await this.getUser(userId);
     if (!user) {
       throw new Error(`User with id ${userId} not found`);
     }
-    return user;
+
+    // Get submission statistics
+    const allSubmissions = await db.select().from(userSubmissions).where(eq(userSubmissions.userId, userId));
+    const cveSubmissions = allSubmissions.filter(s => s.type === 'vulnerability').length;
+    const exploitSubmissions = allSubmissions.filter(s => s.type === 'exploit').length;
+    const verifiedSubmissions = allSubmissions.filter(s => s.verified).length;
+    const approvedSubmissions = allSubmissions.filter(s => s.status === 'approved').length;
+    const rejectedSubmissions = allSubmissions.filter(s => s.status === 'rejected').length;
+    const pendingSubmissions = allSubmissions.filter(s => s.status === 'pending').length;
+    const totalSubmissions = allSubmissions.length;
+
+    // Get post statistics
+    const userPosts = await db.select().from(posts).where(eq(posts.userId, userId));
+    const postCount = userPosts.length;
+
+    // Get likes received
+    const userLikes = await db.select().from(postLikes).where(eq(postLikes.userId, userId));
+    const likesReceived = userLikes.length;
+
+    // Get comments count
+    const userComments = await db.select().from(postComments).where(eq(postComments.userId, userId));
+    const commentsCount = userComments.length;
+
+    // Calculate reputation based on real data
+    let reputation = 0;
+    
+    // Base reputation from submissions
+    reputation += approvedSubmissions * 50; // 50 points per approved submission
+    reputation += verifiedSubmissions * 100; // 100 points per verified submission
+    reputation += cveSubmissions * 25; // 25 points per CVE submission
+    reputation += exploitSubmissions * 30; // 30 points per exploit submission
+    
+    // Reputation from community engagement
+    reputation += likesReceived * 2; // 2 points per like received
+    reputation += commentsCount * 1; // 1 point per comment
+    reputation += postCount * 5; // 5 points per post
+    
+    // Bonus for high-quality contributions
+    if (verifiedSubmissions > 0) reputation += 200; // Bonus for having verified submissions
+    if (approvedSubmissions > 10) reputation += 500; // Bonus for many approved submissions
+    if (totalSubmissions > 20) reputation += 300; // Bonus for high activity
+
+    // Determine reputation level
+    let reputationLevel = 'Beginner';
+    if (reputation >= 2000) reputationLevel = 'Expert';
+    else if (reputation >= 1000) reputationLevel = 'Advanced';
+    else if (reputation >= 500) reputationLevel = 'Intermediate';
+    else if (reputation >= 100) reputationLevel = 'Contributor';
+
+    // Get recent activity
+    const lastSubmission = allSubmissions.length > 0 
+      ? allSubmissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].createdAt
+      : null;
+    
+    const lastPost = userPosts.length > 0 
+      ? userPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].createdAt
+      : null;
+
+    return {
+      id: user.id,
+      username: user.username,
+      reputation,
+      reputationLevel,
+      postCount,
+      likesReceived,
+      commentsCount,
+      cveSubmissions,
+      exploitSubmissions,
+      verifiedSubmissions,
+      totalSubmissions,
+      approvedSubmissions,
+      rejectedSubmissions,
+      pendingSubmissions,
+      recentActivity: {
+        lastLogin: user.lastLogin,
+        lastSubmission,
+        lastPost
+      }
+    };
   }
 
   async getUserActivityStats(userId: number): Promise<{
@@ -115,7 +213,7 @@ export class PostgresStorage implements IStorage {
     if (!user) return;
 
     const updates: any = {};
-    if (field === 'postsCount') updates.postsCount = (user.postsCount || 0) + delta;
+    if (field === 'postsCount') updates.postCount = (user.postCount || 0) + delta;
     if (field === 'likesReceived') updates.likesReceived = (user.likesReceived || 0) + delta;
     if (field === 'commentsCount') updates.commentsCount = (user.commentsCount || 0) + delta;
 
@@ -126,10 +224,32 @@ export class PostgresStorage implements IStorage {
 
   // ==================== POSTS ====================
   
-  async getAllPosts(): Promise<(Post & { user: User })[]> {
-    const result = await db.select().from(posts)
+  async getAllPosts(type?: string): Promise<(Post & { user: User })[]> {
+    let query = db.select().from(posts)
+      .leftJoin(users, eq(posts.userId, users.id));
+    
+    if (type) {
+      query = query.where(eq(posts.type, type));
+    }
+    
+    const result = await query.orderBy(desc(posts.createdAt));
+    
+    return result.map(row => ({
+      ...row.posts,
+      user: row.users!
+    }));
+  }
+
+  async getUserPosts(userId: number, type?: string): Promise<(Post & { user: User })[]> {
+    let query = db.select().from(posts)
       .leftJoin(users, eq(posts.userId, users.id))
-      .orderBy(desc(posts.createdAt));
+      .where(eq(posts.userId, userId));
+    
+    if (type) {
+      query = query.where(and(eq(posts.userId, userId), eq(posts.type, type)));
+    }
+    
+    const result = await query.orderBy(desc(posts.createdAt));
     
     return result.map(row => ({
       ...row.posts,
@@ -155,6 +275,26 @@ export class PostgresStorage implements IStorage {
     await this.updateUserStats(post.userId, 'postsCount', 1);
     
     return result[0];
+  }
+
+  async deletePost(id: number): Promise<void> {
+    // Get the post first to get the user ID
+    const post = await this.getPost(id);
+    if (!post) {
+      throw new Error('Post not found');
+    }
+    
+    // Delete all comments for this post
+    await db.delete(postComments).where(eq(postComments.postId, id));
+    
+    // Delete all likes for this post
+    await db.delete(postLikes).where(eq(postLikes.postId, id));
+    
+    // Delete the post
+    await db.delete(posts).where(eq(posts.id, id));
+    
+    // Update user stats
+    await this.updateUserStats(post.userId, 'postsCount', -1);
   }
 
   async updatePostInteraction(id: number, type: 'likes' | 'comments' | 'shares', delta: number = 1): Promise<void> {
@@ -306,7 +446,37 @@ export class PostgresStorage implements IStorage {
   // ==================== EXPLOITS ====================
   
   async getExploitsForCVE(cveId: string): Promise<Exploit[]> {
-    return db.select().from(exploits).where(eq(exploits.cveId, cveId));
+    const result = await db.select().from(exploits).where(eq(exploits.cveId, cveId));
+    
+    // If exploit code is missing, try to fetch it from external sources
+    for (const exploit of result) {
+      if (!exploit.exploitCode && exploit.exploitId) {
+        try {
+          // Try to fetch exploit code from ExploitDB
+          const response = await fetch(`https://www.exploit-db.com/raw/${exploit.exploitId}`, {
+            headers: {
+              'User-Agent': 'Pabit/1.0 Exploit Fetcher',
+              'Accept': 'text/plain,*/*'
+            }
+          });
+          
+          if (response.ok) {
+            const code = await response.text();
+            if (code && code.trim().length > 10) {
+              // Update the database with the fetched code
+              await db.update(exploits)
+                .set({ exploitCode: code.trim() })
+                .where(eq(exploits.id, exploit.id));
+              exploit.exploitCode = code.trim();
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to fetch exploit code for ${exploit.exploitId}:`, error);
+        }
+      }
+    }
+    
+    return result;
   }
 
   async createExploit(exploit: InsertExploit): Promise<Exploit> {
@@ -316,12 +486,12 @@ export class PostgresStorage implements IStorage {
 
   async updateExploitCode(exploitId: string, code: string): Promise<void> {
     await db.update(exploits)
-      .set({ code })
+      .set({ exploitCode: code })
       .where(eq(exploits.exploitId, exploitId));
   }
 
   async getExploitByEdbId(edbId: string): Promise<Exploit | undefined> {
-    const result = await db.select().from(exploits).where(eq(exploits.edbId, edbId)).limit(1);
+    const result = await db.select().from(exploits).where(eq(exploits.exploitId, edbId)).limit(1);
     return result[0];
   }
 
@@ -522,33 +692,47 @@ export class PostgresStorage implements IStorage {
     const result = await db.insert(userSubmissions).values({
       ...submission,
       status: 'pending',
-      submittedAt: new Date()
+      createdAt: new Date()
     }).returning();
     return result[0];
   }
 
   async getUserSubmissions(userId: number): Promise<(UserSubmission & { user: User })[]> {
-    const result = await db.select().from(userSubmissions)
+    const result = await db.select({
+      submission: userSubmissions,
+      user: users
+    }).from(userSubmissions)
       .leftJoin(users, eq(userSubmissions.userId, users.id))
       .where(eq(userSubmissions.userId, userId))
-      .orderBy(desc(userSubmissions.submittedAt));
+      .orderBy(desc(userSubmissions.createdAt));
     
     return result.map(row => ({
-      ...row.user_submissions,
-      user: row.users!
+      ...row.submission,
+      user: row.user!
     }));
   }
 
   async getAllSubmissions(): Promise<(UserSubmission & { user: User })[]> {
-    const result = await db.select().from(userSubmissions)
-      .leftJoin(users, eq(userSubmissions.userId, users.id))
-      .where(eq(userSubmissions.status, 'approved'))
-      .orderBy(desc(userSubmissions.submittedAt));
-    
-    return result.map(row => ({
-      ...row.user_submissions,
-      user: row.users!
-    }));
+    try {
+      console.log('Getting all submissions...');
+      const result = await db.select({
+        submission: userSubmissions,
+        user: users
+      }).from(userSubmissions)
+        .leftJoin(users, eq(userSubmissions.userId, users.id))
+        .where(eq(userSubmissions.status, 'approved'))
+        .orderBy(desc(userSubmissions.createdAt));
+      
+      console.log('Query result:', result.length, 'rows');
+      return result.map(row => ({
+        ...row.submission,
+        user: row.user!
+      }));
+    } catch (error) {
+      console.error('Error in getAllSubmissions:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw error;
+    }
   }
 
   async updateSubmissionStatus(id: number, status: string, reviewNotes?: string, reviewerId?: number): Promise<void> {
@@ -563,14 +747,25 @@ export class PostgresStorage implements IStorage {
   }
 
   async getAllSubmissionsForAdmin(): Promise<(UserSubmission & { user: User })[]> {
-    const result = await db.select().from(userSubmissions)
-      .leftJoin(users, eq(userSubmissions.userId, users.id))
-      .orderBy(desc(userSubmissions.submittedAt));
-    
-    return result.map(row => ({
-      ...row.user_submissions,
-      user: row.users!
-    }));
+    try {
+      console.log('Getting all submissions for admin...');
+      const result = await db.select({
+        submission: userSubmissions,
+        user: users
+      }).from(userSubmissions)
+        .leftJoin(users, eq(userSubmissions.userId, users.id))
+        .orderBy(desc(userSubmissions.createdAt));
+      
+      console.log('Admin query result:', result.length, 'rows');
+      return result.map(row => ({
+        ...row.submission,
+        user: row.user!
+      }));
+    } catch (error) {
+      console.error('Error in getAllSubmissionsForAdmin:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw error;
+    }
   }
 
   async approveSubmission(id: number, adminId: number, reviewNotes?: string): Promise<void> {
@@ -581,16 +776,36 @@ export class PostgresStorage implements IStorage {
     await this.updateSubmissionStatus(id, 'rejected', reviewNotes, adminId);
   }
 
-  async getPendingSubmissions(): Promise<(UserSubmission & { user: User })[]> {
-    const result = await db.select().from(userSubmissions)
-      .leftJoin(users, eq(userSubmissions.userId, users.id))
-      .where(eq(userSubmissions.status, 'pending'))
-      .orderBy(desc(userSubmissions.submittedAt));
+  async deleteSubmission(id: number): Promise<void> {
+    const submission = await db.select().from(userSubmissions).where(eq(userSubmissions.id, id)).limit(1);
+    if (submission.length === 0) {
+      throw new Error('Submission not found');
+    }
     
-    return result.map(row => ({
-      ...row.user_submissions,
-      user: row.users!
-    }));
+    await db.delete(userSubmissions).where(eq(userSubmissions.id, id));
+  }
+
+  async getPendingSubmissions(): Promise<(UserSubmission & { user: User })[]> {
+    try {
+      console.log('Getting pending submissions...');
+      const result = await db.select({
+        submission: userSubmissions,
+        user: users
+      }).from(userSubmissions)
+        .leftJoin(users, eq(userSubmissions.userId, users.id))
+        .where(eq(userSubmissions.status, 'pending'))
+        .orderBy(desc(userSubmissions.createdAt));
+      
+      console.log('Pending query result:', result.length, 'rows');
+      return result.map(row => ({
+        ...row.submission,
+        user: row.user!
+      }));
+    } catch (error) {
+      console.error('Error in getPendingSubmissions:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw error;
+    }
   }
 
   // ==================== NOTIFICATIONS ====================
@@ -631,6 +846,17 @@ export class PostgresStorage implements IStorage {
   async deleteNotification(id: number): Promise<void> {
     await db.delete(notifications).where(eq(notifications.id, id));
   }
+
+  // ==================== ADMIN METHODS ====================
+  
+  async getAdminUsers(): Promise<User[]> {
+    return db.select().from(users).where(eq(users.role, 'admin'));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt));
+  }
 }
+
 
 

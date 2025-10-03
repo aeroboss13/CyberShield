@@ -1,0 +1,1 @@
+ALTER TABLE "posts" ADD COLUMN "type" text DEFAULT 'public' NOT NULL;
