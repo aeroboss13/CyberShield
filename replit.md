@@ -134,6 +134,8 @@ Preferred communication style: Simple, everyday language.
 ## Changelog
 
 Recent Changes:
+- October 07, 2025: Simplified MITRE ATT&CK Framework interface - removed Grid mode, keeping only List view for better mobile experience
+- October 07, 2025: Removed external NVD links from CVE Database, keeping only Details and Exploits buttons for cleaner interface
 - September 30, 2025: Added InfoSearch API integration for data lookup functionality
 - September 30, 2025: Created deployment instructions (DEPLOYMENT.md)
 - July 03, 2025: Implemented real-time security news aggregation with RSS feeds
