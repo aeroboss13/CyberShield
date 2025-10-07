@@ -48,24 +48,24 @@ export default function MitreMatrix() {
   return (
     <div className="space-y-6">
       {/* Header with Stats */}
-      <div className="cyber-bg-surface rounded-xl p-4 sm:p-6 border cyber-border">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
+      <div className="cyber-bg-surface rounded-lg sm:rounded-xl p-3 sm:p-6 border cyber-border">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center space-x-3">
-              <Target className="w-6 sm:w-8 h-6 sm:h-8 cyber-text-blue" />
+            <h2 className="text-lg sm:text-2xl font-bold text-white flex items-center space-x-2 sm:space-x-3">
+              <Target className="w-5 sm:w-8 h-5 sm:h-8 cyber-text-blue flex-shrink-0" />
               <span className="hidden sm:inline">MITRE ATT&CK Framework</span>
-              <span className="sm:hidden">ATT&CK Framework</span>
+              <span className="sm:hidden text-base">ATT&CK</span>
             </h2>
-            <p className="cyber-text-muted mt-1">Live data from MITRE's official GitHub repository</p>
+            <p className="cyber-text-muted mt-1 text-xs sm:text-sm">Live data from MITRE's official GitHub repository</p>
           </div>
-          <div className="flex justify-center sm:justify-end">
-            <div className="flex items-center space-x-6">
+          <div className="flex justify-start sm:justify-end">
+            <div className="flex items-center space-x-4 sm:space-x-6">
               <div className="text-center">
-                <div className="text-lg sm:text-2xl font-bold cyber-text-blue">{filteredTactics?.length || 0}</div>
+                <div className="text-base sm:text-2xl font-bold cyber-text-blue">{filteredTactics?.length || 0}</div>
                 <div className="text-xs cyber-text-dim">Tactics</div>
               </div>
               <div className="text-center">
-                <div className="text-lg sm:text-2xl font-bold cyber-text-green">
+                <div className="text-base sm:text-2xl font-bold cyber-text-green">
                   {filteredTactics?.reduce((acc, tactic) => acc + tactic.techniques.length, 0) || 0}
                 </div>
                 <div className="text-xs cyber-text-dim">Techniques</div>
@@ -74,9 +74,9 @@ export default function MitreMatrix() {
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
           <Select value={selectedMatrix} onValueChange={setSelectedMatrix}>
-            <SelectTrigger className="cyber-input w-full sm:w-48">
+            <SelectTrigger className="cyber-input w-full sm:w-48 text-sm sm:text-base" data-testid="select-matrix">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="cyber-bg-surface border cyber-border">
@@ -90,23 +90,28 @@ export default function MitreMatrix() {
             placeholder="Search tactics and techniques..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="cyber-input flex-1"
+            className="cyber-input flex-1 text-sm sm:text-base"
+            data-testid="input-search-mitre"
           />
           
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 w-full sm:w-auto">
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
               onClick={() => setViewMode('grid')}
-              className="px-3"
+              className="px-3 sm:px-4 flex-1 sm:flex-initial"
+              data-testid="button-view-grid"
             >
-              <Grid3X3 className="w-4 h-4" />
+              <Grid3X3 className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">Grid</span>
             </Button>
             <Button
               variant={viewMode === 'list' ? 'default' : 'outline'}
               onClick={() => setViewMode('list')}
-              className="px-3"
+              className="px-3 sm:px-4 flex-1 sm:flex-initial"
+              data-testid="button-view-list"
             >
-              <List className="w-4 h-4" />
+              <List className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">List</span>
             </Button>
           </div>
         </div>
@@ -114,46 +119,48 @@ export default function MitreMatrix() {
 
       {/* Tactics Grid/List */}
       {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {filteredTactics?.map((tactic) => (
-            <div key={tactic.tacticId} className="matrix-cell rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-bold cyber-text-blue text-lg">{tactic.tacticName}</h3>
-                  <Badge className="cyber-bg-blue text-white mt-1">
+            <div key={tactic.tacticId} className="matrix-cell rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6" data-testid={`card-tactic-${tactic.tacticId}`}>
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold cyber-text-blue text-base sm:text-lg truncate pr-2">{tactic.tacticName}</h3>
+                  <Badge className="cyber-bg-blue text-white mt-1 text-xs">
                     {tactic.tacticId}
                   </Badge>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold cyber-text-green">{tactic.techniques.length}</div>
-                  <div className="text-xs cyber-text-dim">Techniques</div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-lg sm:text-2xl font-bold cyber-text-green">{tactic.techniques.length}</div>
+                  <div className="text-xs cyber-text-dim whitespace-nowrap">Tech</div>
                 </div>
               </div>
               
-              <p className="text-white text-sm mb-4 leading-relaxed">{tactic.tacticDescription}</p>
+              <p className="text-white text-xs sm:text-sm mb-3 sm:mb-4 leading-relaxed line-clamp-3">{tactic.tacticDescription}</p>
               
-              <div className="space-y-2 mb-4">
-                {tactic.techniques.slice(0, 4).map((technique) => (
+              <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
+                {tactic.techniques.slice(0, 3).map((technique) => (
                   <div
                     key={technique.techniqueId}
                     onClick={() => setSelectedTechnique(technique.techniqueId)}
-                    className="cyber-bg-surface-light rounded-lg p-3 text-sm hover:cyber-bg-surface transition-all cursor-pointer border cyber-border hover:border-blue-500"
+                    className="cyber-bg-surface-light rounded p-2 sm:p-3 text-xs sm:text-sm hover:cyber-bg-surface transition-all cursor-pointer border cyber-border hover:border-blue-500"
+                    data-testid={`technique-${technique.techniqueId}`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="cyber-text-green font-mono font-semibold">{technique.techniqueId}</span>
-                      <Button size="sm" variant="ghost" className="p-1 h-6 w-6">
+                      <span className="cyber-text-green font-mono font-semibold text-xs sm:text-sm">{technique.techniqueId}</span>
+                      <Button size="sm" variant="ghost" className="p-0.5 sm:p-1 h-5 w-5 sm:h-6 sm:w-6">
                         <Eye className="w-3 h-3" />
                       </Button>
                     </div>
-                    <span className="text-white block mt-1">{technique.techniqueName}</span>
+                    <span className="text-white block mt-1 line-clamp-1 text-xs sm:text-sm">{technique.techniqueName}</span>
                   </div>
                 ))}
                 
-                {tactic.techniques.length > 4 && (
+                {tactic.techniques.length > 3 && (
                   <Button 
                     variant="ghost" 
-                    className="w-full cyber-text-blue hover:cyber-bg-surface-light"
-                    onClick={() => setSelectedTechnique(tactic.techniques[4]?.techniqueId || tactic.techniques[0]?.techniqueId)}
+                    className="w-full cyber-text-blue hover:cyber-bg-surface-light text-xs sm:text-sm py-1.5 sm:py-2"
+                    onClick={() => setSelectedTechnique(tactic.techniques[3]?.techniqueId || tactic.techniques[0]?.techniqueId)}
+                    data-testid={`button-view-all-${tactic.tacticId}`}
                   >
                     View all {tactic.techniques.length} techniques
                   </Button>
@@ -161,51 +168,54 @@ export default function MitreMatrix() {
               </div>
               
               <div className="flex space-x-2">
-                <Button className="cyber-button-secondary flex-1">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  MITRE
+                <Button className="cyber-button-secondary flex-1 text-xs sm:text-sm py-1.5 sm:py-2" data-testid={`button-mitre-${tactic.tacticId}`}>
+                  <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">MITRE</span>
+                  <span className="sm:hidden">Info</span>
                 </Button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {filteredTactics?.map((tactic) => (
-            <div key={tactic.tacticId} className="cyber-bg-surface rounded-xl p-6 border cyber-border">
-              <div className="flex items-start justify-between mb-4">
+            <div key={tactic.tacticId} className="cyber-bg-surface rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 border cyber-border" data-testid={`card-list-tactic-${tactic.tacticId}`}>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 sm:mb-4 space-y-2 sm:space-y-0">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="font-bold cyber-text-blue text-xl">{tactic.tacticName}</h3>
-                    <Badge className="cyber-bg-blue text-white">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <h3 className="font-bold cyber-text-blue text-base sm:text-lg lg:text-xl">{tactic.tacticName}</h3>
+                    <Badge className="cyber-bg-blue text-white text-xs">
                       {tactic.tacticId}
                     </Badge>
-                    <Badge variant="outline" className="border-gray-600 text-gray-400">
-                      {tactic.techniques.length} techniques
+                    <Badge variant="outline" className="border-gray-600 text-gray-400 text-xs">
+                      {tactic.techniques.length} tech
                     </Badge>
                   </div>
-                  <p className="text-white mb-4">{tactic.tacticDescription}</p>
+                  <p className="text-white text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-none">{tactic.tacticDescription}</p>
                 </div>
-                <Button className="cyber-button-secondary">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  View Details
+                <Button className="cyber-button-secondary text-xs sm:text-sm w-full sm:w-auto sm:ml-4" data-testid={`button-details-${tactic.tacticId}`}>
+                  <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">View Details</span>
+                  <span className="sm:hidden">Details</span>
                 </Button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                 {tactic.techniques.map((technique) => (
                   <div
                     key={technique.techniqueId}
                     onClick={() => setSelectedTechnique(technique.techniqueId)}
-                    className="cyber-bg-surface-light rounded-lg p-3 cursor-pointer hover:cyber-bg-surface transition-all border cyber-border hover:border-blue-500"
+                    className="cyber-bg-surface-light rounded p-2 sm:p-3 cursor-pointer hover:cyber-bg-surface transition-all border cyber-border hover:border-blue-500"
+                    data-testid={`list-technique-${technique.techniqueId}`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="cyber-text-green font-mono text-sm font-semibold">
+                      <span className="cyber-text-green font-mono text-xs sm:text-sm font-semibold">
                         {technique.techniqueId}
                       </span>
-                      <Eye className="w-4 h-4 cyber-text-dim" />
+                      <Eye className="w-3 h-3 sm:w-4 sm:h-4 cyber-text-dim flex-shrink-0" />
                     </div>
-                    <span className="text-white text-sm">{technique.techniqueName}</span>
+                    <span className="text-white text-xs sm:text-sm line-clamp-2">{technique.techniqueName}</span>
                   </div>
                 ))}
               </div>
@@ -215,10 +225,10 @@ export default function MitreMatrix() {
       )}
       
       {filteredTactics?.length === 0 && (
-        <div className="text-center cyber-text-muted py-12">
-          <Target className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">No tactics or techniques found matching your search.</p>
-          <p className="text-sm mt-2">Try adjusting your search terms or matrix selection.</p>
+        <div className="text-center cyber-text-muted py-8 sm:py-12 px-4" data-testid="empty-state-mitre">
+          <Target className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 opacity-50" />
+          <p className="text-base sm:text-lg">No tactics or techniques found matching your search.</p>
+          <p className="text-xs sm:text-sm mt-2">Try adjusting your search terms or matrix selection.</p>
         </div>
       )}
 
