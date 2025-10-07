@@ -327,36 +327,26 @@ export default function NewsModal({ article, isOpen, onClose, shouldFocusComment
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="cyber-text-muted hover:cyber-text-blue"
-                onClick={handleShare}
-                data-testid="button-share-article"
-              >
-                <Share className="w-4 h-4 mr-1" />
-                Share
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="cyber-text-muted hover:cyber-text-blue"
-                onClick={handleDiscuss}
-                data-testid="button-discuss-article"
-              >
-                <MessageSquare className="w-4 h-4 mr-1" />
-                Discuss
-              </Button>
-            </div>
-            
+          <div className="flex items-center space-x-3 pt-4 border-t border-slate-700">
             <Button
-              className="cyber-button-primary"
-              onClick={() => window.location.href = `/search?q=${encodeURIComponent(article.title + ' ' + article.source)}`}
+              variant="ghost"
+              size="sm"
+              className="cyber-text-muted hover:cyber-text-blue"
+              onClick={handleShare}
+              data-testid="button-share-article"
             >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Search Original
+              <Share className="w-4 h-4 mr-1" />
+              Share
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="cyber-text-muted hover:cyber-text-blue"
+              onClick={handleDiscuss}
+              data-testid="button-discuss-article"
+            >
+              <MessageSquare className="w-4 h-4 mr-1" />
+              Discuss
             </Button>
           </div>
 
