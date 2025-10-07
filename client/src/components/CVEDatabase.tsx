@@ -287,6 +287,7 @@ export default function CVEDatabase() {
                 <Button 
                   className="cyber-button-secondary"
                   onClick={() => setSelectedCVE(cve)}
+                  data-testid={`button-details-${cve.cveId}`}
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Details
@@ -294,17 +295,10 @@ export default function CVEDatabase() {
                 <Button 
                   className="cyber-button-primary"
                   onClick={() => setSelectedCVE(cve)}
+                  data-testid={`button-exploits-${cve.cveId}`}
                 >
                   <Code className="w-4 h-4 mr-2" />
                   Exploits
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="border-gray-600 text-gray-400 hover:text-white hover:border-gray-500"
-                  onClick={() => window.open(`https://nvd.nist.gov/vuln/detail/${cve.cveId}`, '_blank')}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  NVD
                 </Button>
               </div>
             </div>
